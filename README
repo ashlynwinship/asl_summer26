@@ -1,2 +1,7 @@
-In order to use MediaPipe successfully with the existing scripts, you should install version 0.10.21 (the most recent version has deprecated a lot of modules that most of the documentation/troubleshooting online is available for). 
-Python version 3.10 as well                                                                                                      
+Versions:
+- MediaPipe 0.10.21
+- Python 3.10
+
+In data_processing, I provided the scripts for getting the MediaPipe data out of citation-form videos (preprocessing_for_LSH.ipynb), and for running Locality-Sensitive Hashing (LSH) to determine the similarity of a test sign.
+I also provided a test sign (chocolate-me.mov), as well as a handful of citation forms from Bill Vickers (asl_citation_forms folder). 
+You can use these scripts and the test data to play around with LSH analysis locally; the full analysis will have to be run on the Unicorn cluster.
