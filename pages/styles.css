@@ -155,11 +155,10 @@ ul li a:hover {
 .guide-columns {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
   flex-wrap: wrap;
 }
 
 /* column styling */
 .guide-panel {
-  flex: 1 1 320px;
+  flex: 1;
 }
