@@ -17,27 +17,31 @@
   <p>My first paragraph.</p>
   <p>another paragraph</p>
 </body>
-<div class="upload-container">
+
+
+<div class="flex-container">
+  <div class="left-box">
+    <div class="upload-container">
   <!-- Upload box for files -->
   <label for="file-upload" class="custom-upload-box">
     <div class="upload-icon">📁</div>
     <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
+    <span class="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
   </label>
   
   <!-- Upload functionality -->
-  <input type="file" id="file-upload" class="hidden-input" multiple />
+  <input type="file" accept="video/*" id="file-upload" class="hidden-input"/>
 </div>
-
-<div class="upload-container">
+  </div>
+  <div class="right-box">
+    <div class="upload-container">
   <label class="custom-record-box">
-    <div class="upload-icon">📹</div>
-    <div class="upload-text">
-    <button class="startButton">Start Recording</button>
-    <button class="stopButton" disabled>Stop Recording</button>
     <video id="recording" controls></video>
-    <video id="preview" autoplay muted playsinline></video>
-    </div>
+    <video id="preview" class="video-preview"autoplay muted playsinline></video>
+    <button id="startButton" class="startButton">Start Recording</button>
+    <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
   </label>
 </div>
-
+  </div>
+</div>
 </html>

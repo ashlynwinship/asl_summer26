@@ -69,8 +69,8 @@ ul li a:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 800;
-  height: 400;
+  width: 1600;
+  height: 800;
   border: 2px solid #4a90e2;
   border-radius: 12px;
   background-color: #f9fbfd;
@@ -112,11 +112,18 @@ ul li a:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 800;
-  height: 400;
+  width: 1000;
+  height: 1600;
   border: 2px solid #4a90e2;
   border-radius: 12px;
   background-color: #f9fbfd;
+}
+
+.video-preview {
+  width: 80%;
+  height: auto;
+  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .startButton, .stopButton {
@@ -128,4 +135,10 @@ ul li a:hover {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 10px;
+  align-self: center;
+}
+
+.startButton, .stopButton:hover {
+  background-color: #78afef;
+  border-color: #2b72c4;
 }
