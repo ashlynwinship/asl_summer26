@@ -16,4 +16,20 @@
   <p>My first paragraph.</p>
   <p>another paragraph</p>
 </body>
+<div class="upload-container">
+  <!-- Upload box for files -->
+  <label for="file-upload" class="custom-upload-box">
+    <div class="upload-icon">📁</div>
+    <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
+  </label>
+  
+  <!-- Upload functionality -->
+  <input type="file" id="file-upload" class="hidden-input" multiple />
+</div>
+
+<video id="preview" autoplay muted playsinline></video>
+<button id="startButton">Start Recording</button>
+<button id="stopButton" disabled>Stop Recording</button>
+<video id="recording" controls></video>
+
 </html>

@@ -1,3 +1,4 @@
+/* General body styling */
 body {
     font-family: 'Times New Roman';
     margin: 10px;
@@ -8,6 +9,7 @@ body {
     background-color: #f0f2f5;
     }
     
+/* Top bar styling */
 ul {
     list-style-type: none;
     position: fixed;
@@ -21,6 +23,7 @@ ul {
     justify-content: right;
 }
 
+/* Top bar buttons */
 ul li a {
     display: block;
     color: white;
@@ -28,6 +31,59 @@ ul li a {
     text-decoration: none;
 }
 
+/* Hover for top bar buttons */
 ul li a:hover {
     background-color: #111111;
+}
+
+/* Container position */
+.upload-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px;
+}
+
+/* Dashed line around container */
+.custom-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 400px;
+  height: 200px;
+  border: 2px dashed #4a90e2;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* File upload hover */
+.custom-upload-box:hover {
+  background-color: #f0f7ff;
+  border-color: #2b72c4;
+  transform: scale(1.01);
+}
+
+/* File upload icon */
+.upload-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+/* File upload text */
+.upload-text {
+  color: #555;
+  font-size: 14px;
+}
+
+.upload-text strong {
+  color: #4a90e2;
+}
+
+/* COMPLETELY HIDE THE DEFAULT INPUT FIELD */
+.hidden-input {
+  display: none;
 }
