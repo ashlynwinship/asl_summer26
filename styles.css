@@ -56,15 +56,15 @@ ul li a:hover {
   padding: 40px;
 }
 
-/* Dashed line around container */
+/* Upload box styling */
 .custom-upload-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 400px;
-  height: 200px;
-  border: 2px dashed #4a90e2;
+  width: 800;
+  height: 400;
+  border: 2px solid #4a90e2;
   border-radius: 12px;
   background-color: #f9fbfd;
   cursor: pointer;
@@ -97,4 +97,28 @@ ul li a:hover {
 /* COMPLETELY HIDE THE DEFAULT INPUT FIELD */
 .hidden-input {
   display: none;
+}
+
+/* Dashed line around container */
+.custom-record-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 800;
+  height: 400;
+  border: 2px solid #4a90e2;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+}
+
+.startButton, .stopButton {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #4a90e2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
 }
