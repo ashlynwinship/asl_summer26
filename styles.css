@@ -47,6 +47,13 @@ ul li a:hover {
     background-color: #111111;
 }
 
+/* Underline spanning whole page */
+.longer-underline {
+  text-decoration: none;
+  display: inline-block;
+  border-bottom: 1px solid black;
+}
+
 /* Container position */
 .upload-container {
   display: flex;
