@@ -15,10 +15,21 @@ ul {
     left: 0;
     right: 0;
     margin: 0;
-    padding: 0;
+    padding: 0 16px;
     background-color: #333333;
     display: flex;
-    justify-content: right;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+ul .title {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+}
+
+ul li:nth-child(2) {
+    margin-left: auto;
 }
 
 ul li a {
