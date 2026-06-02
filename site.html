@@ -28,9 +28,16 @@
   <input type="file" id="file-upload" class="hidden-input" multiple />
 </div>
 
-<video id="preview" autoplay muted playsinline></video>
-<button id="startButton">Start Recording</button>
-<button id="stopButton" disabled>Stop Recording</button>
-<video id="recording" controls></video>
+<div class="upload-container">
+  <label class="custom-record-box">
+    <div class="upload-icon">📹</div>
+    <div class="upload-text">
+    <button class="startButton">Start Recording</button>
+    <button class="stopButton" disabled>Stop Recording</button>
+    <video id="recording" controls></video>
+    <video id="preview" autoplay muted playsinline></video>
+    </div>
+  </label>
+</div>
 
 </html>
