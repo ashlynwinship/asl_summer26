@@ -129,3 +129,24 @@ ul li a:hover {
   cursor: pointer;
   margin-top: 10px;
 }
+
+/* user guide content styling */
+.guide-content {
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* side-by-side content */
+.guide-columns {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* column styling */
+.guide-panel {
+  flex: 1 1 320px;
+}
