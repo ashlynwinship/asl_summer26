@@ -31,31 +31,32 @@
 <div class="flex-container">
   <div class="left-box">
     <div class="upload-container">
-  <!-- Upload box for files -->
-  <label for="file-upload" class="custom-upload-box">
-    <div class="upload-icon">📁</div>
-    <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
-    <br></br>
-    <span class="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
-  </label>
-  
-  <!-- Upload functionality -->
-  <input type="file" accept="video/*" id="file-upload" class="hidden-input"/>
-</div>
+      <!-- Upload box for files -->
+      <label for="file-upload" class="custom-upload-box">
+        <div class="upload-icon">📁</div>
+        <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
+        <br></br>
+        <span class="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
+      </label>
+      
+      <!-- Upload functionality -->
+      <input type="file" accept="video/*" id="file-upload" class="hidden-input"/>
+    </div>
   </div>
 
   <!-- Record box-->
   <div class="right-box">
     <div class="upload-container">
-  <label class="custom-record-box">
-    <div class="upload-icon">📹</div>
-    <span class="upload-text">Record your video</span>
-    <!-- <video id="recording" controls></video> -->
-    <!-- <video id="preview" class="video-preview"autoplay muted playsinline></video> -->
-    <button id="startButton" class="startButton">Start Recording</button>
-    <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
-  </label>
-</div>
+      <label class="custom-record-box">
+        <div class="upload-icon">📹</div>
+        <span class="upload-text">Record your video</span>
+        <video id="recording" controls></video>
+        <video id="preview" class="video-preview" autoplay muted playsinline></video>
+        <button id="startButton" class="startButton">Start Recording</button>
+        <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
+        <button id="download" disabled>Download Video</button>
+      </label>
+    </div>
   </div>
 </div>
 
