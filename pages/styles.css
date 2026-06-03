@@ -162,7 +162,7 @@ ul li a:hover {
 }
 
 /* user guide content styling */
-.guide-content {
+.column-content {
   background-color: white;
   padding: 10px;
   border-radius: 10px;
@@ -170,13 +170,25 @@ ul li a:hover {
 }
 
 /* side-by-side content */
-.guide-columns {
+.columns {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
 }
 
 /* column styling */
-.guide-panel {
+.panel {
   flex: 1;
+}
+
+.matches-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: black;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  align-self: center;
 }
