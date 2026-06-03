@@ -25,9 +25,6 @@
      The user guide can be found <a href="guide.html">here</a>.
   </p>
   
-</body>
-
-
 <div class="flex-container">
   <div class="left-box">
     <div class="upload-container">
@@ -35,6 +32,7 @@
   <label for="file-upload" class="custom-upload-box">
     <div class="upload-icon">📁</div>
     <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
+    <br></br>
     <span class="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
   </label>
   
@@ -47,12 +45,21 @@
   <div class="right-box">
     <div class="upload-container">
   <label class="custom-record-box">
-    <video id="recording" controls></video>
-    <video id="preview" class="video-preview"autoplay muted playsinline></video>
+    <div class="upload-icon">📹</div>
+    <span class="upload-text">Record your video</span>
+    <!-- <video id="recording" controls></video> -->
+    <!-- <video id="preview" class="video-preview"autoplay muted playsinline></video> -->
     <button id="startButton" class="startButton">Start Recording</button>
     <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
   </label>
 </div>
   </div>
 </div>
+
+  <div class = "home-ending" style="text-align: center;">
+    <p>Record or upload a video here. Your video will be stored temporarily, and matching 
+      results will display below once the upload is processed.</p>
+  </div>
+
+</body>
 </html>
