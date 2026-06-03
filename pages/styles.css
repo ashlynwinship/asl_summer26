@@ -5,10 +5,15 @@ body {
     padding-top: 20px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f0f2f5;
-    padding-bottom: 40px;
+    padding-bottom: 10px;
     }
+
+.emphasized-text {
+  font-weight: bold;
+  text-decoration: underline;
+}
     
 /* Top bar styling */
 ul {
@@ -53,6 +58,13 @@ ul li a:hover {
   text-decoration: none;
   display: inline-block;
   border-bottom: 1px solid black;
+}
+
+.welcome-content {
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
 
 /* Container position */
