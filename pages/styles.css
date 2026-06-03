@@ -59,7 +59,6 @@ ul li a:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 40px;
 }
 
@@ -141,6 +140,14 @@ ul li a:hover {
 .startButton, .stopButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
+}
+
+/* Flex container for upload areas */
+.flex-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: center;
 }
 
 /* user guide content styling */
