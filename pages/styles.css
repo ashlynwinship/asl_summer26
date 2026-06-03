@@ -125,7 +125,7 @@ ul li a:hover {
   margin-top: 20px;
 }
 
-.startButton, .stopButton {
+.startButton, .stopButton, .downloadButton {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -137,7 +137,7 @@ ul li a:hover {
   align-self: center;
 }
 
-.startButton, .stopButton:hover {
+.startButton, .stopButton, .downloadButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
 }
