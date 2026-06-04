@@ -1,0 +1,48 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1780590666.503650 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+W0000 00:00:1780590666.563207 1303837 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590666.572146 1303843 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590666.584180 1303845 landmark_projection_calculator.cc:186] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+I0000 00:00:1780590667.699271 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590667.756669 1303885 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590667.765247 1303889 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590669.069214 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590669.126954 1303948 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590669.135591 1303955 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590670.334962 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590670.393005 1304050 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590670.401902 1304056 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590671.622632 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590671.681851 1304079 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590671.690619 1304083 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590673.409990 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590673.465159 1304124 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590673.474344 1304125 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590677.012690 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590677.074881 1304179 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590677.083604 1304185 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590678.280115 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590678.336484 1304217 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590678.345159 1304221 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590679.841492 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590679.902621 1304269 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590679.911349 1304274 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590681.976560 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590682.036686 1304313 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590682.045586 1304313 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590683.250627 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590683.310083 1304360 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590683.319050 1304369 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590684.303417 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590684.364101 1304402 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590684.372863 1304409 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590685.708375 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590685.765899 1304433 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590685.774745 1304433 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590686.634411 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590686.693989 1304464 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590686.702481 1304469 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+I0000 00:00:1780590688.032450 1303756 gl_context.cc:369] GL version: 2.1 (2.1 Metal - 90.5), renderer: Apple M3 Pro
+W0000 00:00:1780590688.090232 1304513 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1780590688.098968 1304515 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
