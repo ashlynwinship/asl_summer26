@@ -2,14 +2,14 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>ASL Live Translation</title>
+  <title>ASL Live Dictionary</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
   <ul>
-    <li class="title">ASL Live Translation</li>
+    <li class="title">ASL Live Dictionary</li>
     <li><a href="home.html">Home</a></li>
     <li><a href="guide.html">User Guide</a></li>
   </ul>
@@ -100,6 +100,7 @@
           downloadButton.disabled = false;
           retakeButton.disabled = false;
           submitButton.disabled = false;
+          preview.style.display = 'none';
         };
         mediaRecorder.start();
         startButton.disabled = true;
@@ -135,6 +136,7 @@
         downloadButton.disabled = true;
         retakeButton.disabled = true;
         submitButton.disabled = true;
+        preview.style.display = 'block';
       });
       //submit video
       submitButton.addEventListener('click', () => {
