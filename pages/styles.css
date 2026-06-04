@@ -174,7 +174,7 @@ ul li a:hover {
   object-fit: cover;
 }
 
-.startButton, .stopButton, .downloadButton {
+.startButton, .stopButton, .downloadButton, .retakeButton, .submitButton {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -186,7 +186,7 @@ ul li a:hover {
   align-self: center;
 }
 
-.startButton:hover, .stopButton:hover, .downloadButton:hover {
+.startButton:hover, .stopButton:hover, .downloadButton:hover, .retakeButton:hover, .submitButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
 }

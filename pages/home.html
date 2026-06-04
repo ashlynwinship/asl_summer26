@@ -55,7 +55,11 @@
         <div class="button-container">
           <button id="startButton" class="startButton">Start Recording</button>
           <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
+        </div>
+        <div class="button-container">
           <button id="download" class="downloadButton" disabled>Download Video</button>
+          <button id="retakeButton" class="retakeButton" disabled>Retake</button>
+          <button id="submitButton" class="submitButton" disabled>Submit</button>
         </div>
       </div>
     </div>
@@ -63,6 +67,8 @@
       const startButton = document.getElementById('startButton');
       const stopButton = document.getElementById('stopButton');
       const downloadButton = document.getElementById('download');
+      const retakeButton = document.getElementById('retakeButton');
+      const submitButton = document.getElementById('submitButton');
       const preview = document.getElementById('preview');
       const recording = document.getElementById('recording');
 
@@ -92,10 +98,14 @@
           recording.style.display = 'block';
           recording.load();
           downloadButton.disabled = false;
+          retakeButton.disabled = false;
+          submitButton.disabled = false;
         };
         mediaRecorder.start();
         startButton.disabled = true;
         stopButton.disabled = false;
+        retakeButton.disabled = true;
+        submitButton.disabled = true;
       });
       //stop recording
       stopButton.addEventListener('click', () => {
@@ -118,6 +128,32 @@
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         }, 100);
+      });
+      //retake video
+      retakeButton.addEventListener('click', () => {
+        recording.style.display = 'none';
+        downloadButton.disabled = true;
+        retakeButton.disabled = true;
+        submitButton.disabled = true;
+      });
+      //submit video
+      submitButton.addEventListener('click', () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append('video', blob, 'recorded_video.webm');
+        fetch('/upload', {
+          method: 'POST',
+          body: formData
+        }).then(response => {
+          if (response.ok) {
+            window.location.href = 'results.html';
+          } else {
+            alert('Failed to upload video');
+          }
+        }).catch(error => {
+          console.error('Error uploading video:', error);
+          alert('An error occurred while uploading the video');
+        });
       });
     </script>
   </div>
