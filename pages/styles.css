@@ -250,8 +250,9 @@ ul li a:hover {
 
 .match-info-attribute-item {
   flex: 1 1 0;
-  min-width: 0;
-  margin: 10px;
+  padding: 5px;
+  min-width: 125px;
+  margin: 10px 5px;
   text-align: center;
 }
 
