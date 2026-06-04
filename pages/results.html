@@ -15,60 +15,77 @@
   <h1 class="longer-underline"> Results</h1>
 
   <div class="flex-container"; style = "justify-content: space-evenly;">
-    <div class="left-box">
-    <label class="custom-box"; style="justify-content: flex-start;">
-        <h2 style="text-align: center;">Your Uploaded Video</h2>
-        <video id="uploadedVideo" width="400" height="300" controls></video>
-        <button id="download" class="downloadButton">Download Video</button>
-    </label>
-    <div class="column-content"; style = "margin: 20px;">
-       <p>Handshape: </p>
-       <p>Movement: </p>
-       <p>Location: </p>
-       <p>Palm Orientation: </p>
-       <p>Non-Manual Signs: </p>
-     </div>
+    <div class="left-box"; style = "text-align: center;">
+      <label class="custom-box"; style="justify-content: flex-start;">
+          <h2 style="text-align: center;">Your Uploaded Video</h2>
+          <video id="uploadedVideo" width="400" height="300" controls></video>
+      </label>
+      <button id="download" class="downloadButton">Download Video</button>
     </div>
-    <div class="right-box">
-    <label class="custom-box"; style="justify-content: flex-start;">
-        <h2 style="text-align: center;">Top Match: </h2>
-        <video id="matchedVideo" width="400" height="300"controls></video>
-    </label>
-     <div class="column-content"; style = "margin: 20px;">
-       <p>Handshape: </p>
-       <p>Movement: </p>
-       <p>Location: </p>
-       <p>Palm Orientation: </p>
-       <p>Non-Manual Signs: </p>
-     </div>
-    </div>
-  </div>
-  <div class="flex-container"; style = "justify-content: space-evenly;">
-    <div class="left-box">
-    <label class="custom-box"; style="justify-content: flex-start;">
-        <h2 style="text-align: center;">Second Best Match: </h2>
-        <video id="matchedVideo2" width="400" height="300" controls></video>
-    </label>
-     <div class="column-content"; style = "margin: 20px;">
-       <p>Handshape: </p>
-       <p>Movement: </p>
-       <p>Location: </p>
-       <p>Palm Orientation: </p>
-       <p>Non-Manual Signs: </p>
-     </div>
-    </div>
-    <div class="right-box">
-    <label class="custom-box"; style="justify-content: flex-start;">
-        <h2 style="text-align: center;">Third Best Match: </h2>
-        <video id="matchedVideo3" width="400" height="300" controls></video>
-    </label>
-     <div class="column-content"; style = "margin: 20px;">
-       <p>Handshape: </p>
-       <p>Movement: </p>
-       <p>Location: </p>
-       <p>Palm Orientation: </p>
-       <p>Non-Manual Signs: </p>
-     </div>
+    <div class="right-box match-info-panel">
+      <label class="custom-box"; style="justify-content: flex-start; height: 350px;">
+          <h2 style="text-align: center;">Top Match: </h2>
+          <video id="matchedVideo" width="400" height="250"controls></video>
+      </label>
+      <div class="match-info-row">
+        <div class="column-content match-info-attribute-item">
+          <p>Handshape: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Movement: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Location: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Palm Orientation: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Non-Manual Signs: </p>
+        </div>
+      </div>
+      <label class="custom-box"; style="justify-content: flex-start; height: 350px;">
+          <h2 style="text-align: center;">Second Best Match: </h2>
+          <video id="matchedVideo2" width="400" height="250" controls></video>
+      </label>
+      <div class="match-info-row">
+        <div class="column-content match-info-attribute-item">
+          <p>Handshape: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Movement: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Location: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Palm Orientation: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Non-Manual Signs: </p>
+        </div>
+      </div>
+      <label class="custom-box"; style="justify-content: flex-start; height: 350px;">
+          <h2 style="text-align: center;">Third Best Match: </h2>
+          <video id="matchedVideo3" width="400" height="250" controls></video>
+      </label>
+      <div class="match-info-row">
+        <div class="column-content match-info-attribute-item">
+          <p>Handshape: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Movement: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Location: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Palm Orientation: </p>
+        </div>
+        <div class="column-content match-info-attribute-item">
+          <p>Non-Manual Signs: </p>
+        </div>
+      </div>
     </div>
   </div>
 
