@@ -290,3 +290,40 @@ ul li a:hover {
   margin-top: 10px;
   align-self: center;
 }
+
+/* navigation bar */
+.nav-bar {
+  display: flex;
+  gap: 10px;
+  background-color: #f1f1f1;
+  padding: 10px;
+}
+
+.nav-btn {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 16px;
+}
+
+.nav-btn.active {
+  background-color: grey;
+  color: white;
+  border-radius: 4px;
+}
+
+/* hide panels by default */
+.content-panel {
+  display: none;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: -1px; /* prevent double borders */
+}
+
+/* show the active panel */
+.content-panel.active {
+  display: block;
+  border: 1px solid #ccc;
+  background-color: white;
+}
