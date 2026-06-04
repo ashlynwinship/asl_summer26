@@ -75,14 +75,34 @@ ul li a:hover {
   padding: 40px;
 }
 
-/* Upload box styling */
+/* Box styling */
 .custom-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 600px;
-  height: 400px;
+  min-height: 520px;
+  height: auto;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 2px solid #4a90e2;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+  transition: all 0.3s ease;
+}
+
+/* Upload box styling */
+.custom-box-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 600px;
+  min-height: 520px;
+  height: auto;
+  padding: 24px;
+  box-sizing: border-box;
   border: 2px solid #4a90e2;
   border-radius: 12px;
   background-color: #f9fbfd;
@@ -90,8 +110,23 @@ ul li a:hover {
   transition: all 0.3s ease;
 }
 
+.custom-box-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 600px;
+  min-height: 520px;
+  height: auto;
+  border: 2px solid #4a90e2;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+  transition: all 0.3s ease;
+  padding: 20px;
+}
+
 /* box hover */
-.custom-box:hover {
+.custom-box:hover, .custom-box-upload:hover, .custom-box-record:hover {
   background-color: #f0f7ff;
   border-color: #2b72c4;
   transform: scale(1.01);
@@ -119,10 +154,24 @@ ul li a:hover {
 }
 
 .video-preview {
-  width: 80%;
-  height: auto;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 16 / 9;
   margin-bottom: 20px;
   margin-top: 20px;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+#recording {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 20px;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  object-fit: cover;
 }
 
 .startButton, .stopButton, .downloadButton {
@@ -137,9 +186,17 @@ ul li a:hover {
   align-self: center;
 }
 
-.startButton, .stopButton, .downloadButton:hover {
+.startButton:hover, .stopButton:hover, .downloadButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
+}
+
+/* Flex container for buttons */
+.button-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  justify-content: center;
 }
 
 /* Flex container for upload areas */
