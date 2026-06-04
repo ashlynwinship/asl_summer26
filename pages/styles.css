@@ -186,6 +186,18 @@ ul li a:hover {
   align-self: center;
 }
 
+.startButton:disabled, .stopButton:disabled, .downloadButton:disabled, .retakeButton:disabled, .submitButton:disabled {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #78afef;
+  border: none;
+  border-radius: 5px;
+  cursor: auto;
+  margin-top: 10px;
+  align-self: center;
+}
+
 .startButton:hover, .stopButton:hover, .downloadButton:hover, .retakeButton:hover, .submitButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
