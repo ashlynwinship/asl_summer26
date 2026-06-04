@@ -8,9 +8,6 @@
 
 <body>
 
-  <!-- Javascript -->
-  <script src="scripts.js"></script>
-
   <ul>
     <li class="title">ASL Live Translation</li>
     <li><a href="home.html">Home</a></li>
@@ -32,7 +29,7 @@
   <div class="left-box">
     <div class="upload-container">
       <!-- Upload box for files -->
-      <label for="file-upload" class="custom-box">
+      <label for="file-upload" class="custom-box-upload">
         <div class="upload-icon">📁</div>
         <span class="upload-text">Drag and drop file here or <strong>Browse</strong></span>
         <br></br>
@@ -47,17 +44,81 @@
   <!-- Record box-->
   <div class="right-box">
     <div class="upload-container">
-      <label class="custom-box">
+      <div class="custom-box">
         <div class="upload-icon">📹</div>
         <span class="upload-text">Record your video</span>
-        <video id="recording" controls></video>
+        <p class="upload-text" style="text-align: center";>Your video will immediately start recording once you click the start
+          button. A playback of your recording will be displayed below once the stop button is clicked.
+        </p>
         <video id="preview" class="video-preview" autoplay muted playsinline></video>
-        <button id="startButton" class="startButton">Start Recording</button>
-        <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
-        <button id="download" class="downloadButton" disabled>Download Video</button>
-      </label>
+        <video id="recording" controls style="display:none;"></video>
+        <div class="button-container">
+          <button id="startButton" class="startButton">Start Recording</button>
+          <button id="stopButton" class="stopButton" disabled>Stop Recording</button>
+          <button id="download" class="downloadButton" disabled>Download Video</button>
+        </div>
+      </div>
     </div>
     <script>
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+      const downloadButton = document.getElementById('download');
+      const preview = document.getElementById('preview');
+      const recording = document.getElementById('recording');
+
+      let mediaRecorder;
+      let recordedChunks = [];
+      let recordedUrl = null;
+
+      //start webcam stream
+      startButton.addEventListener('click', async () => {
+        recordedChunks = [];
+        recording.style.display = 'none';
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        preview.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          if (recordedUrl) {
+            URL.revokeObjectURL(recordedUrl);
+          }
+          recordedUrl = URL.createObjectURL(blob);
+          recording.src = recordedUrl;
+          recording.style.display = 'block';
+          recording.load();
+          downloadButton.disabled = false;
+        };
+        mediaRecorder.start();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+      });
+      //stop recording
+      stopButton.addEventListener('click', () => {
+        mediaRecorder.stop();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      });
+      //download video
+      downloadButton.addEventListener('click', () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'recorded_video.webm';
+
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      });
     </script>
   </div>
 </div>
