@@ -18,11 +18,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Navigation />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/guide" element={<Guide />} />
-        <Route path="/results" element={<Results />} />
-      </Routes>
+      <div className="page-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/results" element={<Results />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   )
 }

@@ -21,7 +21,7 @@ export default function TabNavigation() {
 
   return (
     <main>
-      <div className="guideHeader" style={{ marginBottom: '20px' }}>User Guide</div>
+      <h1 style={{ marginBottom: '20px' }}>User Guide</h1>
       <div className="columns">
         <div className="column-content panel">
             <h2 style={{ textAlign: 'center' }}>How to Use</h2>
