@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function TabNavigation() {
+export default function Guide() {
   const [activeTab, setActiveTab] = useState('what');
 
   const tabs = [
