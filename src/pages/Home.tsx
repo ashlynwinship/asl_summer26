@@ -10,26 +10,31 @@ function FileUploader(){
 	// Placeholder UI for uploader
 	return (
 		<div className="custom-box">
-			<div className="upload-icon">📁</div>
-			<span className="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
-			<br></br>
-			<label 
-				htmlFor="upload-input"
-				className="custom-file-label">
-				
-				<span className="upload-text">Drag and drop file here or <strong>Browse</strong></span>
-				<br />
-			</label>
-			<input 
-				id="upload-input"
-				type="file"
-				accept="video/*"
-				onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-				className="hidden-file-input"
-			/>
-			<div style={{ marginTop: '10px' }}>
-          <strong>Uploaded Video:</strong> {file?.name}
-        </div>
+			{!file ? (
+				<>
+					<div className="upload-icon">📁</div>
+					<span className="upload-text">Accepted formats: MP4, MOV, AVI, WebM</span>
+					<br></br>
+					<label 
+						htmlFor="upload-input"
+						className="custom-file-label">
+						<span className="upload-text">Drag and drop file here or <strong>Browse</strong></span>
+						<br />
+					</label>
+					<input 
+						id="upload-input"
+						type="file"
+						accept="video/*"
+						onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+						className="hidden-file-input"
+					/>
+				</>
+			) : (
+				<div style={{ marginTop: '10px' }}>
+					<strong>Uploaded Video:</strong> {file.name}
+				</div>
+			)}
+
 			<div>
 				<button className="uploadButton"
 					onClick={() => {
@@ -52,6 +57,17 @@ function FileUploader(){
 				>Upload</button>
 			</div>
 			<div>{uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}</div>
+			<button className="uploadButton"
+					onClick={() => {
+						setFile(null);
+						setUploadStatus('idle');
+						setUploadProgress(0);
+						const uploadedVideo = document.getElementById('uploadedVideo') as HTMLVideoElement;
+						if (uploadedVideo) {
+							uploadedVideo.src = '';
+						}
+					}}
+				>Reset</button>
 		</div>
 		
 	);
