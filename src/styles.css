@@ -391,17 +391,14 @@ ul li a:hover {
 .slides {
   display: none;
   text-align: center;
-}
-
-.cursor {
-  cursor: pointer;
+  line-height: 0;
 }
 
 .prev,
 .next {
   cursor: pointer;
   position: absolute;
-  top: 50%;
+  top: 30%;
   width: auto;
   padding: 16px;
   margin-top: -50px;
@@ -421,14 +418,6 @@ ul li a:hover {
 .prev:hover,
 .next:hover {
   background-color: rgba(0, 0, 0, 0.8);
-}
-
-.numbertext {
-  color: black;
-  font-size: 12px;
-  padding: 8px 12px;
-  position: absolute;
-  top: 0;
 }
 
 .caption-container {
@@ -451,6 +440,7 @@ ul li a:hover {
 
 .demo {
   opacity: 0.6;
+  cursor: pointer;
 }
 
 .active,
