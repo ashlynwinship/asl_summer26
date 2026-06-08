@@ -133,7 +133,7 @@ def load_pose_data(input_file: Path, pose_dict: dict) -> dict:
 def main():
     root = Path(__file__).parent.parent
     video_ext = "mp4"  # can change out for .webm if needed for semlex
-    output_csv = root / "semlex_frame_training_data.csv"
+    output_csv = root / "data" / "semlex_frame_training_data.csv"
  
     # extract pose coords from training data
     logger.info("... extracting pose coordinates from training videos")
@@ -155,7 +155,7 @@ def main():
     # semlex data import
     logger.info("... loading SEMLEX data")
  
-    semlex_data = (pd.read_csv(root / "semlex_metadata.csv")
+    semlex_data = (pd.read_csv(root / "data" / "semlex_metadata.csv")
                   .loc[:, ['video_id', 'split', 'label', 'Handshape', 'SignType',
                            'PathMovement', 'RepeatedMovement', 'MajorLocation', 
                            'Contact', 'NondominantHandshape']]
