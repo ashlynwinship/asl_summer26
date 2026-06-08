@@ -35,7 +35,7 @@ body {
     background-color: #f0f2f5;
     padding-bottom: 10px;
     width: 100%;
-    }
+}
 
 .page-content {
   width: min(1450px, 98%);
@@ -421,4 +421,79 @@ ul li a:hover {
 .custom-file-label:hover {
   border-color: #2e5c8a;
   background-color: #e8f0f7;
+}
+
+/* slideshow styling */
+.slideshow-container {
+  position: relative;
+}
+
+.slides {
+  display: none;
+  text-align: center;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+.prev,
+.next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  padding: 16px;
+  margin-top: -50px;
+  color: grey;
+  font-weight: bold;
+  font-size: 20px;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.prev:hover,
+.next:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.numbertext {
+  color: black;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+.caption-container {
+  text-align: center;
+  background-color: #222;
+  padding: 2px 16px;
+  color: white;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.column {
+  float: left;
+  width: 16.66%;
+}
+
+.demo {
+  opacity: 0.6;
+}
+
+.active,
+.demo:hover {
+  opacity: 1;
 }

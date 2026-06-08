@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 export default function Results() {
 	const [showBtn, setShowBtn] = useState(false)
 
 	useEffect(() => {
-		function onScroll() {
+		const onScroll = async () => {
 			const scrolled = document.documentElement.scrollTop || document.body.scrollTop
 			setShowBtn(scrolled > 20)
 		}
@@ -12,9 +12,49 @@ export default function Results() {
 		return () => window.removeEventListener('scroll', onScroll)
 	}, [])
 
-	function topFunction() {
+	const topFunction = async () => {
 		window.scrollTo({ top: 0, behavior: 'smooth' })
 	}
+
+	/* slideshow functionality */
+	const slideIndex = useRef<number>(1)
+
+	const plusSlides = (n: number): void => {
+		slideIndex.current += n
+		showSlides(slideIndex.current)
+	}
+
+	const currentSlide = (n: number): void => {
+		slideIndex.current = n
+		showSlides(slideIndex.current)
+	}
+
+	const showSlides = (n: number): void => {
+		const slides = document.getElementsByClassName('slides') as HTMLCollectionOf<HTMLElement>
+		const dots = document.getElementsByClassName('demo') as HTMLCollectionOf<HTMLImageElement>
+		const captionText = document.getElementById('caption')
+		if (slides.length === 0) return
+        
+		if (n > slides.length) slideIndex.current = 1
+		if (n < 1) slideIndex.current = slides.length
+
+		for (let i = 0; i < slides.length; i++) {
+			slides[i].style.display = 'none'
+		}
+
+		for (let i = 0; i < dots.length; i++) {
+			dots[i].className = dots[i].className.replace(' active', '')
+		}
+
+		const idx = slideIndex.current - 1
+		slides[idx].style.display = 'block'
+		if (dots[idx]) dots[idx].className += ' active'
+		if (captionText && dots[idx]) captionText.innerHTML = dots[idx].alt || ''
+	}
+
+	useEffect(() => {
+		showSlides(slideIndex.current)
+	}, [])
 
 	return (
 		<main>
@@ -29,49 +69,42 @@ export default function Results() {
 					<button id="download" className="downloadButton">Download Video</button>
 				</div>
 
-				<div className="right-box match-info-panel">
-					<div className="custom-box" style={{ justifyContent: 'flex-start', minHeight: 'auto' }}>
-						<h2 style={{ textAlign: 'center' }}>Top Match:</h2>
-						<video id="matchedVideo" width={450} height={250} controls />
-					</div>
-
-					<div className="match-info-row">
-						<div className="column-content match-info-attribute-item"><p>Handshape:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Movement:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Location:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Palm Orientation:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Non-Manual Signs:</p></div>
-					</div>
-
-					<div className="custom-box" style={{ justifyContent: 'flex-start', minHeight: 'auto' }}>
-						<h2 style={{ textAlign: 'center' }}>Second Best Match:</h2>
-						<video id="matchedVideo2" width={450} height={250} controls />
-					</div>
-
-					<div className="match-info-row">
-						<div className="column-content match-info-attribute-item"><p>Handshape:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Movement:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Location:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Palm Orientation:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Non-Manual Signs:</p></div>
-					</div>
-
-					<div className="custom-box" style={{ justifyContent: 'flex-start', minHeight: 'auto' }}>
-						<h2 style={{ textAlign: 'center' }}>Third Best Match:</h2>
-						<video id="matchedVideo3" width={450} height={250} controls />
-					</div>
-
-					<div className="match-info-row">
-						<div className="column-content match-info-attribute-item"><p>Handshape:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Movement:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Location:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Palm Orientation:</p></div>
-						<div className="column-content match-info-attribute-item"><p>Non-Manual Signs:</p></div>
-					</div>
+				<div className="right-box custom-box">
+                    <h2 style={{ textAlign: 'center' }}>Top Three Matches</h2>
+                    <div className= "slideshow-container">
+                        <div className="slides">
+                            <div className="numbertext">1 / 3</div>
+                            <video id="slide1" src="test.mp4" width={500} height={300} controls />
+                        </div>
+                        <div className="slides">
+                            <div className="numbertext">2 / 3</div>
+                            <video id="slide2" src="test.mp4" width={500} height={300} controls />
+                        </div>
+                        <div className="slides">
+                            <div className="numbertext">3 / 3</div>
+                            <video id="slide3" src="test.mp4" width={500} height={300} controls />
+                        </div>
+                        <a className="prev" onClick={() => plusSlides(-1)}>&#10094;</a>
+                        <a className="next" onClick={() => plusSlides(1)}>&#10095;</a>
+                        <div className="caption-container">
+                            <p id="caption"></p>
+                        </div>
+                        <div className="row">
+                            <div className="column">
+                                <img className="demo cursor" src="sample.png" style={{ width: '100%' }} onClick={() => currentSlide(1)} alt="Match 1"/>
+                            </div>
+                            <div className="column">
+                                <img className="demo cursor" src="sample.png" style={{ width: '100%' }} onClick={() => currentSlide(2)} alt="Match 2"/>
+                            </div>
+                            <div className="column">
+                                <img className="demo cursor" src="sample.png" style={{ width: '100%' }} onClick={() => currentSlide(3)} alt="Match 3"/>
+                            </div>
+                        </div>
+                    </div>
 				</div>
 			</div>
 
-			<div className="column-content" style={{ margin: '0 60px' }}>
+			<div className="column-content" style={{ margin: '20px 60px' }}>
 				<h2 style={{ textAlign: 'center' }}>Other Potential Matches</h2>
 				<div className="columns">
 					<div className="column-content panel" style={{ textAlign: 'center' }}>
