@@ -2,7 +2,6 @@ export default function Home() {
 	return (
 		<main>
 			<h1 className="longer-underline">Home</h1>
-			<p>Welcome to ASL Live Translation.</p>
 
 			<div className = "welcome-content" style={{textAlign: 'center'}}>
     			<div className="emphasized-text">Welcome!</div>  
@@ -10,7 +9,7 @@ export default function Home() {
 				guide. I am writing a bunch of stuff just so the paragraph looks good and fills up the space.
 				This is just a placeholder for now, but it will be replaced with actual content later on. 
 				<br></br>
-				The user guide can be found <a href="guide.html">here</a>.
+				The user guide can be found  <a href="/guide">here</a>.
 				</p>
   			</div>
 

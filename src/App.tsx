@@ -6,7 +6,7 @@ import Results from './pages/Results'
 function Navigation() {
   return (
     <ul>
-      <li className="title">ASL Live Translation</li>
+      <li className="title">ASL Live Dictionary</li>
       <li><NavLink to="/">Home</NavLink></li>
       <li><NavLink to="/guide">User Guide</NavLink></li>
       <li><NavLink to="/results">Results</NavLink></li>
