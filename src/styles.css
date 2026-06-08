@@ -351,12 +351,12 @@ ul li a:hover {
   padding: 10px 20px;
   cursor: pointer;
   border: none;
-  background: none;
+  background: grey;
   font-size: 16px;
 }
 
 .nav-btn.active {
-  background-color: grey;
+  background-color: black;
   color: white;
   border-radius: 4px;
 }
