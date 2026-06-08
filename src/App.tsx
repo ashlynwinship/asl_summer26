@@ -1,17 +1,23 @@
-import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom'
-import Guide from './pages/Guide'
-import Home from './pages/Home'
-import Results from './pages/Results'
+import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
+import Guide from "./pages/Guide";
+import Home from "./pages/Home";
+import Results from "./pages/Results";
 
 function Navigation() {
   return (
     <ul>
       <li className="title">ASL Live Dictionary</li>
-      <li><NavLink to="/">Home</NavLink></li>
-      <li><NavLink to="/guide">User Guide</NavLink></li>
-      <li><NavLink to="/results">Results</NavLink></li>
+      <li>
+        <NavLink to="/">Home</NavLink>
+      </li>
+      <li>
+        <NavLink to="/guide">User Guide</NavLink>
+      </li>
+      <li>
+        <NavLink to="/results">Results</NavLink>
+      </li>
     </ul>
-  )
+  );
 }
 
 export default function App() {
@@ -26,5 +32,5 @@ export default function App() {
         </Routes>
       </div>
     </BrowserRouter>
-  )
+  );
 }

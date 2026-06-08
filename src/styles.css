@@ -27,14 +27,14 @@
 
 /* General body styling */
 body {
-    font-family: 'Times New Roman';
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f0f2f5;
-    padding-bottom: 10px;
-    width: 100%;
+  font-family: "Times New Roman";
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+  padding-bottom: 10px;
+  width: 100%;
 }
 
 .page-content {
@@ -47,50 +47,50 @@ body {
   font-weight: bold;
   text-decoration: underline;
 }
-    
+
 /* Top bar styling */
 #navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: #333333;
-    transition: top 0.3s;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #333333;
+  transition: top 0.3s;
+  z-index: 1000;
 }
 
 ul {
-    list-style-type: none;
-    margin: 0;
-    padding-right: 0;
-    padding-left: 16px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    background-color: #333333;
+  list-style-type: none;
+  margin: 0;
+  padding-right: 0;
+  padding-left: 16px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #333333;
 }
 
 ul .title {
-    color: white;
-    font-size: 20px;
-    margin: 0;
+  color: white;
+  font-size: 20px;
+  margin: 0;
 }
 
 ul li:nth-child(2) {
-    margin-left: auto;
+  margin-left: auto;
 }
 
 /* Top bar buttons */
 ul li a {
-    display: block;
-    color: white;
-    padding: 14px 16px;
-    text-decoration: none;
+  display: block;
+  color: white;
+  padding: 14px 16px;
+  text-decoration: none;
 }
 
 /* Hover for top bar buttons */
 ul li a:hover {
-    background-color: #111111;
+  background-color: #111111;
 }
 
 /* Underline spanning whole page */
@@ -180,7 +180,9 @@ ul li a:hover {
 }
 
 /* box hover */
-.custom-box:hover, .custom-box-upload:hover, .custom-box-record:hover {
+.custom-box:hover,
+.custom-box-upload:hover,
+.custom-box-record:hover {
   background-color: #f0f7ff;
   border-color: #2b72c4;
   transform: scale(1.01);
@@ -228,7 +230,12 @@ ul li a:hover {
   object-fit: cover;
 }
 
-.uploadButton, .startButton, .stopButton, .downloadButton, .retakeButton, .submitButton {
+.uploadButton,
+.startButton,
+.stopButton,
+.downloadButton,
+.retakeButton,
+.submitButton {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -240,7 +247,11 @@ ul li a:hover {
   align-self: center;
 }
 
-.startButton:disabled, .stopButton:disabled, .downloadButton:disabled, .retakeButton:disabled, .submitButton:disabled {
+.startButton:disabled,
+.stopButton:disabled,
+.downloadButton:disabled,
+.retakeButton:disabled,
+.submitButton:disabled {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -252,7 +263,12 @@ ul li a:hover {
   align-self: center;
 }
 
-.uploadButton:hover, .startButton:hover, .stopButton:hover, .downloadButton:hover, .retakeButton:hover, .submitButton:hover {
+.uploadButton:hover,
+.startButton:hover,
+.stopButton:hover,
+.downloadButton:hover,
+.retakeButton:hover,
+.submitButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
 }
@@ -351,12 +367,12 @@ ul li a:hover {
   padding: 10px 20px;
   cursor: pointer;
   border: none;
-  background: none;
+  background: grey;
   font-size: 16px;
 }
 
 .nav-btn.active {
-  background-color: grey;
+  background-color: black;
   color: white;
   border-radius: 4px;
 }
@@ -379,21 +395,21 @@ ul li a:hover {
 #myBtn {
   display: none;
   position: fixed;
-  bottom: 20px; 
-  right: 30px; 
-  z-index: 99; 
-  border: none; 
-  outline: none; 
-  background-color: #2b72c4; 
-  color: white; 
-  cursor: pointer; 
-  padding: 15px; 
-  border-radius: 10px; 
-  font-size: 18px; 
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  border: none;
+  outline: none;
+  background-color: #2b72c4;
+  color: white;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 18px;
 }
 
 #myBtn:hover {
-  background-color: #78afef; 
+  background-color: #78afef;
 }
 
 /* Hide native file input */
@@ -431,17 +447,14 @@ ul li a:hover {
 .slides {
   display: none;
   text-align: center;
-}
-
-.cursor {
-  cursor: pointer;
+  line-height: 0;
 }
 
 .prev,
 .next {
   cursor: pointer;
   position: absolute;
-  top: 50%;
+  top: 30%;
   width: auto;
   padding: 16px;
   margin-top: -50px;
@@ -461,14 +474,6 @@ ul li a:hover {
 .prev:hover,
 .next:hover {
   background-color: rgba(0, 0, 0, 0.8);
-}
-
-.numbertext {
-  color: black;
-  font-size: 12px;
-  padding: 8px 12px;
-  position: absolute;
-  top: 0;
 }
 
 .caption-container {
@@ -491,6 +496,7 @@ ul li a:hover {
 
 .demo {
   opacity: 0.6;
+  cursor: pointer;
 }
 
 .active,
