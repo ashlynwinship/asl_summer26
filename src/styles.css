@@ -151,6 +151,19 @@ ul li a:hover {
   transition: all 0.3s ease;
 }
 
+/* styling for input button (choose file) */
+.upload-input {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #78afef;
+  border: none;
+  border-radius: 5px;
+  cursor: auto;
+  margin-top: 10px;
+  align-self: center;
+}
+
 .custom-box-record {
   display: flex;
   flex-direction: column;
@@ -215,7 +228,7 @@ ul li a:hover {
   object-fit: cover;
 }
 
-.startButton, .stopButton, .downloadButton, .retakeButton, .submitButton {
+.uploadButton, .startButton, .stopButton, .downloadButton, .retakeButton, .submitButton {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -239,7 +252,7 @@ ul li a:hover {
   align-self: center;
 }
 
-.startButton:hover, .stopButton:hover, .downloadButton:hover, .retakeButton:hover, .submitButton:hover {
+.uploadButton:hover, .startButton:hover, .stopButton:hover, .downloadButton:hover, .retakeButton:hover, .submitButton:hover {
   background-color: #78afef;
   border-color: #2b72c4;
 }
@@ -381,6 +394,33 @@ ul li a:hover {
 
 #myBtn:hover {
   background-color: #78afef; 
+}
+
+/* Hide native file input */
+.hidden-file-input {
+  display: none;
+}
+
+/* Style for custom file picker box */
+.custom-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  min-height: 100px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 2px solid #4a90e2;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-file-label:hover {
+  border-color: #2e5c8a;
+  background-color: #e8f0f7;
 }
 
 /* slideshow styling */
