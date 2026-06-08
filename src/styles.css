@@ -1,5 +1,5 @@
 :root {
-  --text: #6b6375;
+  --text: #000000;
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
@@ -38,7 +38,7 @@ body {
 }
 
 .page-content {
-  width: min(1450px, 100%);
+  width: min(1450px, 98%);
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -98,6 +98,7 @@ ul li a:hover {
   text-decoration: none;
   display: inline-block;
   border-bottom: 1px solid black;
+  width: 100%;
 }
 
 .welcome-content {

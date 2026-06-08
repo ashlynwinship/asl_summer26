@@ -21,7 +21,7 @@ export default function Guide() {
 
   return (
     <main>
-      <h1 style={{ marginBottom: '20px' }}>User Guide</h1>
+      <h1 className="longer-underline"style={{ marginBottom: '20px' }}>User Guide</h1>
       <div className="columns">
         <div className="column-content panel">
             <h2 style={{ textAlign: 'center' }}>How to Use</h2>
