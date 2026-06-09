@@ -84,40 +84,42 @@ export default function Results() {
 
         <div className="right-box custom-box">
           <h2 style={{ textAlign: "center" }}>Top Three Matches</h2>
-          <div className="slideshow-container">
-            <div className="slides">
-              <video
-                id="slide1"
-                src="test.mp4"
-                width={500}
-                height={300}
-                controls
-              />
+          <div className="slideshow-container results-slideshow">
+            <div className="slideshow-stage">
+              <div className="slides">
+                <video
+                  id="slide1"
+                  src="test.mp4"
+                  width={500}
+                  height={300}
+                  controls
+                />
+              </div>
+              <div className="slides">
+                <video
+                  id="slide2"
+                  src="test.mp4"
+                  width={500}
+                  height={300}
+                  controls
+                />
+              </div>
+              <div className="slides">
+                <video
+                  id="slide3"
+                  src="test.mp4"
+                  width={500}
+                  height={300}
+                  controls
+                />
+              </div>
+              <a className="prev" onClick={() => plusSlides(-1)}>
+                &#10094;
+              </a>
+              <a className="next" onClick={() => plusSlides(1)}>
+                &#10095;
+              </a>
             </div>
-            <div className="slides">
-              <video
-                id="slide2"
-                src="test.mp4"
-                width={500}
-                height={300}
-                controls
-              />
-            </div>
-            <div className="slides">
-              <video
-                id="slide3"
-                src="test.mp4"
-                width={500}
-                height={300}
-                controls
-              />
-            </div>
-            <a className="prev" onClick={() => plusSlides(-1)}>
-              &#10094;
-            </a>
-            <a className="next" onClick={() => plusSlides(1)}>
-              &#10095;
-            </a>
             <div className="caption-container">
               <p id="caption"></p>
             </div>

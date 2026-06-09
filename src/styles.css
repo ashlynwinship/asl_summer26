@@ -442,6 +442,17 @@ ul li a:hover {
 /* slideshow styling */
 .slideshow-container {
   position: relative;
+  margin: 0 auto;
+}
+
+.results-slideshow {
+  width: fit-content;
+}
+
+.slideshow-stage {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 .slides {
@@ -454,16 +465,20 @@ ul li a:hover {
 .next {
   cursor: pointer;
   position: absolute;
-  top: 30%;
+  top: 50%;
+  transform: translateY(-50%);
   width: auto;
   padding: 16px;
-  margin-top: -50px;
   color: grey;
   font-weight: bold;
   font-size: 20px;
   border-radius: 0 3px 3px 0;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.prev {
+  left: 0;
 }
 
 .next {
@@ -481,6 +496,9 @@ ul li a:hover {
   background-color: #222;
   padding: 2px 16px;
   color: white;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .row:after {
