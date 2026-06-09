@@ -435,11 +435,6 @@ ul li a:hover {
 /* slideshow styling */
 .slideshow-container {
   position: relative;
-  margin: 0 auto;
-}
-
-.results-slideshow {
-  width: fit-content;
 }
 
 .slideshow-stage {
