@@ -247,6 +247,7 @@ ul li a:hover {
   align-self: center;
 }
 
+.uploadButton:disabled,
 .startButton:disabled,
 .stopButton:disabled,
 .downloadButton:disabled,

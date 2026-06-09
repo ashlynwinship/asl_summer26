@@ -27,11 +27,12 @@ function FileUploader() {
         className="hidden-file-input"
       />
       <div style={{ marginTop: "10px" }}>
-        <strong>Uploaded Video:</strong> {file?.name}
+        <strong>Uploaded Video:</strong> {file ? file.name : "None"}
       </div>
       <div>
         <button
           className="uploadButton"
+          disabled={!file || uploadStatus === "uploading"}
           onClick={() => {
             if (!file) return;
             setUploadStatus("uploading");
