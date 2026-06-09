@@ -139,12 +139,43 @@ export default function Guide() {
             </button>
           ))}
         </nav>
-
         <div
           className="content-panel active"
           style={{ whiteSpace: "pre-line" }}
         >
           {tabs.find((tab) => tab.id === activeTab)?.content}
+          {activeTab === "tips" && (
+            <div className="columns" style={{ justifyContent: "center" }}>
+              <div className="column-content" style={{ textAlign: "center" }}>
+                <p>
+                  <strong>Aim for This ↓</strong>
+                </p>
+                <video
+                  width={450}
+                  height={250}
+                  style={{ margin: "20px" }}
+                  controls
+                >
+                  <source src="/good-vid.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="column-content" style={{ textAlign: "center" }}>
+                <p>
+                  <strong>NOT This ↓</strong>
+                </p>
+                <video
+                  width={450}
+                  height={250}
+                  style={{ margin: "20px" }}
+                  controls
+                >
+                  <source src="/bad-vid.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
