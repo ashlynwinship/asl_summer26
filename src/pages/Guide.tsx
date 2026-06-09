@@ -30,7 +30,8 @@ export default function Guide() {
         "1. Ensure you have good lighting so that your hand movements are clearly visible.\n" +
         "2. Position yourself in front of a plain background to avoid distractions.\n" +
         "3. Keep your hands within the camera frame at all times for accurate translation.\n" +
-        "4. Ensure the video is clear and well-lit for better translation accuracy.",
+        "4. Ensure the video is clear and well-lit for better translation accuracy.\n\n" +
+        "Note: If the video doesn't meet the criteria, the translation may be inaccurate or fail to process.",
     },
   ];
 
@@ -108,13 +109,19 @@ export default function Guide() {
           <div className="slideshow-container slideshow-stage">
             <div className="slides">
               <video id="spoken-demo" width={450} height={250} controls />
-              <div className="caption-container">
+              <div
+                className="caption-container"
+                style={{ lineHeight: "normal" }}
+              >
                 <p id="caption">Demo Video (Spoken)</p>
               </div>
             </div>
             <div className="slides">
               <video id="asl-demo" width={450} height={250} controls />
-              <div className="caption-container">
+              <div
+                className="caption-container"
+                style={{ lineHeight: "normal" }}
+              >
                 <p id="caption">Demo Video (ASL)</p>
               </div>
             </div>
@@ -153,7 +160,7 @@ export default function Guide() {
                 <video
                   width={450}
                   height={250}
-                  style={{ margin: "20px" }}
+                  style={{ margin: "0px 20px" }}
                   controls
                 >
                   <source src="/good-vid.mp4" type="video/mp4" />
@@ -167,7 +174,7 @@ export default function Guide() {
                 <video
                   width={450}
                   height={250}
-                  style={{ margin: "20px" }}
+                  style={{ margin: "0px 20px" }}
                   controls
                 >
                   <source src="/bad-vid.mp4" type="video/mp4" />

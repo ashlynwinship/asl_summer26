@@ -69,20 +69,52 @@ export default function Results() {
         className="flex-container"
         style={{ justifyContent: "space-evenly" }}
       >
-        <div className="left-box" style={{ textAlign: "center" }}>
+        <div className="left-box">
           <div
             className="custom-box"
-            style={{ justifyContent: "flex-start", minHeight: "auto" }}
+            style={{
+              justifyContent: "flex-start",
+              backgroundColor: "#f9fbfd",
+              border: "2px solid grey",
+            }}
           >
-            <h2 style={{ textAlign: "center" }}>Your Uploaded Video</h2>
-            <video id="uploadedVideo" width={500} height={300} controls />
-            <button id="download" className="downloadButton">
-              Download Video
-            </button>
+            <div className="user-video" style={{ textAlign: "center" }}>
+              <h2>Your Uploaded Video</h2>
+              <video id="uploadedVideo" width={500} height={300} controls />
+              <button id="download" className="downloadButton">
+                Download Video
+              </button>
+            </div>
+            <div
+              className="match-details"
+              style={{
+                marginTop: "20px",
+                textAlign: "left",
+                alignSelf: "stretch",
+              }}
+            >
+              <p
+                style={{
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "18px",
+                }}
+              >
+                Features
+              </p>
+              <p>Handshape (Confidence: XX%):</p>
+              <p>Movement (Confidence: XX%):</p>
+              <p>Location (Confidence: XX%):</p>
+              <p>Palm Orientation (Confidence: XX%):</p>
+              <p>Non-Manual Signs (Confidence: XX%):</p>
+            </div>
           </div>
         </div>
 
-        <div className="right-box custom-box">
+        <div
+          className="right-box custom-box"
+          style={{ backgroundColor: "#f9fbfd", border: "2px solid grey" }}
+        >
           <h2 style={{ textAlign: "center" }}>Top Three Matches</h2>
           <div className="slideshow-container results-slideshow">
             <div className="slideshow-stage">
@@ -119,9 +151,9 @@ export default function Results() {
               <a className="next" onClick={() => plusSlides(1)}>
                 &#10095;
               </a>
-            </div>
-            <div className="caption-container">
-              <p id="caption"></p>
+              <div className="caption-container">
+                <p id="caption"></p>
+              </div>
             </div>
             <div
               className="row"
@@ -165,11 +197,11 @@ export default function Results() {
               >
                 Features
               </p>
-              <p>Handshape:</p>
-              <p>Movement:</p>
-              <p>Location:</p>
-              <p>Palm Orientation:</p>
-              <p>Non-Manual Signs:</p>
+              <p>Handshape (Confidence: XX%):</p>
+              <p>Movement (Confidence: XX%):</p>
+              <p>Location (Confidence: XX%):</p>
+              <p>Palm Orientation (Confidence: XX%):</p>
+              <p>Non-Manual Signs (Confidence: XX%):</p>
             </div>
           </div>
         </div>
@@ -178,32 +210,40 @@ export default function Results() {
       <div className="column-content" style={{ margin: "20px 60px" }}>
         <h2 style={{ textAlign: "center" }}>Other Potential Matches</h2>
         <div className="columns">
-          <div className="column-content panel" style={{ textAlign: "center" }}>
-            <button className="matches-button">match</button>
+          <div className="column-content panel">
+            <div style={{ textAlign: "center" }}>
+              <button className="matches-button">match</button>
+            </div>
             <p>Handshape:</p>
             <p>Movement:</p>
             <p>Location:</p>
             <p>Palm Orientation:</p>
             <p>Non-Manual Signs:</p>
           </div>
-          <div className="column-content panel" style={{ textAlign: "center" }}>
-            <button className="matches-button">match</button>
+          <div className="column-content panel" style={{ textAlign: "left" }}>
+            <div style={{ textAlign: "center" }}>
+              <button className="matches-button">match</button>
+            </div>
             <p>Handshape:</p>
             <p>Movement:</p>
             <p>Location:</p>
             <p>Palm Orientation:</p>
             <p>Non-Manual Signs:</p>
           </div>
-          <div className="column-content panel" style={{ textAlign: "center" }}>
-            <button className="matches-button">match</button>
+          <div className="column-content panel" style={{ textAlign: "left" }}>
+            <div style={{ textAlign: "center" }}>
+              <button className="matches-button">match</button>
+            </div>
             <p>Handshape:</p>
             <p>Movement:</p>
             <p>Location:</p>
             <p>Palm Orientation:</p>
             <p>Non-Manual Signs:</p>
           </div>
-          <div className="column-content panel" style={{ textAlign: "center" }}>
-            <button className="matches-button">match</button>
+          <div className="column-content panel" style={{ textAlign: "left" }}>
+            <div style={{ textAlign: "center" }}>
+              <button className="matches-button">match</button>
+            </div>
             <p>Handshape:</p>
             <p>Movement:</p>
             <p>Location:</p>
