@@ -7,25 +7,34 @@ function FileUploader() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Placeholder UI for uploader
   return (
     <div className="custom-box" style={{ backgroundColor: "#f9fbfd" }}>
-      <label htmlFor="upload-input" className="custom-file-label">
-        <span className="upload-text">
-          <div className="upload-icon">📁</div>
-          Drag and drop file here or <strong>Browse</strong>
-          <p className="upload-text">Accepted formats: MP4, MOV, AVI, WebM</p>
-        </span>
-      </label>
-      <input
-        id="upload-input"
-        type="file"
-        accept="video/*"
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        className="hidden-file-input"
-      />
+      {!file && (
+        <>
+          <label htmlFor="upload-input" className="custom-file-label">
+            <span className="upload-text">
+              <div className="upload-icon">📁</div>
+              Drag and drop file here or <strong>Browse</strong>
+              <p className="upload-text">
+                Accepted formats: MP4, MOV, AVI, WebM
+              </p>
+            </span>
+          </label>
+          <input
+            id="upload-input"
+            type="file"
+            accept="video/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="hidden-file-input"
+          />
+        </>
+      )}
       <div style={{ marginTop: "10px" }}>
-        <strong>Uploaded Video:</strong> {file ? file.name : "None"}
+        {file && (
+          <div>
+            <strong>Uploaded Video:</strong> {file.name}
+          </div>
+        )}
       </div>
       <div>
         <div className="button-container">
