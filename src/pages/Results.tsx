@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function Results() {
+  const location = useLocation();
+  const videoURL = location.state?.videoURL;
+
   const [showBtn, setShowBtn] = useState(false);
 
   useEffect(() => {
@@ -78,7 +82,7 @@ export default function Results() {
             style={{ width: "500px", margin: "0 auto", textAlign: "center" }}
           >
             <h2>Your Uploaded Video</h2>
-            <video id="uploadedVideo" width={500} height={300} controls />
+            <video src={videoURL} width={500} height={300} controls />
             <button id="download" className="downloadButton">
               Download Video
             </button>

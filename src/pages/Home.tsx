@@ -22,7 +22,7 @@ function FileUploader() {
   const navigate = useNavigate();
 
   const handleRedirect = (): void => {
-    navigate('/results');
+    navigate("/results", { state: { videoURL } });
   };
 
   return (
@@ -63,8 +63,8 @@ function FileUploader() {
                 className="uploadButton"
                 disabled={!file || uploadStatus === "uploading"}
                 //onClick={() => {
-                  //if (!file) return;
-                  //setUploadStatus("success");
+                //if (!file) return;
+                //setUploadStatus("success");
                 onClick={handleRedirect}
                 //</div>}}
               >
