@@ -14,6 +14,9 @@ import cv2 as cv
 import numpy as np
 import mediapipe as mp
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 np.set_printoptions(
     threshold=sys.maxsize  # prevents long arrays from saving to csv with "..."
@@ -77,10 +80,11 @@ def run_webcam_hands():
                 cv.imshow('MediaPipe Hands', cv.flip(image, 1))
                 if cv.waitKey(5) & 0xFF == ord('q'):
                     break
+
     finally:
         cap.release()
         cv.destroyAllWindows()
-        cv.waitKey(1)  # must be added for Macs
+        cv.waitKey(1)  # must be added for Macs, comment out if using other OS
 
 
 def process_static_images(image_files: list, root: Path) -> None:
@@ -90,7 +94,7 @@ def process_static_images(image_files: list, root: Path) -> None:
         image_files: List of paths to input image files.
         root: Root directory for output files.
     """
-    output_dir = root / "results" / "annotated_images"
+    output_dir = root / "results"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with mp_hands.Hands(
@@ -127,16 +131,17 @@ def process_static_images(image_files: list, root: Path) -> None:
                     mp_drawing_styles.get_default_hand_connections_style()
                 )
 
-            cv.imwrite(str(output_dir / f"annotated_image{idx}.png"), cv.flip(annotated_image, 1))
+            cv.imwrite(str(output_dir / "annotated_images" / f"annotated_image{idx}.png"), cv.flip(annotated_image, 1))
 
             # draw hand world landmarks
             if not results.multi_hand_world_landmarks:
                 continue
-
-            for hand_world_landmarks in results.multi_hand_world_landmarks:
+            for hand_idx, hand_world_landmarks in enumerate(results.multi_hand_world_landmarks):
                 mp_drawing.plot_landmarks(
                     hand_world_landmarks, mp_hands.HAND_CONNECTIONS, azimuth=5
                 )
+                plt.savefig(str(output_dir / "world_landmarks" / f"world_landmarks{idx}_hand{hand_idx}.png"))
+                plt.close()
 
 
 def main():
