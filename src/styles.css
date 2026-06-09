@@ -464,7 +464,7 @@ ul li a:hover {
 .next {
   cursor: pointer;
   position: absolute;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
   width: auto;
   padding: 16px;
