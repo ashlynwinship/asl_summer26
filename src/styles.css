@@ -136,7 +136,7 @@ ul li a:hover {
 /* styling for input button (choose file) */
 .upload-input {
   justify-content: center;
-  padding: 10px 20px;
+  padding: 10px;
   font-size: 16px;
   color: #78afef;
   background-color: #78afef;
@@ -423,7 +423,7 @@ ul li a:hover {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 100px;
+  min-height: 450px;
   padding: 24px;
   box-sizing: border-box;
   border: 2px solid #000000;
