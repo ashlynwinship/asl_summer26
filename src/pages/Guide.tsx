@@ -103,25 +103,19 @@ export default function Guide() {
         </div>
         <div
           className="column-content panel"
-          style={{ textAlign: "center", paddingBottom: 20 }}
+          style={{ textAlign: "center", paddingBottom: 25 }}
         >
           <h2>Walkthrough Demonstration</h2>
           <div className="slideshow-container slideshow-stage">
             <div className="slides">
               <video id="spoken-demo" width={450} height={250} controls />
-              <div
-                className="caption-container"
-                style={{ lineHeight: "normal" }}
-              >
+              <div className="caption-container" style={{ lineHeight: "10px" }}>
                 <p id="caption">Demo Video (Spoken)</p>
               </div>
             </div>
             <div className="slides">
               <video id="asl-demo" width={450} height={250} controls />
-              <div
-                className="caption-container"
-                style={{ lineHeight: "normal" }}
-              >
+              <div className="caption-container" style={{ lineHeight: "10px" }}>
                 <p id="caption">Demo Video (ASL)</p>
               </div>
             </div>

@@ -69,45 +69,42 @@ export default function Results() {
         className="flex-container"
         style={{ justifyContent: "space-evenly" }}
       >
-        <div className="left-box">
+        <div
+          className="left-box custom-box"
+          style={{ backgroundColor: "#f9fbfd", border: "2px solid grey" }}
+        >
           <div
-            className="custom-box"
+            className="user-video"
+            style={{ width: "500px", margin: "0 auto", textAlign: "center" }}
+          >
+            <h2>Your Uploaded Video</h2>
+            <video id="uploadedVideo" width={500} height={300} controls />
+            <button id="download" className="downloadButton">
+              Download Video
+            </button>
+          </div>
+          <div
+            className="match-details"
             style={{
-              justifyContent: "flex-start",
-              backgroundColor: "#f9fbfd",
-              border: "2px solid grey",
+              marginTop: "20px",
+              textAlign: "left",
+              alignSelf: "stretch",
             }}
           >
-            <div className="user-video" style={{ textAlign: "center" }}>
-              <h2>Your Uploaded Video</h2>
-              <video id="uploadedVideo" width={500} height={300} controls />
-              <button id="download" className="downloadButton">
-                Download Video
-              </button>
-            </div>
-            <div
-              className="match-details"
+            <p
               style={{
-                marginTop: "20px",
-                textAlign: "left",
-                alignSelf: "stretch",
+                fontWeight: "bold",
+                textAlign: "center",
+                fontSize: "18px",
               }}
             >
-              <p
-                style={{
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "18px",
-                }}
-              >
-                Features
-              </p>
-              <p>Handshape (Confidence: XX%):</p>
-              <p>Movement (Confidence: XX%):</p>
-              <p>Location (Confidence: XX%):</p>
-              <p>Palm Orientation (Confidence: XX%):</p>
-              <p>Non-Manual Signs (Confidence: XX%):</p>
-            </div>
+              Features
+            </p>
+            <p>Handshape (Confidence: XX%):</p>
+            <p>Movement (Confidence: XX%):</p>
+            <p>Location (Confidence: XX%):</p>
+            <p>Palm Orientation (Confidence: XX%):</p>
+            <p>Non-Manual Signs (Confidence: XX%):</p>
           </div>
         </div>
 
@@ -116,7 +113,7 @@ export default function Results() {
           style={{ backgroundColor: "#f9fbfd", border: "2px solid grey" }}
         >
           <h2 style={{ textAlign: "center" }}>Top Three Matches</h2>
-          <div className="slideshow-container results-slideshow">
+          <div className="slideshow-container">
             <div className="slideshow-stage">
               <div className="slides">
                 <video
