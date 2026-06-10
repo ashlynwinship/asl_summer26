@@ -53,18 +53,8 @@ def get_pose_coords(input_vid, pose_model_path):
         print("Error: Could not open video.")
         exit()
 
-    # Handle result files!
-    result_file_name = str(input_vid)[:-4] + "_pose-results.txt" # cut off .mp4 and add _pose-results.txt !
-    # results_file = open(result_file_name, "w")
-    # ROOT = Path.cwd()
-
-    # pose_directory_path = ROOT / "asl_citation_forms" / "pose_results"
-    # # pose_directory_path = "/Users/ashlynwinship/Desktop/reverse-dictionary/asl_citation_forms/pose_results"
-    # # Create the directory if it doesn't exist (parents=True creates parent directories if needed)
-    # os.makedirs(pose_directory_path, exist_ok=True)
-    # # Construct the full file path
-    # result_file_path = os.path.join(pose_directory_path, result_file_name)
-    # # Open the file in write mode ('w') and write some content
+    # Handle result file!
+    result_file_name = str(input_vid).split(".")[0] + "_pose-results.txt" # cut off file ending and add _pose-results.txt
     results_file = open(result_file_name, "w")
 
     while cap.isOpened():
