@@ -165,25 +165,8 @@ footer {
   margin-top: 10px;
   align-self: center;
 }
-
-.custom-box-record {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 600px;
-  min-height: 520px;
-  height: auto;
-  border: 2px solid #4a90e2;
-  border-radius: 12px;
-  background-color: #f9fbfd;
-  transition: all 0.3s ease;
-  padding: 20px;
-}
-
 /* box hover */
-.custom-box:hover,
-.custom-box-record:hover {
+.custom-box:hover {
   background-color: #f0f7ff;
   border-color: #2b72c4;
   transform: scale(1.01);

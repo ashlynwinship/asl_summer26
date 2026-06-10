@@ -8,30 +8,30 @@ export default function Guide() {
       id: "what",
       label: "What is the Tool Doing?",
       content:
-        "The ASL Live Translation tool uses advanced computer vision and machine learning " +
-        "algorithms to translate American Sign Language (ASL) into spoken English in real-time. It captures video input " +
-        "from a camera, processes the sign language gestures, and outputs the corresponding translation along with a video " +
-        "demonstration. The tool utilizes a combination of computer vision techniques to detect and track hand movements " +
+        "The ASL Live Dictionary uses advanced computer vision and machine learning " +
+        "algorithms to match American Sign Language (ASL) with the corresponding English word. It captures video input " +
+        "from a camera, processes the sign language gestures, and outputs the closest match along with video " +
+        "demonstrations of the top most accurate matches. The tool utilizes a combination of computer vision techniques to detect and track hand movements " +
         "and body language. It then applies machine learning models trained on large datasets of ASL " +
-        "gestures to interpret the signs and generate accurate translations.",
+        "gestures to interpret the signs and generate accurate pairs.",
     },
     {
       id: "who",
       label: "Who is the Tool For?",
       content:
-        "The ASL Live Translation tool is designed for educators, researchers, " +
+        "The ASL Live Dictionary is designed for educators, researchers, " +
         "and anyone interested in learning or improving their ASL skills.",
     },
     {
       id: "tips",
       label: "Tips for Filming",
       content:
-        "These are some tips for filming your ASL translations: \n" +
+        "These are some tips for filming your ASL signs: \n" +
         "1. Ensure you have good lighting so that your hand movements are clearly visible.\n" +
         "2. Position yourself in front of a plain background to avoid distractions.\n" +
-        "3. Keep your hands within the camera frame at all times for accurate translation.\n" +
-        "4. Ensure the video is clear and well-lit for better translation accuracy.\n\n" +
-        "Note: If the video doesn't meet the criteria, the translation may be inaccurate or fail to process.",
+        "3. Keep your hands within the camera frame at all times for accurate matches.\n" +
+        "4. Ensure the video is clear and well-lit for better match accuracy.\n\n" +
+        "Note: If the video doesn't meet the criteria, the match may be inaccurate or fail to process.",
     },
   ];
 
