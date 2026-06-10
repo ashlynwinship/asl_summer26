@@ -63,7 +63,7 @@ export default function Results() {
     },
   ];
 
-  const handleDownload = () => saveAs(videoURL, "download.mp4");
+  const handleDownload = () => saveAs(videoURL, "download.webm");
 
   const nextSlide = (): void => {
     setActiveIdx((prev) => (prev + 1) % topMatches.length);
