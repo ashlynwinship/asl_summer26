@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, ChangeEvent, useEffect } from "react";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -7,7 +8,22 @@ function FileUploader() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPreviewURL, setVideoPreviewURL] = useState<String | null>(null);
+  const [videoURL, setVideoURL] = useState<string | null>(null);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    setFile(selectedFile);
+    if (selectedFile) {
+      const tempUrl = URL.createObjectURL(selectedFile);
+      setVideoURL(tempUrl);
+    }
+  };
+
+  const navigate = useNavigate();
+
+  const handleRedirect = (): void => {
+    navigate("/results", { state: { videoURL } });
+  };
 
   return (
     <main>
@@ -28,9 +44,10 @@ function FileUploader() {
                 id="upload-input"
                 type="file"
                 accept="video/*"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={handleFileChange}
                 className="hidden-file-input"
               />
+              {videoURL && <video src={videoURL} width="400" controls />}
             </>
           )}
           <div style={{ marginTop: "10px" }}>
@@ -45,23 +62,11 @@ function FileUploader() {
               <button
                 className="uploadButton"
                 disabled={!file || uploadStatus === "uploading"}
-                onClick={() => {
-                  if (!file) return;
-                  setUploadStatus("uploading");
-                  const form = new FormData();
-                  form.append("file", file);
-                  fetch("/api/upload", {
-                    method: "POST",
-                    body: form,
-                  })
-                    .then((response) => {
-                      if (!response.ok) {
-                        throw new Error("Upload failed");
-                      }
-                      setUploadStatus("success");
-                    })
-                    .catch(() => setUploadStatus("error"));
-                }}
+                //onClick={() => {
+                //if (!file) return;
+                //setUploadStatus("success");
+                onClick={handleRedirect}
+                //</div>}}
               >
                 Upload
               </button>
@@ -73,6 +78,7 @@ function FileUploader() {
                   setFile(null);
                   setUploadStatus(null);
                   setUploadProgress(0);
+                  setVideoURL(null);
                 }}
               >
                 Reset

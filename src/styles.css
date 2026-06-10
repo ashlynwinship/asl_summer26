@@ -199,12 +199,6 @@ ul li a:hover {
   display: none;
 }
 
-.button-container {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
 .video-preview {
   width: 100%;
   max-width: 560px;
