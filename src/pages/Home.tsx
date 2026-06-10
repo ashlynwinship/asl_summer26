@@ -175,20 +175,25 @@ function FileUploader() {
             button. A playback of your recording will be displayed below once
             the stop button is clicked.
           </p>
-          <video
-            ref={liveVideoRef}
-            id="preview"
-            className="video-preview"
-            autoPlay
-            muted
-            playsInline
-          />
-          <video
-            id="recording"
-            src={recordedVideo || undefined}
-            controls
-            style={{ display: recordedVideo ? "block" : "none" }}
-          />
+
+          {!recordedVideo && (
+            <video
+              ref={liveVideoRef}
+              id="preview"
+              className="video-preview"
+              autoPlay
+              muted
+              playsInline
+            />
+          )}
+          {recordedVideo && (
+            <video
+              id="recording"
+              src={recordedVideo || undefined}
+              controls
+              style={{ display: recordedVideo ? "block" : "none" }}
+            />
+          )}
           <div className="button-container">
             <button
               id="startButton"
@@ -202,7 +207,15 @@ function FileUploader() {
               id="stopButton"
               className="stopButton"
               disabled={recordingStatus !== "recording"}
-              onClick={stopRecording}
+              onClick={() => {
+                stopRecording();
+                if (streamRef.current) {
+                  streamRef.current
+                    .getTracks()
+                    .forEach((track) => track.stop());
+                }
+                setPermission(false);
+              }}
             >
               Stop Recording
             </button>
@@ -242,6 +255,12 @@ function FileUploader() {
               className="submitButton"
               disabled={!recordedVideo}
               onClick={() => {
+                if (streamRef.current) {
+                  streamRef.current
+                    .getTracks()
+                    .forEach((track) => track.stop());
+                }
+                setPermission(false);
                 if (recordedVideo) {
                   navigate("/results", { state: { videoURL: recordedVideo } });
                 }
