@@ -1,11 +1,29 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { saveAs } from "file-saver";
 
 export default function Results() {
   const location = useLocation();
   const videoURL = location.state?.videoURL;
 
   const [showBtn, setShowBtn] = useState(false);
+
+  const handleDownload = () => saveAs(videoURL, videoURL);
+
+  /* back to top button functionality (doesn't work) */
+  useEffect(() => {
+    const onScroll = async () => {
+      const scrolled =
+        document.documentElement.scrollTop || document.body.scrollTop;
+      setShowBtn(scrolled > 20);
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const topFunction = async () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   /* slideshow functionality */
   const slideIndex = useRef<number>(1);
@@ -68,7 +86,12 @@ export default function Results() {
           >
             <h2>Your Uploaded Video</h2>
             <video src={videoURL} width={500} height={300} controls />
-            <button id="download" className="downloadButton">
+            <button
+              disabled={!videoURL}
+              id="download"
+              className="downloadButton"
+              onClick={handleDownload}
+            >
               Download Video
             </button>
           </div>
