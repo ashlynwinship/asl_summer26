@@ -12,7 +12,6 @@ interface MatchVideo {
     movement: string;
     location: string;
     palm: string;
-    nonManual: string;
   };
 }
 
@@ -32,7 +31,6 @@ export default function Results() {
         movement: "92%",
         location: "98%",
         palm: "90%",
-        nonManual: "88%",
       },
     },
     {
@@ -45,7 +43,6 @@ export default function Results() {
         movement: "80%",
         location: "87%",
         palm: "82%",
-        nonManual: "79%",
       },
     },
     {
@@ -58,7 +55,6 @@ export default function Results() {
         movement: "72%",
         location: "70%",
         palm: "78%",
-        nonManual: "71%",
       },
     },
   ];
@@ -110,10 +106,11 @@ export default function Results() {
             }}
           >
             <p
+              className="longer-underline"
               style={{
                 fontWeight: "bold",
-                textAlign: "center",
-                fontSize: "18px",
+                fontSize: "23px",
+                marginBottom: "0",
               }}
             >
               Features
@@ -122,7 +119,6 @@ export default function Results() {
             <p>Movement (Confidence: XX%):</p>
             <p>Location (Confidence: XX%):</p>
             <p>Palm Orientation (Confidence: XX%):</p>
-            <p>Non-Manual Signs (Confidence: XX%):</p>
           </div>
         </div>
 
@@ -170,10 +166,11 @@ export default function Results() {
             </div>
             <div className="match-details" style={{ marginTop: 20 }}>
               <p
+                className="longer-underline"
                 style={{
                   fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "18px",
+                  fontSize: "23px",
+                  marginBottom: "0",
                 }}
               >
                 Features
@@ -183,10 +180,6 @@ export default function Results() {
               <p>Location (Confidence: {currentMatch.features.location}):</p>
               <p>
                 Palm Orientation (Confidence: {currentMatch.features.palm}):
-              </p>
-              <p>
-                Non-Manual Signs (Confidence: {currentMatch.features.nonManual}
-                ):
               </p>
             </div>
           </div>
@@ -204,7 +197,6 @@ export default function Results() {
               <p>Movement:</p>
               <p>Location:</p>
               <p>Palm Orientation:</p>
-              <p>Non-Manual Signs:</p>
             </div>
           ))}
         </div>
