@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 export default function Results() {
   const [showBtn, setShowBtn] = useState(false);
 
+  /* back to top button functionality (doesn't work) */
   useEffect(() => {
     const onScroll = async () => {
       const scrolled =
@@ -64,7 +65,6 @@ export default function Results() {
   return (
     <main>
       <h1 className="longer-underline">Results</h1>
-
       <div
         className="flex-container"
         style={{ justifyContent: "space-evenly" }}
@@ -203,7 +203,6 @@ export default function Results() {
           </div>
         </div>
       </div>
-
       <div className="column-content" style={{ margin: "20px 60px" }}>
         <h2 style={{ textAlign: "center" }}>Other Potential Matches</h2>
         <div className="columns">
@@ -250,6 +249,7 @@ export default function Results() {
         </div>
       </div>
 
+      {/* doesn't work */}
       {showBtn && (
         <button
           onClick={topFunction}
