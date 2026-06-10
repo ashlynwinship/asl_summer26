@@ -7,21 +7,6 @@ export default function Results() {
 
   const [showBtn, setShowBtn] = useState(false);
 
-  /* back to top button functionality (doesn't work) */
-  useEffect(() => {
-    const onScroll = async () => {
-      const scrolled =
-        document.documentElement.scrollTop || document.body.scrollTop;
-      setShowBtn(scrolled > 20);
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const topFunction = async () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   /* slideshow functionality */
   const slideIndex = useRef<number>(1);
 
@@ -252,18 +237,6 @@ export default function Results() {
           </div>
         </div>
       </div>
-
-      {/* doesn't work */}
-      {showBtn && (
-        <button
-          onClick={topFunction}
-          id="myBtn"
-          title="Go to top"
-          className="back-to-top"
-        >
-          <span style={{ marginRight: 6 }}>&uarr;</span> Back to top
-        </button>
-      )}
     </main>
   );
 }
