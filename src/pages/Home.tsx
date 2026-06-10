@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, useRef } from "react";
+import { saveAs } from "file-saver";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -8,7 +9,7 @@ function FileUploader() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [videoURL, setVideoURL] = useState<string | undefined>(undefined);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -25,10 +26,83 @@ function FileUploader() {
     navigate("/results", { state: { videoURL } });
   };
 
+  // Video recorder
+  const [permission, setPermission] = useState<boolean>(false);
+  const [recordingStatus, setRecordingStatus] = useState<
+    null | "recording" | "stopped"
+  >(null);
+  const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
+  const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const getCameraPermission = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("The MediaRecorder API is not supported in this browser.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      streamRef.current = stream;
+      setPermission(true);
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Permission denied or error accessing media devices:", err);
+      alert("Could not access camera or microphone.");
+    }
+  };
+
+  const startRecording = async () => {
+    if (!streamRef.current) return;
+
+    const mediaRecorder = new MediaRecorder(streamRef.current);
+    mediaRecorderRef.current = mediaRecorder;
+    const chunks: Blob[] = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      chunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "video/mp4" });
+      const url = URL.createObjectURL(blob);
+      setRecordedVideo(url);
+      setVideoChunks([]);
+    };
+
+    setVideoChunks([]);
+    mediaRecorder.start();
+    setRecordingStatus("recording");
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecordingStatus("stopped");
+    }
+  };
+
+  const handleCameraAndStart = async () => {
+    if (!permission) {
+      await getCameraPermission();
+    }
+    startRecording();
+  };
+
   return (
     <main>
       <div className="flex-container">
-        <div className="custom-box" style={{ backgroundColor: "#f9fbfd" }}>
+        <div
+          className="custom-box"
+          style={{ backgroundColor: "#f9fbfd", borderColor: "#282828" }}
+        >
           {!file && (
             <>
               <label htmlFor="upload-input" className="custom-file-label">
@@ -36,7 +110,7 @@ function FileUploader() {
                   <div className="upload-icon">📁</div>
                   Drag and drop file here or <strong>Browse</strong>
                   <p className="upload-text">
-                    Accepted formats: MP4, MOV, AVI, WebM
+                    Accepted formats: MP4, MOV, WebM
                   </p>
                 </span>
               </label>
@@ -50,9 +124,10 @@ function FileUploader() {
               {videoURL && <video src={videoURL} width="400" controls />}
             </>
           )}
-          <div style={{ marginTop: "10px" }}>
+          <div style={{ marginTop: "10px", textAlign: "center" }}>
             {file && (
               <div>
+                <video src={videoURL} width={500} height={300} controls />
                 <strong>Uploaded Video:</strong> {file.name}
               </div>
             )}
@@ -78,7 +153,7 @@ function FileUploader() {
                   setFile(null);
                   setUploadStatus(null);
                   setUploadProgress(0);
-                  setVideoURL(null);
+                  setVideoURL(undefined);
                 }}
               >
                 Reset
@@ -89,7 +164,10 @@ function FileUploader() {
             {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}
           </div>
         </div>
-        <div className="custom-box" style={{ backgroundColor: "#f9fbfd" }}>
+        <div
+          className="custom-box"
+          style={{ backgroundColor: "#f9fbfd", borderColor: "#282828" }}
+        >
           <div className="upload-icon">📹</div>
           <span className="upload-text">Record your video</span>
           <p className="upload-text">
@@ -98,29 +176,77 @@ function FileUploader() {
             the stop button is clicked.
           </p>
           <video
+            ref={liveVideoRef}
             id="preview"
             className="video-preview"
             autoPlay
             muted
             playsInline
-          ></video>
-          <video id="recording" controls style={{ display: "none" }}></video>
+          />
+          <video
+            id="recording"
+            src={recordedVideo || undefined}
+            controls
+            style={{ display: recordedVideo ? "block" : "none" }}
+          />
           <div className="button-container">
-            <button id="startButton" className="startButton">
+            <button
+              id="startButton"
+              className="startButton"
+              onClick={handleCameraAndStart}
+              disabled={recordingStatus === "recording"}
+            >
               Start Recording
             </button>
-            <button id="stopButton" className="stopButton" disabled>
+            <button
+              id="stopButton"
+              className="stopButton"
+              disabled={recordingStatus !== "recording"}
+              onClick={stopRecording}
+            >
               Stop Recording
             </button>
           </div>
           <div className="button-container">
-            <button id="download" className="downloadButton" disabled>
+            <button
+              id="download"
+              className="downloadButton"
+              disabled={!recordedVideo}
+              onClick={() => {
+                if (recordedVideo) {
+                  saveAs(recordedVideo, "recorded_video.mp4");
+                }
+              }}
+            >
               Download Video
             </button>
-            <button id="retakeButton" className="retakeButton" disabled>
+            <button
+              id="retakeButton"
+              className="retakeButton"
+              disabled={!recordedVideo}
+              onClick={() => {
+                setRecordedVideo(null);
+                setRecordingStatus(null);
+                if (streamRef.current) {
+                  streamRef.current
+                    .getTracks()
+                    .forEach((track) => track.stop());
+                }
+                setPermission(false);
+              }}
+            >
               Retake
             </button>
-            <button id="submitButton" className="submitButton" disabled>
+            <button
+              id="submitButton"
+              className="submitButton"
+              disabled={!recordedVideo}
+              onClick={() => {
+                if (recordedVideo) {
+                  navigate("/results", { state: { videoURL: recordedVideo } });
+                }
+              }}
+            >
               Submit
             </button>
           </div>
