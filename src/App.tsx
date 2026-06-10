@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import Guide from "./pages/Guide";
 import Home from "./pages/Home";
 import Results from "./pages/Results";
@@ -22,15 +22,19 @@ function Navigation() {
   return (
     <div id="navbar" className={visible ? "navbar-visible" : "navbar-hidden"}>
       <ul>
-        <li className="title">ASL Live Dictionary</li>
         <li>
-          <NavLink to="/">Home</NavLink>
+          <Link to="/" className="title">
+            ASL Live Dictionary
+          </Link>
         </li>
         <li>
-          <NavLink to="/guide">User Guide</NavLink>
+          <Link to="/">Home</Link>
         </li>
         <li>
-          <NavLink to="/results">Results</NavLink>
+          <Link to="/guide">User Guide</Link>
+        </li>
+        <li>
+          <Link to="/results">Results</Link>
         </li>
       </ul>
     </div>

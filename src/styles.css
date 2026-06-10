@@ -71,15 +71,14 @@ body {
 ul {
   list-style-type: none;
   margin: 0;
-  padding-right: 0;
-  padding-left: 16px;
+  padding: 0;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   background-color: #333333;
 }
 
-ul .title {
+ul title {
   color: white;
   font-size: 25px;
   margin: 0;
