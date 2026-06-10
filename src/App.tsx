@@ -37,6 +37,14 @@ function Navigation() {
   );
 }
 
+function Footer() {
+  return (
+    <footer>
+      <p>&copy; 2026 ASL Live Dictionary. All rights reserved.</p>
+    </footer>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -48,6 +56,7 @@ export default function App() {
           <Route path="/results" element={<Results />} />
         </Routes>
       </div>
+      <Footer />
     </BrowserRouter>
   );
 }
