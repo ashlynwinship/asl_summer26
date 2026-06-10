@@ -34,7 +34,7 @@ body {
   min-height: 100vh;
   background-color: #f0f2f5;
   padding-bottom: 10px;
-  padding-top: 30px;
+  padding-top: 40px;
   width: 100%;
 }
 
@@ -52,12 +52,17 @@ body {
 /* Top bar styling */
 #navbar {
   position: fixed;
-  top: 0;
   left: 0;
   right: 0;
   background-color: #333333;
   transition: top 0.3s;
   z-index: 1000;
+}
+.navbar-visible {
+  top: 0;
+}
+.navbar-hidden {
+  top: -50px;
 }
 
 ul {
@@ -73,7 +78,7 @@ ul {
 
 ul .title {
   color: white;
-  font-size: 20px;
+  font-size: 25px;
   margin: 0;
 }
 
@@ -87,6 +92,7 @@ ul li a {
   color: white;
   padding: 14px 16px;
   text-decoration: none;
+  font-size: 20px;
 }
 
 /* Hover for top bar buttons */

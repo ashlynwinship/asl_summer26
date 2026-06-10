@@ -2,72 +2,74 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
 
+interface MatchVideo {
+  id: number;
+  src: string;
+  thumbnail: string;
+  label: string;
+  features: {
+    handshape: string;
+    movement: string;
+    location: string;
+    palm: string;
+  };
+}
+
 export default function Results() {
   const location = useLocation();
   const videoURL = location.state?.videoURL;
 
-  const [showBtn, setShowBtn] = useState(false);
+  const [activeIdx, setActiveIdx] = useState<number>(0);
+  const topMatches: MatchVideo[] = [
+    {
+      id: 1,
+      src: "test.mp4",
+      thumbnail: "test-ss.png",
+      label: "Match 1 (Confidence: 95%)",
+      features: {
+        handshape: "95%",
+        movement: "92%",
+        location: "98%",
+        palm: "90%",
+      },
+    },
+    {
+      id: 2,
+      src: "test.mp4",
+      thumbnail: "test-ss.png",
+      label: "Match 2 (Confidence: 85%)",
+      features: {
+        handshape: "85%",
+        movement: "80%",
+        location: "87%",
+        palm: "82%",
+      },
+    },
+    {
+      id: 3,
+      src: "test.mp4",
+      thumbnail: "test-ss.png",
+      label: "Match 3 (Confidence: 75%)",
+      features: {
+        handshape: "75%",
+        movement: "72%",
+        location: "70%",
+        palm: "78%",
+      },
+    },
+  ];
 
-  const handleDownload = () => saveAs(videoURL, videoURL);
+  const handleDownload = () => saveAs(videoURL, "download.webm");
 
-  /* back to top button functionality (doesn't work) */
-  useEffect(() => {
-    const onScroll = async () => {
-      const scrolled =
-        document.documentElement.scrollTop || document.body.scrollTop;
-      setShowBtn(scrolled > 20);
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const topFunction = async () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const nextSlide = (): void => {
+    setActiveIdx((prev) => (prev + 1) % topMatches.length);
   };
 
-  /* slideshow functionality */
-  const slideIndex = useRef<number>(1);
-
-  const plusSlides = (n: number): void => {
-    slideIndex.current += n;
-    showSlides(slideIndex.current);
+  const prevSlide = (): void => {
+    setActiveIdx((prev) => (prev - 1 + topMatches.length) % topMatches.length);
   };
 
-  const currentSlide = (n: number): void => {
-    slideIndex.current = n;
-    showSlides(slideIndex.current);
-  };
-
-  const showSlides = (n: number): void => {
-    const slides = document.getElementsByClassName(
-      "slides",
-    ) as HTMLCollectionOf<HTMLElement>;
-    const dots = document.getElementsByClassName(
-      "demo",
-    ) as HTMLCollectionOf<HTMLImageElement>;
-    const captionText = document.getElementById("caption");
-    if (slides.length === 0) return;
-
-    if (n > slides.length) slideIndex.current = 1;
-    if (n < 1) slideIndex.current = slides.length;
-
-    for (let i = 0; i < slides.length; i++) {
-      slides[i].style.display = "none";
-    }
-
-    for (let i = 0; i < dots.length; i++) {
-      dots[i].className = dots[i].className.replace(" active", "");
-    }
-
-    const idx = slideIndex.current - 1;
-    slides[idx].style.display = "block";
-    if (dots[idx]) dots[idx].className += " active";
-    if (captionText && dots[idx]) captionText.innerHTML = dots[idx].alt || "";
-  };
-
-  useEffect(() => {
-    showSlides(slideIndex.current);
-  }, []);
+  const currentMatch = topMatches[activeIdx];
 
   return (
     <main>
@@ -104,10 +106,11 @@ export default function Results() {
             }}
           >
             <p
+              className="longer-underline"
               style={{
                 fontWeight: "bold",
-                textAlign: "center",
-                fontSize: "18px",
+                fontSize: "23px",
+                marginBottom: "0",
               }}
             >
               Features
@@ -116,7 +119,6 @@ export default function Results() {
             <p>Movement (Confidence: XX%):</p>
             <p>Location (Confidence: XX%):</p>
             <p>Palm Orientation (Confidence: XX%):</p>
-            <p>Non-Manual Signs (Confidence: XX%):</p>
           </div>
         </div>
 
@@ -127,90 +129,58 @@ export default function Results() {
           <h2 style={{ textAlign: "center" }}>Top Three Matches</h2>
           <div className="slideshow-container">
             <div className="slideshow-stage">
-              <div className="slides">
+              <div className="slides" style={{ display: "block" }}>
                 <video
-                  id="slide1"
-                  src="test.mp4"
+                  key={currentMatch.id}
+                  src={currentMatch.src}
                   width={500}
                   height={300}
                   controls
                 />
               </div>
-              <div className="slides">
-                <video
-                  id="slide2"
-                  src="test.mp4"
-                  width={500}
-                  height={300}
-                  controls
-                />
-              </div>
-              <div className="slides">
-                <video
-                  id="slide3"
-                  src="test.mp4"
-                  width={500}
-                  height={300}
-                  controls
-                />
-              </div>
-              <a className="prev" onClick={() => plusSlides(-1)}>
+              <a className="prev" onClick={prevSlide}>
                 &#10094;
               </a>
-              <a className="next" onClick={() => plusSlides(1)}>
+              <a className="next" onClick={nextSlide}>
                 &#10095;
               </a>
               <div className="caption-container">
-                <p id="caption"></p>
+                <p id="caption">{currentMatch.label}</p>
               </div>
             </div>
             <div
               className="row"
               style={{ display: "flex", justifyContent: "center" }}
             >
-              <div className="column">
-                <img
-                  className="demo"
-                  src="test-ss.png"
-                  style={{ width: "100%" }}
-                  onClick={() => currentSlide(1)}
-                  alt="Match 1 (Confidence: XX%)"
-                />
-              </div>
-              <div className="column">
-                <img
-                  className="demo"
-                  src="test-ss.png"
-                  style={{ width: "100%" }}
-                  onClick={() => currentSlide(2)}
-                  alt="Match 2 (Confidence: XX%)"
-                />
-              </div>
-              <div className="column">
-                <img
-                  className="demo"
-                  src="test-ss.png"
-                  style={{ width: "100%" }}
-                  onClick={() => currentSlide(3)}
-                  alt="Match 3 (Confidence: XX%)"
-                />
-              </div>
+              {topMatches.map((match, idx) => (
+                <div className="column" key={match.id}>
+                  <img
+                    className={`demo ${idx === activeIdx ? "active" : ""}`}
+                    src={match.thumbnail}
+                    style={{ width: "100%" }}
+                    onClick={() => setActiveIdx(idx)}
+                    alt={match.label}
+                  />
+                </div>
+              ))}
             </div>
             <div className="match-details" style={{ marginTop: 20 }}>
               <p
+                className="longer-underline"
                 style={{
                   fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "18px",
+                  fontSize: "23px",
+                  marginBottom: "0",
                 }}
               >
                 Features
               </p>
-              <p>Handshape (Confidence: XX%):</p>
-              <p>Movement (Confidence: XX%):</p>
-              <p>Location (Confidence: XX%):</p>
-              <p>Palm Orientation (Confidence: XX%):</p>
-              <p>Non-Manual Signs (Confidence: XX%):</p>
+              <p>Handshape (Confidence: {currentMatch.features.handshape}):</p>
+              <p>Movement (Confidence: {currentMatch.features.movement}):</p>
+              <p>Location (Confidence: {currentMatch.features.location}):</p>
+              <p>
+                Palm Orientation (Confidence: {currentMatch.features.palm}):
+              </p>
             </div>
           </div>
         </div>
@@ -218,60 +188,19 @@ export default function Results() {
       <div className="column-content" style={{ margin: "20px 60px" }}>
         <h2 style={{ textAlign: "center" }}>Other Potential Matches</h2>
         <div className="columns">
-          <div className="column-content panel">
-            <div style={{ textAlign: "center" }}>
-              <button className="matches-button">match</button>
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="column-content panel">
+              <div style={{ textAlign: "center" }}>
+                <button className="matches-button">match</button>
+              </div>
+              <p>Handshape:</p>
+              <p>Movement:</p>
+              <p>Location:</p>
+              <p>Palm Orientation:</p>
             </div>
-            <p>Handshape:</p>
-            <p>Movement:</p>
-            <p>Location:</p>
-            <p>Palm Orientation:</p>
-            <p>Non-Manual Signs:</p>
-          </div>
-          <div className="column-content panel" style={{ textAlign: "left" }}>
-            <div style={{ textAlign: "center" }}>
-              <button className="matches-button">match</button>
-            </div>
-            <p>Handshape:</p>
-            <p>Movement:</p>
-            <p>Location:</p>
-            <p>Palm Orientation:</p>
-            <p>Non-Manual Signs:</p>
-          </div>
-          <div className="column-content panel" style={{ textAlign: "left" }}>
-            <div style={{ textAlign: "center" }}>
-              <button className="matches-button">match</button>
-            </div>
-            <p>Handshape:</p>
-            <p>Movement:</p>
-            <p>Location:</p>
-            <p>Palm Orientation:</p>
-            <p>Non-Manual Signs:</p>
-          </div>
-          <div className="column-content panel" style={{ textAlign: "left" }}>
-            <div style={{ textAlign: "center" }}>
-              <button className="matches-button">match</button>
-            </div>
-            <p>Handshape:</p>
-            <p>Movement:</p>
-            <p>Location:</p>
-            <p>Palm Orientation:</p>
-            <p>Non-Manual Signs:</p>
-          </div>
+          ))}
         </div>
       </div>
-
-      {/* doesn't work */}
-      {showBtn && (
-        <button
-          onClick={topFunction}
-          id="myBtn"
-          title="Go to top"
-          className="back-to-top"
-        >
-          <span style={{ marginRight: 6 }}>&uarr;</span> Back to top
-        </button>
-      )}
     </main>
   );
 }
