@@ -295,9 +295,11 @@ export default function Home() {
 
       <div className="home-ending" style={{ textAlign: "center" }}>
         <p>
-          Record or upload a video here. Your video will be stored temporarily,
-          and you will be redirected to the results page once the upload is
-          processed.
+          <strong>
+            Record <u>or</u> upload a video here.
+          </strong>
+          Your video will be stored temporarily, and you will be redirected to
+          the results page once the upload is processed.
         </p>
       </div>
 

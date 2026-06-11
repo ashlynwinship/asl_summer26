@@ -33,6 +33,23 @@ export default function Guide() {
         "4. Ensure the video is clear and well-lit for better match accuracy.\n\n" +
         "Note: If the video doesn't meet the criteria, the match may be inaccurate or fail to process.",
     },
+    {
+      id: "data",
+      label: "How is my Data Being Used?",
+      content:
+        "Any videos you upload will only be stored on your computer locally." +
+        "We do not use your likeness or your video directly, and what you upload is only used for" +
+        " determining vector points so we can best match your sign with those in our data set. ",
+    },
+    {
+      id: "faq",
+      label: "FAQ",
+      content: (
+        <strong>
+          <u>FAQ</u>
+        </strong>
+      ),
+    },
   ];
 
   /* slideshow functionality */
