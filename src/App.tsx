@@ -34,7 +34,6 @@ function Navigation() {
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/guide">User Guide</Link>
-          <Link to="/results">Results</Link>
         </div>
       </div>
     </nav>
