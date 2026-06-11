@@ -312,6 +312,11 @@ footer {
   flex-wrap: wrap;
 }
 
+.features-box {
+  width: 250px;
+  text-align: left;
+}
+
 .match-info-panel {
   display: flex;
   flex-direction: column;

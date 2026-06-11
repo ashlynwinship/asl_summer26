@@ -71,6 +71,12 @@ export default function Results() {
 
   const currentMatch = topMatches[activeIdx];
 
+  const [isVisible, setIsVisible] = useState<{ [key: number]: boolean }>({
+    1: false,
+    2: false,
+    3: false,
+  });
+
   return (
     <main>
       <h1 className="longer-underline">Results</h1>
@@ -187,16 +193,60 @@ export default function Results() {
       </div>
       <div className="column-content" style={{ margin: "20px 60px" }}>
         <h2 style={{ textAlign: "center" }}>Other Potential Matches</h2>
+        <div
+          className="welcome-content"
+          style={{ backgroundColor: "#e7e6e6", padding: "3px" }}
+        >
+          <p style={{ textAlign: "center" }}>
+            Click each button to see the video that matches with the
+            corresponding sign.
+          </p>
+        </div>
         <div className="columns">
           {[1, 2, 3].map((item) => (
             <div key={item} className="column-content panel">
-              <div style={{ textAlign: "center" }}>
-                <button className="matches-button">match</button>
+              <div
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                {!isVisible[item] && (
+                  <button
+                    className="matches-button"
+                    onClick={() => setIsVisible({ ...isVisible, [item]: true })}
+                  >
+                    match
+                  </button>
+                )}
+                {isVisible[item] && (
+                  <video
+                    key={currentMatch.id}
+                    src={currentMatch.src}
+                    width={390}
+                    height={300}
+                    controls
+                  ></video>
+                )}
+                <div className="features-box">
+                  <p>
+                    Handshape (Confidence: {currentMatch.features.handshape}):
+                  </p>
+                  <p>
+                    Movement (Confidence: {currentMatch.features.handshape}):
+                  </p>
+                  <p>
+                    Location (Confidence: {currentMatch.features.handshape}):
+                  </p>
+                  <p>
+                    Palm Orientation (Confidence:{" "}
+                    {currentMatch.features.handshape}
+                    ):
+                  </p>
+                </div>
               </div>
-              <p>Handshape:</p>
-              <p>Movement:</p>
-              <p>Location:</p>
-              <p>Palm Orientation:</p>
             </div>
           ))}
         </div>
