@@ -20,24 +20,18 @@ function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [prevScrollPos]);
   return (
-    <div id="navbar" className={visible ? "navbar-visible" : "navbar-hidden"}>
-      <ul>
-        <li>
-          <Link to="/" className="title">
-            ASL Live Dictionary
-          </Link>
-        </li>
-        <li>
+    <nav className={visible ? "nav-visible" : "nav-hidden"}>
+      <div className="nav-inner">
+        <Link to="/" className="nav-title">
+          ASL Live Dictionary
+        </Link>
+        <div className="nav-links">
           <Link to="/">Home</Link>
-        </li>
-        <li>
           <Link to="/guide">User Guide</Link>
-        </li>
-        <li>
           <Link to="/results">Results</Link>
-        </li>
-      </ul>
-    </div>
+        </div>
+      </div>
+    </nav>
   );
 }
 
