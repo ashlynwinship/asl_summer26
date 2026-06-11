@@ -1,14 +1,15 @@
 @import url("https://fonts.googleapis.com/css?family=Google+Sans|Lato|DM+Sans|Merriweather|Playfair+Display&display=swap");
 
-root {
+:root {
   --text: #000000;
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-  --font-head: "Playfair Display";
-  --font-body: "Merriweather";
+  --font-head: "Playfair Display", serif;
+  --font-body: "Playfair Display", serif;
+  --font-button: "Google Sans", sans-serif;
 
   /* font: 18px/145% var(--sans); */
   letter-spacing: 0.18px;
@@ -55,6 +56,16 @@ body {
   background-color: #f1f1f1;
   padding: 20px;
   text-align: center;
+}
+
+.header h1,
+.header p,
+.longer-underline,
+h1,
+h2,
+h3,
+.nav-inner {
+  font-family: var(--font-head);
 }
 
 /* top navigation bar */
@@ -230,7 +241,7 @@ footer {
 .downloadButton,
 .retakeButton,
 .submitButton {
-  /* font-family: "Google Sans"; */
+  font-family: var(--font-button);
   padding: 10px 20px;
   font-size: 16px;
   color: white;
