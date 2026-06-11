@@ -6,9 +6,10 @@ Unused modules (add back if needed):
 
 from skimage.metrics import structural_similarity as ssim
 import cv2 as cv
+from pathlib import Path
 
 
-def extract_keyframe_ssim():
+def extract_keyframe_ssim(video_path: Path, threshold: float = 0.90) -> list:
     """Extracts keyframes from a video using Structural Similarity Index (SSIM).
 
     derived from paper read for 6/11, algorithm 3
@@ -17,13 +18,21 @@ def extract_keyframe_ssim():
     Args:
         video_path: Path to the input video file.
         threshold: SSIM threshold above which frames are considered similar 
-                   and discarded (default: 0.90).
+                   and discarded (default: 0.90). <- is based off the paper's hardcoded threshold but wanted
+                   to make it easy to adjust if needed for now, then fix later.
     Returns:
         List of keyframes as numpy arrays.
     Raises:
         ValueError: If the video file cannot be opened.
     """
-    pass
+    cap = cv.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise ValueError(f"Could not open video: {video_path}")
+
+    frames = []
+    while cap.isOpened():
+        ret, frame = cap.read()
+        
 
 
 # Input: Dataset -Folder comprising of Vi, V2.... Vn videos Output: Output- Folder Vi,V2, V3....Vn subfolder, each subfolder contains frames of
