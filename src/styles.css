@@ -52,8 +52,8 @@ body {
   text-decoration: underline;
 }
 
-/* Top bar styling */
-#navbar {
+/* top navigation bar */
+nav {
   position: fixed;
   left: 0;
   right: 0;
@@ -61,45 +61,40 @@ body {
   transition: top 0.3s;
   z-index: 1000;
 }
-.navbar-visible {
+.nav-visible {
   top: 0;
 }
-.navbar-hidden {
+.nav-hidden {
   top: -50px;
 }
-
-ul {
+.nav-inner {
   list-style-type: none;
   margin: 0;
-  padding: 0;
+  padding: 10px 0;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   background-color: #333333;
 }
-
-ul title {
+.nav-title {
   color: white;
   font-size: 25px;
-  margin: 0;
+  margin-right: auto;
+  text-decoration: none;
+  padding-left: 10px;
 }
-
-ul li:nth-child(2) {
-  margin-left: auto;
-}
-
-/* Top bar buttons */
-ul li a {
+nav.links {
   display: block;
+}
+.nav-links a {
   color: white;
   padding: 14px 16px;
   text-decoration: none;
   font-size: 20px;
 }
-
-/* Hover for top bar buttons */
-ul li a:hover {
+.nav-links a:hover {
   background-color: #111111;
+  padding: 13px 16px;
 }
 
 /* footer */
@@ -357,15 +352,15 @@ footer {
   align-self: center;
 }
 
-/* navigation bar */
-.nav-bar {
+/* tab bar */
+.tab-bar {
   display: flex;
   gap: 10px;
   background-color: #f1f1f1;
   padding: 10px;
 }
 
-.nav-btn {
+.tab-btn {
   padding: 10px 20px;
   cursor: pointer;
   border: none;
@@ -373,7 +368,7 @@ footer {
   font-size: 16px;
 }
 
-.nav-btn.active {
+.tab-btn.active {
   background-color: black;
   color: white;
   border-radius: 4px;

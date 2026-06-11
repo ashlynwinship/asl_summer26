@@ -129,17 +129,17 @@ export default function Guide() {
         </div>
       </div>
       <div className="tab-container">
-        <nav className="nav-bar">
+        <div className="tab-bar">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`nav-btn ${activeTab === tab.id ? "active" : ""}`}
+              className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
             </button>
           ))}
-        </nav>
+        </div>
         <div
           className="content-panel active"
           style={{ whiteSpace: "pre-line" }}
