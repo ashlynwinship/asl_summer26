@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Link,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import Guide from "./pages/Guide";
 import Home from "./pages/Home";
 import Results from "./pages/Results";
@@ -35,6 +41,42 @@ function Navigation() {
   );
 }
 
+type Header = {
+  title: string;
+  subtitle?: string;
+  content?: React.ReactNode;
+};
+
+const headers: Record<string, Header> = {
+  "/": {
+    title: "Welcome to ASL Live Dictionary!",
+    subtitle:
+      "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
+      "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good" +
+      "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
+  },
+  "/guide": {
+    title: "User Guide",
+    subtitle: "Learn how to film and submit a clear recording.",
+  },
+  "/results": {
+    title: "Results",
+    subtitle: "Review the top matches and their feature breakdown.",
+  },
+};
+
+function Header() {
+  const location = useLocation();
+  const header = headers[location.pathname] ?? headers["/"];
+
+  return (
+    <header className="header" style={{ whiteSpace: "pre-line" }}>
+      <h1 style={{ fontSize: "50px" }}>{header.title}</h1>
+      {header.subtitle && <p style={{ fontSize: "25px" }}>{header.subtitle}</p>}
+    </header>
+  );
+}
+
 function Footer() {
   return (
     <footer>
@@ -46,6 +88,7 @@ function Footer() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Header />
       <Navigation />
       <div className="page-content">
         <Routes>

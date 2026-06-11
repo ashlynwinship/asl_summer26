@@ -280,7 +280,7 @@ export default function Home() {
     <main>
       <h1 className="longer-underline">Home</h1>
 
-      <div className="welcome-content" style={{ textAlign: "center" }}>
+      {/* <div className="welcome-content" style={{ textAlign: "center" }}>
         <div className="emphasized-text">Welcome!</div>
         <p>
           This is going to be content. Written here is a paragraph explaining an
@@ -291,7 +291,7 @@ export default function Home() {
           <br />
           The user guide can be found <a href="/guide">here</a>.
         </p>
-      </div>
+      </div> */}
 
       <div className="home-ending" style={{ textAlign: "center" }}>
         <p>
