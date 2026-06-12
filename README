@@ -14,3 +14,5 @@ You can use these notebooks and the test data to play around with LSH analysis l
 
 To run the `lsh_preprocess_script.py` via terminal and without the warning lines from mediapipe:
 - `python data_processing/scripts/lsh_preprocess_script.py 2>data_processing/mediapipe_warnings.log` -- this will redirect the logs to a separate txt file (`mediapipe_warnings.log`) for debugging use if needed. 
+
+https://git-lfs.com/ (for larage file storage/git add&push)
