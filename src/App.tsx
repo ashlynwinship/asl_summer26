@@ -60,7 +60,7 @@ const headers: Record<string, Header> = {
   },
   "/results": {
     title: "Results",
-    subtitle: "Review the top matches and their feature breakdown.",
+    subtitle: "Review your top matches and their feature breakdown.",
   },
 };
 
