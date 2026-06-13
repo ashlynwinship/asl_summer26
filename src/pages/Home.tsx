@@ -23,7 +23,8 @@ function FileUploader() {
   const navigate = useNavigate();
 
   const handleRedirect = (): void => {
-    navigate("/results", { state: { videoURL } });
+    if (!file) return;
+    navigate("/results", { state: { videoBlob: file, videoURL: videoURL } });
   };
 
   // Video recorder
@@ -33,6 +34,8 @@ function FileUploader() {
   >(null);
   const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
   const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
+
+  const [rawRecordedBlob, setRawRecordedBlob] = useState<Blob | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -253,7 +256,7 @@ function FileUploader() {
             <button
               id="submitButton"
               className="submitButton"
-              disabled={!recordedVideo}
+              disabled={!rawRecordedBlob}
               onClick={() => {
                 if (streamRef.current) {
                   streamRef.current
@@ -261,8 +264,13 @@ function FileUploader() {
                     .forEach((track) => track.stop());
                 }
                 setPermission(false);
-                if (recordedVideo) {
-                  navigate("/results", { state: { videoURL: recordedVideo } });
+                if (rawRecordedBlob && recordedVideo) {
+                  navigate("/results", {
+                    state: {
+                      videoBlob: rawRecordedBlob,
+                      videoURL: recordedVideo,
+                    },
+                  });
                 }
               }}
             >

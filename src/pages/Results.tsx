@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
+import { extractPoseData } from "../utils/userPoseData";
 
 interface MatchVideo {
   id: number;
@@ -17,7 +18,29 @@ interface MatchVideo {
 
 export default function Results() {
   const location = useLocation();
-  const videoURL = location.state?.videoURL;
+
+  const { videoBlob, videoURL } =
+    (location.state as { videoBlob?: Blob; videoURL?: string }) || {};
+  const [poseVectors, setPoseVectors] = useState<number[][] | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!videoBlob) {
+      setIsProcessing(false);
+      return;
+    }
+
+    setIsProcessing(true);
+    extractPoseData(videoBlob)
+      .then((data) => {
+        setPoseVectors(data);
+        setIsProcessing(false);
+      })
+      .catch((err) => {
+        console.error("MediaPipe Extraction Failed:", err);
+        setIsProcessing(false);
+      });
+  }, [videoBlob]);
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const topMatches: MatchVideo[] = [
@@ -59,7 +82,11 @@ export default function Results() {
     },
   ];
 
-  const handleDownload = () => saveAs(videoURL, "download.webm");
+  const handleDownload = () => {
+    if (videoURL) {
+      saveAs(videoURL, "download.webm");
+    }
+  };
 
   const nextSlide = (): void => {
     setActiveIdx((prev) => (prev + 1) % topMatches.length);
@@ -76,6 +103,23 @@ export default function Results() {
     2: false,
     3: false,
   });
+
+  const handleResultsDownload = () => {
+    if (!poseVectors) return;
+
+    const jsonString = JSON.stringify(
+      {
+        frameCount: poseVectors.length,
+        landmarksPerFrame: 33,
+        extractedAt: new Date().toISOString(),
+        data: poseVectors,
+      },
+      null,
+      2,
+    );
+    const blob = new Blob([jsonString], { type: "application/json" });
+    saveAs(blob, "pose_corrdinates_${Date.now()}.json");
+  };
 
   return (
     <main>
@@ -101,6 +145,17 @@ export default function Results() {
               onClick={handleDownload}
             >
               Download Video
+            </button>
+            {/* //TEMPORARY button for downloading mediapipe analysis file */}
+            {/* delete to the end of "Download Pose Results File" once backend implemented */}
+            <br></br>
+            <button
+              disabled={isProcessing || !poseVectors}
+              id="downloadResults"
+              className="downloadButton"
+              onClick={handleResultsDownload}
+            >
+              Download Pose Results File
             </button>
           </div>
           <div
