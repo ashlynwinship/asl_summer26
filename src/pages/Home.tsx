@@ -76,6 +76,7 @@ function FileUploader() {
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
+      setRawRecordedBlob(blob);
       setRecordedVideo(url);
       setVideoChunks([]);
     };
