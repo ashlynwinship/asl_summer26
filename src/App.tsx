@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   BrowserRouter,
   Link,
@@ -43,7 +43,7 @@ function Navigation() {
 type Header = {
   title: string;
   subtitle?: string;
-  content?: React.ReactNode;
+  content?: ReactNode;
 };
 
 const headers: Record<string, Header> = {
@@ -51,7 +51,7 @@ const headers: Record<string, Header> = {
     title: "Welcome to ASL Live Dictionary!",
     subtitle:
       "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
-      "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good" +
+      "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good " +
       "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
   },
   "/guide": {
@@ -60,18 +60,41 @@ const headers: Record<string, Header> = {
   },
   "/results": {
     title: "Results",
-    subtitle: "Review the top matches and their feature breakdown.",
+    subtitle: "Review your top matches and their feature breakdown.",
   },
 };
 
-function Header() {
+type HeaderProps = {
+  collapsed: boolean;
+  onToggle: () => void;
+};
+
+function Header({ collapsed, onToggle }: HeaderProps) {
   const location = useLocation();
   const header = headers[location.pathname] ?? headers["/"];
 
   return (
-    <header className="header" style={{ whiteSpace: "pre-line" }}>
-      <h1 style={{ fontSize: "50px" }}>{header.title}</h1>
-      {header.subtitle && <p style={{ fontSize: "25px" }}>{header.subtitle}</p>}
+    <header
+      className={collapsed ? "header header-collapsed" : "header"}
+      style={{ whiteSpace: "pre-line" }}
+    >
+      <button
+        type="button"
+        className="header-toggle"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? "Expand header" : "Collapse header"}
+      >
+        {collapsed ? "▼ See more" : "▲ See less"}
+      </button>
+      {!collapsed && (
+        <div className="header-copy">
+          <h1 style={{ fontSize: "50px" }}>{header.title}</h1>
+          {header.subtitle && (
+            <p style={{ fontSize: "25px" }}>{header.subtitle}</p>
+          )}
+        </div>
+      )}
     </header>
   );
 }
@@ -85,9 +108,14 @@ function Footer() {
 }
 
 export default function App() {
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+
   return (
     <BrowserRouter>
-      <Header />
+      <Header
+        collapsed={headerCollapsed}
+        onToggle={() => setHeaderCollapsed((isCollapsed) => !isCollapsed)}
+      />
       <Navigation />
       <div className="page-content">
         <Routes>
