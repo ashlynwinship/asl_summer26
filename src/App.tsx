@@ -40,6 +40,20 @@ function Navigation() {
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [pathname]);
+
+  return null;
+}
+
 type Header = {
   title: string;
   subtitle?: string;
@@ -112,6 +126,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Header
         collapsed={headerCollapsed}
         onToggle={() => setHeaderCollapsed((isCollapsed) => !isCollapsed)}
