@@ -264,13 +264,7 @@ footer {
   object-fit: cover;
 }
 
-.uploadButton,
-.uploadResetButton,
-.startButton,
-.stopButton,
-.downloadButton,
-.retakeButton,
-.submitButton {
+.btn {
   font-family: var(--font-button);
   padding: 10px 20px;
   font-size: 16px;
@@ -282,13 +276,7 @@ footer {
   margin-top: 10px;
   align-self: center;
 }
-.uploadButton:disabled,
-.uploadResetButton:disabled,
-.startButton:disabled,
-.stopButton:disabled,
-.downloadButton:disabled,
-.retakeButton:disabled,
-.submitButton:disabled {
+.btn:disabled {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
@@ -299,13 +287,7 @@ footer {
   margin-top: 10px;
   align-self: center;
 }
-.uploadButton:hover,
-.uploadResetButton:hover,
-.startButton:hover,
-.stopButton:hover,
-.downloadButton:hover,
-.retakeButton:hover,
-.submitButton:hover {
+.btn:hover {
   background-color: #78afef;
   border-color: #2b72c4;
 }

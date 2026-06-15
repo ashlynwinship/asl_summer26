@@ -139,7 +139,7 @@ function FileUploader() {
           <div>
             <div className="button-container">
               <button
-                className="uploadButton"
+                className="btn"
                 disabled={!file || uploadStatus === "uploading"}
                 //onClick={() => {
                 //if (!file) return;
@@ -151,7 +151,7 @@ function FileUploader() {
               </button>
 
               <button
-                className="uploadResetButton"
+                className="btn"
                 disabled={!file || uploadStatus === "uploading"}
                 onClick={() => {
                   setFile(null);
@@ -201,7 +201,7 @@ function FileUploader() {
           <div className="button-container">
             <button
               id="startButton"
-              className="startButton"
+              className="btn"
               onClick={handleCameraAndStart}
               disabled={recordingStatus === "recording"}
             >
@@ -209,7 +209,7 @@ function FileUploader() {
             </button>
             <button
               id="stopButton"
-              className="stopButton"
+              className="btn"
               disabled={recordingStatus !== "recording"}
               onClick={() => {
                 stopRecording();
@@ -227,7 +227,7 @@ function FileUploader() {
           <div className="button-container">
             <button
               id="download"
-              className="downloadButton"
+              className="btn"
               disabled={!recordedVideo}
               onClick={() => {
                 if (recordedVideo) {
@@ -239,7 +239,7 @@ function FileUploader() {
             </button>
             <button
               id="retakeButton"
-              className="retakeButton"
+              className="btn"
               disabled={!recordedVideo}
               onClick={() => {
                 setRecordedVideo(null);
@@ -256,7 +256,7 @@ function FileUploader() {
             </button>
             <button
               id="submitButton"
-              className="submitButton"
+              className="btn"
               disabled={!rawRecordedBlob}
               onClick={() => {
                 if (streamRef.current) {
@@ -288,19 +288,6 @@ export default function Home() {
   return (
     <main>
       <h1 className="longer-underline">Home</h1>
-
-      {/* <div className="welcome-content" style={{ textAlign: "center" }}>
-        <div className="emphasized-text">Welcome!</div>
-        <p>
-          This is going to be content. Written here is a paragraph explaining an
-          overview of the application, as well as linking to the user guide. I
-          am writing a bunch of stuff just so the paragraph looks good and fills
-          up the space. This is just a placeholder for now, but it will be
-          replaced with actual content later on.
-          <br />
-          The user guide can be found <a href="/guide">here</a>.
-        </p>
-      </div> */}
 
       <div className="home-ending" style={{ textAlign: "center" }}>
         <p>

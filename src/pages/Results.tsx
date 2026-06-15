@@ -141,7 +141,7 @@ export default function Results() {
             <button
               disabled={!videoURL}
               id="download"
-              className="downloadButton"
+              className="btn"
               onClick={handleDownload}
             >
               Download Video
@@ -152,7 +152,7 @@ export default function Results() {
             <button
               disabled={isProcessing || !poseVectors}
               id="downloadResults"
-              className="downloadButton"
+              className="btn"
               onClick={handleResultsDownload}
             >
               Download Pose Results File
