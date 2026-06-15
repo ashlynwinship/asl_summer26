@@ -25,6 +25,19 @@ function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [prevScrollPos]);
+
+  useEffect(() => {
+    const handleMouseMove = (event: { clientY: number }) => {
+      if (event.clientY <= 50) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
     <nav className={visible ? "nav-visible" : "nav-hidden"}>
       <div className="nav-inner">
