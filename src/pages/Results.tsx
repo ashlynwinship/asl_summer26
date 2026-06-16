@@ -157,10 +157,10 @@ export default function Results() {
                 className="btn"
                 onClick={handleResultsDownload}
               >
-                Download Pose Results File
+                Download Pose Results JSON File
               </button>
             )}
-            {isProcessing && <p>Loading JSON File...</p>}
+            {isProcessing && <p>Loading Results File...</p>}
             <SyncLoader color="#4a90e2" loading={isProcessing}></SyncLoader>
           </div>
           <div
