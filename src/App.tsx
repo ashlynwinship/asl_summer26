@@ -39,14 +39,28 @@ function Navigation() {
   }, []);
 
   return (
-    <nav className={visible ? "nav-visible" : "nav-hidden"}>
-      <div className="nav-inner">
+    <nav
+      className={`sticky left-0 right-0 bg-neutral-dark transition-[top] duration-300 z-1000 ${
+        visible ? "top-0" : "top-12.5"
+      }`}
+    >
+      <div className="list-none m-0 py-2.5 px-0 flex justify-start items-center bg-neutral-dark font-head">
         <Link to="/" className="nav-title">
           ASL Live Dictionary
         </Link>
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/guide">User Guide</Link>
+        <div className="block">
+          <Link
+            to="/"
+            className="text-white py-3.5 px-4 no-underline text-xl transition-colors hover:bg-neutral-darkest hover:py-3.25"
+          >
+            Home
+          </Link>
+          <Link
+            to="/guide"
+            className="text-white py-3.5 px-4 no-underline text-xl transition-colors hover:bg-neutral-darkest hover:py-3.25"
+          >
+            User Guide
+          </Link>
         </div>
       </div>
     </nav>
@@ -102,12 +116,13 @@ function Header({ collapsed, onToggle }: HeaderProps) {
 
   return (
     <header
-      className={collapsed ? "header header-collapsed" : "header"}
-      style={{ whiteSpace: "pre-line" }}
+      className={`bg-neutral-panel text-center text-black relative transition-all duration-250 ease-in-out whitespace-pre-line ${
+        collapsed ? "py-2 px-5 min-h-13" : "px-5 pt-5 pb-16"
+      }`}
     >
       <button
         type="button"
-        className="header-toggle"
+        className="absolute right-5 bottom-5 font-button text-[15px] text-[#1f1f1f] bg-white border border-neutral-border rounded-full py-2 px-3.5 cursor-pointer shadow-sm hover:bg-[#f7f7f7]"
         onClick={onToggle}
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand header" : "Collapse header"}
@@ -115,10 +130,14 @@ function Header({ collapsed, onToggle }: HeaderProps) {
         {collapsed ? "▼ See more" : "▲ See less"}
       </button>
       {!collapsed && (
-        <div className="header-copy">
-          <h1 style={{ fontSize: "50px" }}>{header.title}</h1>
+        <div className="flex flex-col items-center relative">
+          <h1 className="font-head text-[50px] leading-tight m-0">
+            {header.title}
+          </h1>
           {header.subtitle && (
-            <p style={{ fontSize: "25px" }}>{header.subtitle}</p>
+            <p className="font-head text-[25px] m-2.5 max-w-4xl">
+              {header.subtitle}
+            </p>
           )}
         </div>
       )}
@@ -128,7 +147,7 @@ function Header({ collapsed, onToggle }: HeaderProps) {
 
 function Footer() {
   return (
-    <footer>
+    <footer className="bg-neutral-dark text-white flex justify-center relative top-2.5 bottom-0 w-full py-4">
       <p>&copy; 2026 ASL Live Dictionary. All rights reserved.</p>
     </footer>
   );
@@ -145,13 +164,13 @@ export default function App() {
         onToggle={() => setHeaderCollapsed((isCollapsed) => !isCollapsed)}
       />
       <Navigation />
-      <div className="page-content">
+      <main className="w-[min(1450px,98%)] mx-auto box-border grid grid-rows-[auto_1fr_auto] min-h-dvh">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/guide" element={<Guide />} />
           <Route path="/results" element={<Results />} />
         </Routes>
-      </div>
+      </main>
       <Footer />
     </BrowserRouter>
   );
