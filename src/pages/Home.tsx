@@ -3,6 +3,7 @@ import { useState, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
 // import { SyncLoader } from "react-spinners";
 // above will be implemented on home screen when server available
+import { Cropper } from "react-easy-crop";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
