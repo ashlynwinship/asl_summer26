@@ -303,7 +303,7 @@ function FileUploader() {
 export default function Home() {
   return (
     <main className="min-h-screen py-10 bg-gray-50">
-      <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:bottom-[-8px] after:left-0">
+      <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
         Home
       </h1>
       <div className="text-center max-w-2xl mx-auto mt-6 mb-10 px-4 text-gray-600">
