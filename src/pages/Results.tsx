@@ -118,7 +118,7 @@ export default function Results() {
       2,
     );
     const blob = new Blob([jsonString], { type: "application/json" });
-    saveAs(blob, "pose_corrdinates_${Date.now()}.json");
+    saveAs(blob, "pose_coordinates_" + Date().toString() + ".json");
   };
 
   return (
