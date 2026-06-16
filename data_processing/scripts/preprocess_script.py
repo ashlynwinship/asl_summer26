@@ -2,9 +2,10 @@
 Processing pipeline for both pose and hand data using MediaPipe for a reverse ASL dictionary.
 """
 
-import imageio
+# import imageio
+import argparse
 import cv2 as cv
-import numpy as np
+# import numpy as np
 import mediapipe as mp
 from pathlib import Path
 
@@ -118,106 +119,121 @@ def get_pose_and_hand_coords(input_vid: Path, root: Path) -> tuple[Path, Path]:
     return pose_result_file_path, hand_result_file_path
 
 
-def save_annotated_gif(input_vid: Path, root: Path, fps: int = 24) -> Path:
-    """Sets up pose/hand landmarks on black background for each frame, saves to GIF for
-    visual understanding where the coordinates are on hand/pose. This is just for 
-    personal visualization purposes so it's easier to understand where each coordinate goes/
-    moves across the video clip. FEEL FREE TO COMMENT OUT IF NOT NEEDED FOR THE FULL SEMLEX DATASET!
+# def save_annotated_gif(input_vid: Path, root: Path, fps: int = 24) -> Path:
+#     """Sets up pose/hand landmarks on black background for each frame, saves to GIF for
+#     visual understanding where the coordinates are on hand/pose. This is just for 
+#     personal visualization purposes so it's easier to understand where each coordinate goes/
+#     moves across the video clip. COMMENT OUT/IN AS NEEDED FOR THE FULL SEMLEX DATASET!
  
-    Args:
-        input_vid: Path to the input video file.
-        root: Root directory for output files.
-        fps: Frames per second for the output GIF (default 24).
-    Returns:
-        Path to the saved GIF file.
-    Raises:
-        ValueError: If the video file cannot be opened.
-    """
-    # get input video & path
-    input_vid = Path(input_vid)
-    gif_dir = root / "results" / "gifs"
-    gif_dir.mkdir(parents=True, exist_ok=True)
-    gif_path = gif_dir / (input_vid.stem + "_annotated.gif")
+#     Args:
+#         input_vid: Path to the input video file.
+#         root: Root directory for output files.
+#         fps: Frames per second for the output GIF (default 24).
+#     Returns:
+#         Path to the saved GIF file.
+#     Raises:
+#         ValueError: If the video file cannot be opened.
+#     """
+#     # get input video & path
+#     input_vid = Path(input_vid)
+#     gif_dir = root / "results" / "gifs"
+#     gif_dir.mkdir(parents=True, exist_ok=True)
+#     gif_path = gif_dir / (input_vid.stem + "_annotated.gif")
  
-    # set up pose/hands
-    mp_pose = mp.solutions.pose
-    mp_hands_model = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
+#     # set up pose/hands
+#     mp_pose = mp.solutions.pose
+#     mp_hands_model = mp.solutions.hands
+#     mp_drawing = mp.solutions.drawing_utils
+#     mp_drawing_styles = mp.solutions.drawing_styles
  
-    pose = mp_pose.Pose(
-        static_image_mode=False,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
-    )
-    hands = mp_hands_model.Hands(
-        static_image_mode=False,
-        max_num_hands=2,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
-    )
+#     pose = mp_pose.Pose(
+#         static_image_mode=False,
+#         min_detection_confidence=0.5,
+#         min_tracking_confidence=0.5,
+#     )
+#     hands = mp_hands_model.Hands(
+#         static_image_mode=False,
+#         max_num_hands=2,
+#         min_detection_confidence=0.5,
+#         min_tracking_confidence=0.5,
+#     )
  
-    # analayze/run video
-    cap = cv.VideoCapture(str(input_vid))
-    if not cap.isOpened():
-        raise ValueError(f"ERROR: could not open video {input_vid}.")
+#     # analayze/run video
+#     cap = cv.VideoCapture(str(input_vid))
+#     if not cap.isOpened():
+#         raise ValueError(f"ERROR: could not open video {input_vid}.")
  
-    gif_frames = []
+#     gif_frames = []
  
-    try:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+#     try:
+#         while cap.isOpened():
+#             ret, frame = cap.read()
+#             if not ret:
+#                 break
  
-            image_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+#             image_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
  
-            # get canvas to be same size as original
-            canvas = np.zeros_like(frame)
+#             # get canvas to be same size as original
+#             canvas = np.zeros_like(frame)
  
-            # draw pose landmarks onto canvas
-            pose_results = pose.process(image_rgb)
-            if pose_results.pose_landmarks:
-                mp_drawing.draw_landmarks(
-                    canvas,
-                    pose_results.pose_landmarks,
-                    mp_pose.POSE_CONNECTIONS,
-                    mp_drawing_styles.get_default_pose_landmarks_style(),
-                )
+#             # draw pose landmarks onto canvas
+#             pose_results = pose.process(image_rgb)
+#             if pose_results.pose_landmarks:
+#                 mp_drawing.draw_landmarks(
+#                     canvas,
+#                     pose_results.pose_landmarks,
+#                     mp_pose.POSE_CONNECTIONS,
+#                     mp_drawing_styles.get_default_pose_landmarks_style(),
+#                 )
  
-            # draw hand landmarks onto canvas
-            hand_results = hands.process(image_rgb)
-            if hand_results.multi_hand_landmarks:
-                for hand_landmarks in hand_results.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(
-                        canvas,
-                        hand_landmarks,
-                        mp_hands_model.HAND_CONNECTIONS,
-                        mp_drawing_styles.get_default_hand_landmarks_style(),
-                        mp_drawing_styles.get_default_hand_connections_style(),
-                    )
+#             # draw hand landmarks onto canvas
+#             hand_results = hands.process(image_rgb)
+#             if hand_results.multi_hand_landmarks:
+#                 for hand_landmarks in hand_results.multi_hand_landmarks:
+#                     mp_drawing.draw_landmarks(
+#                         canvas,
+#                         hand_landmarks,
+#                         mp_hands_model.HAND_CONNECTIONS,
+#                         mp_drawing_styles.get_default_hand_landmarks_style(),
+#                         mp_drawing_styles.get_default_hand_connections_style(),
+#                     )
  
-            # canvas is BGR, imageio expects RGB so gotta change it back
-            gif_frames.append(cv.cvtColor(canvas, cv.COLOR_BGR2RGB))
+#             # canvas is BGR, imageio expects RGB so gotta change it back
+#             gif_frames.append(cv.cvtColor(canvas, cv.COLOR_BGR2RGB))
  
-    finally:
-        cap.release()
-        pose.close()
-        hands.close()
+#     finally:
+#         cap.release()
+#         pose.close()
+#         hands.close()
  
-    imageio.mimsave(gif_path, gif_frames, fps=fps)
-    print(f"saved GIF to {gif_path}")
-    return gif_path
+#     imageio.mimsave(gif_path, gif_frames, fps=fps)
+#     print(f"saved GIF to {gif_path}")
+#     return gif_path
 
 
 def main():
+    parser = argparse.ArgumentParser(description="process videos from SEMLEX dataset.")
+
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="max number of videos to process, omit this argument to process all videos.",
+    )
+
+    args = parser.parse_args()
     root = Path(__file__).parent.parent
     folder_path = root / "asl_citation_forms"
+    video_paths = sorted(folder_path.glob("*.mp4"))
+    if args.limit is not None:
+        video_paths = video_paths[: args.limit]
+
+    print(f"processing {len(video_paths)} videos...")
  
-    for video_path in folder_path.glob("*.mp4"):
+    for video_path in video_paths:
         print(f"\nprocessing {video_path.name}")
         pose_path, hand_path = get_pose_and_hand_coords(video_path, root)
-        save_annotated_gif(video_path, root, fps=24)
+        # save_annotated_gif(video_path, root, fps=24)
 
         # double checks
         print(f"pose results: {pose_path}")
