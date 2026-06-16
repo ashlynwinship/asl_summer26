@@ -63,7 +63,7 @@ export default function Guide() {
 
   return (
     <main className="p-4">
-      <h1 className="font-head text-black text-3xl mb-5 pb-1 border-b border-black w-full">
+      <h1 className="text-4xl font-extrabold text-gray-900 text-center mt-3 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:bottom-[-8px] after:left-0">
         User Guide
       </h1>
 

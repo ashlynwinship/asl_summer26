@@ -104,18 +104,22 @@ function FileUploader() {
 
   return (
     <main>
-      <div className="flex-container">
-        <div
-          className="custom-box"
-          style={{ backgroundColor: "#f9fbfd", borderColor: "#282828" }}
-        >
+      <div className="flex flex-col lg:flex-row gap-5 justify-center items-stretch w-full px-4 mb-10">
+        {/* file upload section */}
+        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover:bg-brand-hover-bg hover:scale-[1.01]">
           {!file && (
-            <>
-              <label htmlFor="upload-input" className="custom-file-label">
-                <span className="upload-text">
-                  <div className="upload-icon">📁</div>
-                  Drag and drop file here or <strong>Browse</strong>
-                  <p className="upload-text">
+            <div className="w-full flex-1 flex flex-col justify-center">
+              <label
+                htmlFor="upload-input"
+                className="flex flex-col items-center justify-center w-full min-h-75 p-6 border-2 border-dashed border-brand-dark rounded-xl cursor-pointer bg-brand-light hover:bg-brand-alt-bg transition-colors"
+              >
+                <span className="flex flex-col items-center text-center text-sm text-gray-600 gap-2">
+                  <div className="text-4xl mb-2">📁</div>
+                  <span>
+                    Drag and drop file here or{" "}
+                    <strong className="text-brand font-bold">Browse</strong>
+                  </span>
+                  <p className="text-xs text-gray-400">
                     Accepted formats: MP4, MOV, WebM
                   </p>
                 </span>
@@ -125,35 +129,37 @@ function FileUploader() {
                 type="file"
                 accept="video/*"
                 onChange={handleFileChange}
-                className="hidden-file-input"
+                className="hidden"
               />
-              {videoURL && <video src={videoURL} width="400" controls />}
-            </>
+            </div>
           )}
-          <div style={{ marginTop: "10px", textAlign: "center" }}>
-            {file && (
-              <div>
-                <video src={videoURL} width={500} height={300} controls />
-                <strong>Uploaded Video:</strong> {file.name}
-              </div>
-            )}
-          </div>
-          <div>
-            <div className="button-container">
+          {file && (
+            <div className="mt-2.5 text-center flex-1 flex flex-col items-center justify-center">
+              <video
+                src={videoURL}
+                className="w-full max-w-125 rounded-lg border-2 border-neutral-dark object-cover aspect-video mb-3"
+                controls
+              />
+              <p className="text-gray-700 text-sm">
+                <strong className="text-brand">Uploaded Video:</strong>{" "}
+                {file.name}
+              </p>
+            </div>
+          )}
+          <div className="w-full mt-4">
+            <div className="flex flex-row gap-2.5 justify-center">
               <button
-                className="btn"
+                type="button"
+                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
                 disabled={!file || uploadStatus === "uploading"}
-                //onClick={() => {
-                //if (!file) return;
-                //setUploadStatus("success");
                 onClick={handleRedirect}
-                //</div>}}
               >
                 Upload
               </button>
 
               <button
-                className="btn"
+                type="button"
+                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
                 disabled={!file || uploadStatus === "uploading"}
                 onClick={() => {
                   setFile(null);
@@ -165,53 +171,60 @@ function FileUploader() {
                 Reset
               </button>
             </div>
-          </div>
-          <div>
-            {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}
+            {uploadStatus && (
+              <div className="text-center mt-2 text-sm text-gray-500 font-medium">
+                {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}
+              </div>
+            )}
           </div>
         </div>
-        <div
-          className="custom-box"
-          style={{ backgroundColor: "#f9fbfd", borderColor: "#282828" }}
-        >
-          <div className="upload-icon">📹</div>
-          <span className="upload-text">Record your video</span>
-          <p className="upload-text">
-            Your video will immediately start recording once you click the start
-            button. A playback of your recording will be displayed below once
-            the stop button is clicked.
-          </p>
+        {/* camera recording section */}
+        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover:bg-brand-hover-bg hover:scale-[1.01]">
+          <div className="w-full text-center flex flex-col items-center">
+            <div className="text-4xl mb-1">📹</div>
+            <span className="font-bold text-gray-700 text-sm">
+              Record your video
+            </span>
+            <p className="text-xs text-gray-500 max-w-md mt-1 leading-relaxed">
+              Your video will immediately start recording once you click the
+              start button. A playback of your recording will be displayed below
+              once the stop button is clicked.
+            </p>
+          </div>
 
-          {!recordedVideo && (
-            <video
-              ref={liveVideoRef}
-              id="preview"
-              className="video-preview"
-              autoPlay
-              muted
-              playsInline
-            />
-          )}
-          {recordedVideo && (
-            <video
-              id="recording"
-              src={recordedVideo || undefined}
-              controls
-              style={{ display: recordedVideo ? "block" : "none" }}
-            />
-          )}
-          <div className="button-container">
+          <div className="w-full flex-1 flex items-center justify-center my-4">
+            {!recordedVideo ? (
+              <video
+                ref={liveVideoRef}
+                id="preview"
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                autoPlay
+                muted
+                playsInline
+              />
+            ) : (
+              <video
+                key={recordedVideo}
+                id="recording"
+                src={recordedVideo}
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                controls
+              />
+            )}
+          </div>
+
+          <div className="w-full flex flex-col gap-3">
             <button
-              id="startButton"
-              className="btn"
+              type="button"
+              className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
               onClick={handleCameraAndStart}
-              disabled={recordingStatus === "recording"}
+              disabled={recordingStatus === "recording" || !!recordedVideo}
             >
               Start Recording
             </button>
             <button
-              id="stopButton"
-              className="btn"
+              type="button"
+              className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
               disabled={recordingStatus !== "recording"}
               onClick={() => {
                 stopRecording();
@@ -226,10 +239,10 @@ function FileUploader() {
               Stop Recording
             </button>
           </div>
-          <div className="button-container">
+          <div className="w-full flex flex-row gap-2 justify-center flex-wrap border-t border-gray-200 pt-4">
             <button
               id="download"
-              className="btn"
+              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               disabled={!recordedVideo}
               onClick={() => {
                 if (recordedVideo) {
@@ -241,10 +254,11 @@ function FileUploader() {
             </button>
             <button
               id="retakeButton"
-              className="btn"
+              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               disabled={!recordedVideo}
               onClick={() => {
                 setRecordedVideo(null);
+                setRawRecordedBlob(null);
                 setRecordingStatus(null);
                 if (streamRef.current) {
                   streamRef.current
@@ -258,7 +272,7 @@ function FileUploader() {
             </button>
             <button
               id="submitButton"
-              className="btn"
+              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               disabled={!rawRecordedBlob}
               onClick={() => {
                 if (streamRef.current) {
@@ -288,14 +302,19 @@ function FileUploader() {
 
 export default function Home() {
   return (
-    <main>
-      <h1 className="longer-underline">Home</h1>
-
-      <div className="home-ending" style={{ textAlign: "center" }}>
-        <p>
+    <main className="min-h-screen py-10 bg-gray-50">
+      <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:bottom-[-8px] after:left-0">
+        Home
+      </h1>
+      <div className="text-center max-w-2xl mx-auto mt-6 mb-10 px-4 text-gray-600">
+        <p className="text-base sm:text-lg leading-relaxed">
           <strong>
-            Record <u>or</u> upload a video here.
-          </strong>
+            Record{" "}
+            <span className="underline decoration-brand-darker decoration-2">
+              or
+            </span>{" "}
+            upload a video here.
+          </strong>{" "}
           Your video will be stored temporarily, and you will be redirected to
           the results page once the upload is processed.
         </p>
