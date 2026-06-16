@@ -124,186 +124,210 @@ export default function Results() {
 
   return (
     <main>
-      <h1 className="longer-underline">Results</h1>
-      <div
-        className="flex-container"
-        style={{ justifyContent: "space-evenly" }}
-      >
-        <div
-          className="left-box custom-box"
-          style={{ backgroundColor: "#f9fbfd", border: "2px solid grey" }}
-        >
-          <div
-            className="user-video"
-            style={{ width: "500px", margin: "0 auto", textAlign: "center" }}
-          >
-            <h2>Your Uploaded Video</h2>
-            <video src={videoURL} width={500} height={300} controls />
-            <button
-              disabled={!videoURL}
-              id="download"
-              className="btn"
-              onClick={handleDownload}
-            >
-              Download Video
-            </button>
-            {/* //TEMPORARY button for downloading mediapipe analysis file */}
-            {/* delete to the end of "Download Pose Results File" once backend implemented */}
-            <br></br>
-            {!isProcessing && (
+      <h1 className="text-4xl font-extrabold text-neutral-darkest text-center mt-5 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
+        Results
+      </h1>
+      {/* side-by-side layout */}
+      <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch w-full mb-12">
+        {/* user video */}
+        <div className="flex flex-col items-center justify-between w-full lg:w-1/2 p-6 border-2 border-neutral-border rounded-xl bg-brand-light shadow-custom">
+          <div className="w-full text-center flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-neutral-darkest mb-4">
+              Your Uploaded Video
+            </h2>
+            <div className="w-full max-w-md aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border mb-4">
+              <video
+                src={videoURL}
+                className="w-full h-full object-cover"
+                controls
+              />
+            </div>
+            <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
               <button
-                disabled={isProcessing || !poseVectors}
-                id="downloadResults"
-                className="btn"
-                onClick={handleResultsDownload}
+                disabled={!videoURL}
+                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md transition-colors hover:bg-brand-hover disabled:bg-neutral-border disabled:text-gray-400 disabled:cursor-not-allowed"
+                onClick={handleDownload}
               >
-                Download Pose Results JSON File
+                Download Video
               </button>
-            )}
-            {isProcessing && <p>Loading Results File...</p>}
-            <SyncLoader color="#4a90e2" loading={isProcessing}></SyncLoader>
+              {/* //TEMPORARY button for downloading mediapipe analysis file */}
+              {/* delete to the end of "Download Pose Results File" once backend implemented */}
+              <br></br>
+              {!isProcessing && poseVectors && (
+                <button
+                  onClick={handleResultsDownload}
+                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                >
+                  Download Pose Results JSON File
+                </button>
+              )}
+              {isProcessing && (
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <p className="text-sm text-gray-500 font-medium animate-pulse">
+                    Loading Results File...
+                  </p>
+                  <SyncLoader
+                    color="#4a90e2"
+                    size={10}
+                    loading={isProcessing}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-          <div
-            className="match-details"
-            style={{
-              marginTop: "20px",
-              textAlign: "left",
-              alignSelf: "stretch",
-            }}
-          >
-            <p
-              className="longer-underline"
-              style={{
-                fontWeight: "bold",
-                fontSize: "23px",
-                marginBottom: "0",
-              }}
-            >
+          {/* user features */}
+          <div className="w-full mt-8 pt-6 border-t border-neutral-border text-left">
+            <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
             </p>
-            <p>Handshape (Confidence: XX%):</p>
-            <p>Movement (Confidence: XX%):</p>
-            <p>Location (Confidence: XX%):</p>
-            <p>Palm Orientation (Confidence: XX%):</p>
+            <div className="space-y-1.5 text-neutral-dark text-sm sm:text-base">
+              <p>Handshape (Confidence: XX%):</p>
+              <p>Movement (Confidence: XX%):</p>
+              <p>Location (Confidence: XX%):</p>
+              <p>Palm Orientation (Confidence: XX%):</p>
+            </div>
           </div>
         </div>
 
-        <div
-          className="right-box custom-box"
-          style={{ backgroundColor: "#f9fbfd", border: "2px solid grey" }}
-        >
-          <h2 style={{ textAlign: "center" }}>Top Three Matches</h2>
-          <div className="slideshow-container">
-            <div className="slideshow-stage">
-              <div className="slides" style={{ display: "block" }}>
-                <video
-                  key={currentMatch.id}
-                  src={currentMatch.src}
-                  width={500}
-                  height={300}
-                  controls
-                />
-              </div>
-              <a className="prev" onClick={prevSlide}>
+        {/* top 3 matches */}
+        <div className="flex flex-col items-center justify-between w-full lg:w-1/2 p-6 border-2 border-neutral-border rounded-xl bg-brand-light shadow-custom">
+          <div className="w-full text-center">
+            <h2 className="text-2xl font-bold text-neutral-darkest mb-4">
+              Top Three Matches
+            </h2>
+            {/* slideshow */}
+            <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border group mb-4">
+              <video
+                key={currentMatch.id}
+                src={currentMatch.src}
+                className="w-full h-full object-cover"
+                controls
+              />
+              <button
+                onClick={prevSlide}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/70 w-9 h-9 flex items-center justify-center rounded-full text-xl font-bold transition-all cursor-pointer select-none"
+              >
                 &#10094;
-              </a>
-              <a className="next" onClick={nextSlide}>
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/70 w-9 h-9 flex items-center justify-center rounded-full text-xl font-bold transition-all cursor-pointer select-none"
+              >
                 &#10095;
-              </a>
-              <div className="caption-container">
-                <p id="caption">{currentMatch.label}</p>
+              </button>
+              <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
+                <p className="text-white text-sm font-medium">
+                  {currentMatch.label}
+                </p>
               </div>
             </div>
-            <div
-              className="row"
-              style={{ display: "flex", justifyContent: "center" }}
-            >
+            {/* caption */}
+            <div className="flex flex-row gap-3 justify-center max-w-xs mx-auto">
               {topMatches.map((match, idx) => (
-                <div className="column" key={match.id}>
+                <button
+                  key={match.id}
+                  onClick={() => setActiveIdx(idx)}
+                  className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all ${
+                    idx === activeIdx
+                      ? "border-brand scale-105 opacity-100 ring-2 ring-brand-hover-bg"
+                      : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
                   <img
-                    className={`demo ${idx === activeIdx ? "active" : ""}`}
                     src={match.thumbnail}
-                    style={{ width: "100%" }}
-                    onClick={() => setActiveIdx(idx)}
+                    className="w-full h-full object-cover"
                     alt={match.label}
                   />
-                </div>
+                </button>
               ))}
             </div>
-            <div className="match-details" style={{ marginTop: 20 }}>
-              <p
-                className="longer-underline"
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "23px",
-                  marginBottom: "0",
-                }}
-              >
-                Features
-              </p>
-              <p>Handshape (Confidence: {currentMatch.features.handshape}):</p>
-              <p>Movement (Confidence: {currentMatch.features.movement}):</p>
-              <p>Location (Confidence: {currentMatch.features.location}):</p>
+          </div>
+          {/* match details */}
+          <div className="w-full mt-6 pt-6 border-t border-neutral-border text-left">
+            <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
+              Features
+            </p>
+            <div className="space-y-1.5 text-neutral-dark text-sm sm:text-base">
               <p>
-                Palm Orientation (Confidence: {currentMatch.features.palm}):
+                Handshape (Confidence:{" "}
+                <span className="text-brand-dark font-bold">
+                  {currentMatch.features.handshape}
+                </span>
+                ):
+              </p>
+              <p>
+                Movement (Confidence:{" "}
+                <span className="text-brand-dark font-bold">
+                  {currentMatch.features.movement}
+                </span>
+                ):
+              </p>
+              <p>
+                Location (Confidence:{" "}
+                <span className="text-brand-dark font-bold">
+                  {currentMatch.features.location}
+                </span>
+                ):
+              </p>
+              <p>
+                Palm Orientation (Confidence:{" "}
+                <span className="text-brand-dark font-bold">
+                  {currentMatch.features.palm}
+                </span>
+                ):
               </p>
             </div>
           </div>
         </div>
       </div>
-      <div className="column-content" style={{ margin: "20px 60px" }}>
-        <h2 style={{ textAlign: "center" }}>Other Potential Matches</h2>
-        <div
-          className="welcome-content"
-          style={{ backgroundColor: "#e7e6e6", padding: "3px" }}
-        >
-          <p style={{ textAlign: "center" }}>
+      {/* other matches */}
+      <div className="w-full border-t border-neutral-border pt-8 mt-4">
+        <h2 className="text-3xl font-bold text-neutral-darkest text-center mb-4">
+          Other Potential Matches
+        </h2>
+        <div className="w-full bg-brand-alt-bg text-neutral-dark p-3 rounded-lg border border-neutral-border mb-6 text-center">
+          <p className="text-sm font-medium">
             Click each button to see the video that matches with the
             corresponding sign.
           </p>
         </div>
-        <div className="columns">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((item) => (
-            <div key={item} className="column-content panel">
-              <div
-                style={{
-                  justifyContent: "center",
-                  alignItems: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
+            <div
+              key={item}
+              className="flex flex-col items-center p-5 bg-neutral-panel rounded-xl border border-neutral-border shadow-sm"
+            >
+              <div className="w-full flex flex-col items-center">
                 {!isVisible[item] && (
                   <button
-                    className="matches-button"
+                    className="font-button w-full max-w-70 aspect-video bg-brand text-white text-lg font-semibold rounded-lg shadow hover:bg-brand-hover active:scale-95 transition-all uppercase tracking-wider cursor-pointer"
                     onClick={() => setIsVisible({ ...isVisible, [item]: true })}
                   >
-                    match
+                    View Match {item}
                   </button>
                 )}
                 {isVisible[item] && (
-                  <video
-                    key={currentMatch.id}
-                    src={currentMatch.src}
-                    width={390}
-                    height={300}
-                    controls
-                  ></video>
+                  <div className="w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border">
+                    <video
+                      key={currentMatch.id}
+                      src={currentMatch.src}
+                      className="w-full h-full object-cover"
+                      controls
+                    />
+                  </div>
                 )}
-                <div className="features-box">
+                <div className="w-full mt-4 p-4 bg-white rounded-lg border border-neutral-border text-xs sm:text-sm text-neutral-dark space-y-1">
                   <p>
                     Handshape (Confidence: {currentMatch.features.handshape}):
                   </p>
                   <p>
-                    Movement (Confidence: {currentMatch.features.handshape}):
+                    Movement (Confidence: {currentMatch.features.movement}):
                   </p>
                   <p>
-                    Location (Confidence: {currentMatch.features.handshape}):
+                    Location (Confidence: {currentMatch.features.location}):
                   </p>
                   <p>
-                    Palm Orientation (Confidence:{" "}
-                    {currentMatch.features.handshape}
-                    ):
+                    Palm Orientation (Confidence: {currentMatch.features.palm}):
                   </p>
                 </div>
               </div>
