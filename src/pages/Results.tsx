@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
 import { extractPoseData } from "../utils/userPoseData";
+import { SyncLoader } from "react-spinners";
 
 interface MatchVideo {
   id: number;
@@ -149,14 +150,18 @@ export default function Results() {
             {/* //TEMPORARY button for downloading mediapipe analysis file */}
             {/* delete to the end of "Download Pose Results File" once backend implemented */}
             <br></br>
-            <button
-              disabled={isProcessing || !poseVectors}
-              id="downloadResults"
-              className="btn"
-              onClick={handleResultsDownload}
-            >
-              Download Pose Results File
-            </button>
+            {!isProcessing && (
+              <button
+                disabled={isProcessing || !poseVectors}
+                id="downloadResults"
+                className="btn"
+                onClick={handleResultsDownload}
+              >
+                Download Pose Results File
+              </button>
+            )}
+            {isProcessing && <p>Loading JSON File...</p>}
+            <SyncLoader color="#4a90e2" loading={isProcessing}></SyncLoader>
           </div>
           <div
             className="match-details"

@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
+// import { SyncLoader } from "react-spinners";
+// above will be implemented on home screen when server available
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
