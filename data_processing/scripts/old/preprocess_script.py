@@ -16,11 +16,10 @@ NUM_HAND_LANDMARKS = 21
 
 
 def get_pose_and_hand_coords(input_vid: Path, root: Path) -> tuple[Path, Path]:
-    """Extracts pose and hand landmark coordinates from a video using SSIM keyframe
-    selection and writes them to separate files.
+    """Extracts pose and hand landmark coordinates from a video and writes them to separate files.
 
     Will output Poses in (frame_idx, landmark_id, x, y, z) format, 
-    and Hands in (frame_idx, hand_idx, landmark_id, x, y, z) format; hands are 0-padded if no hands.
+    and Hands in
 
     Args:
         input_vid: Path to the input video file.
@@ -224,7 +223,7 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).parent.parent
     folder_path = root / "asl_citation_forms"
-    video_paths = sorted(folder_path.glob("*.mp4"))
+    video_paths = sorted(folder_path.glob("*.webm"))  # can change to .mp4 as needed for local use, but .webm for SEMLEX data
     if args.limit is not None:
         video_paths = video_paths[: args.limit]
 
