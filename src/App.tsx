@@ -27,7 +27,7 @@ function Navigation() {
   }, [prevScrollPos]);
 
   useEffect(() => {
-    const handleMouseMove = (event: { clientY: number }) => {
+    const handleMouseMove = (event: MouseEvent) => {
       if (event.clientY <= 50) {
         setVisible(true);
       } else {
@@ -41,11 +41,11 @@ function Navigation() {
   return (
     <nav
       className={`sticky left-0 right-0 bg-neutral-dark transition-[top] duration-300 z-1000 ${
-        visible ? "top-0" : "top-12.5"
+        visible ? "top-0" : "-top-12.5"
       }`}
     >
-      <div className="list-none m-0 py-2.5 px-0 flex justify-start items-center bg-neutral-dark font-head">
-        <Link to="/" className="nav-title">
+      <div className="list-none py-3.25 flex justify-between items-center bg-neutral-dark font-head">
+        <Link to="/" className="text-white no-underline px-3 text-2xl">
           ASL Live Dictionary
         </Link>
         <div className="block">
@@ -117,7 +117,7 @@ function Header({ collapsed, onToggle }: HeaderProps) {
   return (
     <header
       className={`bg-neutral-panel text-center text-black relative transition-all duration-250 ease-in-out whitespace-pre-line ${
-        collapsed ? "py-2 px-5 min-h-13" : "px-5 pt-5 pb-16"
+        collapsed ? "py-2 px-5 min-h-20" : "px-5 pt-10 pb-16"
       }`}
     >
       <button

@@ -37,7 +37,7 @@ export default function Guide() {
     },
     {
       id: "data",
-      label: "How is my Data Being Used?",
+      label: "Is My Data Being Used?",
       content:
         "Any videos you upload will only be stored on your computer locally. " +
         "We do not use your likeness or your video directly, and what you upload is only used for " +
