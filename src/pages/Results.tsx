@@ -233,7 +233,7 @@ export default function Results() {
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {item.name}
+                        {item.name}: ___
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
