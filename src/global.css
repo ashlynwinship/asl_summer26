@@ -1,8 +1,6 @@
 @import url("https://fonts.googleapis.com/css?family=Google+Sans|Lato|DM+Sans|Merriweather|Playfair+Display&display=swap");
 @import "tailwindcss";
 @plugin "flyonui";
-/* @import "./node_modules/flyonui/variants.css";
-@source "./node_modules/flyonui/dist/index.js"; */
 
 @theme {
   --color-brand-light: #f9fbfd;
