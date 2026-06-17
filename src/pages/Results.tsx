@@ -133,6 +133,22 @@ export default function Results() {
     { name: "Palm Orientation", value: currentMatch.features.palm },
   ];
 
+  const [enabledFeatures, setEnabledFeatures] = useState<
+    Record<string, boolean>
+  >({
+    Handshape: true,
+    Movement: true,
+    Location: true,
+    "Palm Orientation": true,
+  });
+
+  const handleToggleFeature = (name: string) => {
+    setEnabledFeatures((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
+  };
+
   return (
     <main>
       <h1 className="text-4xl font-extrabold text-neutral-darkest text-center mt-5 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
@@ -193,33 +209,59 @@ export default function Results() {
             </p>
             <div className="flex flex-col gap-3 w-full">
               {featuresList.map((item) => {
+                const isEnabled = enabledFeatures[item.name];
                 const numericValue = parsePercent("50");
                 return (
                   <div
                     key={item.name}
-                    className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
+                    className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 p-3 rounded-lg border transition-all duration-300 ease-in-out ${
+                      isEnabled
+                        ? "bg-white/50 border-neutral-border/40 opacity-100"
+                        : "bg-neutral-panel/40 border-neutral-border/20 opacity-40 select-none"
+                    }`}
                   >
-                    <span className="text-neutral-dark text-sm sm:text-base font-medium">
-                      {item.name}: ___
-                    </span>
+                    <div className="sm:col-span-2 flex items-center justify-start gap-3 w-full">
+                      <input
+                        type="checkbox"
+                        className="switch cursor-pointer"
+                        checked={isEnabled}
+                        onChange={() => handleToggleFeature(item.name)}
+                        aria-label={`Toggle ${item.name}`}
+                      />
+                      <span
+                        className={`text-sm sm:text-base font-medium transition-colors duration-300 ${
+                          isEnabled ? "text-neutral-dark" : "text-gray-400"
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+                    </div>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
                       <div className="w-full max-w-48 md:w-60">
                         <div
-                          className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
+                          className={`h-2.5 rounded-full w-full overflow-hidden transition-colors duration-300 ${
+                            isEnabled ? "bg-gray-200" : "bg-gray-300"
+                          }`}
                           role="progressbar"
-                          aria-label={`Progress`}
+                          aria-label={`${item.name}Progress`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
                         >
                           <div
-                            className="progress-bar bg-brand h-full rounded-full transition-all duration-500 ease-out"
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${
+                              isEnabled ? "bg-brand" : "bg-gray-400"
+                            }`}
                             style={{ width: `${numericValue}%` }}
                           />
                         </div>
                       </div>
-                      <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
-                        50
+                      <span
+                        className={`text-sm sm:text-base font-semibold sm:text-right transition-colors duration-300 whitespace-nowrap ${
+                          isEnabled ? "text-neutral-dark" : "text-gray-400"
+                        }`}
+                      >
+                        {numericValue}
                       </span>
                     </div>
                   </div>
