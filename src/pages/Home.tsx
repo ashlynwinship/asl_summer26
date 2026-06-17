@@ -197,7 +197,7 @@ function FileUploader() {
               <video
                 ref={liveVideoRef}
                 id="preview"
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black -scale-x-100"
                 autoPlay
                 muted
                 playsInline
@@ -207,7 +207,7 @@ function FileUploader() {
                 key={recordedVideo}
                 id="recording"
                 src={recordedVideo}
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black -scale-x-100"
                 controls
               />
             )}
