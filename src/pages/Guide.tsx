@@ -108,7 +108,7 @@ export default function Guide() {
                   className="rounded-lg bg-black"
                 />
                 <div className="text-center bg-neutral-dark text-white p-1 text-sm rounded-b-lg w-full">
-                  <p className="m-0 leading-normal">Demo Video (Spoken)</p>
+                  <p className="m-2 leading-normal">Demo Video (Spoken)</p>
                 </div>
               </div>
             )}
