@@ -9,6 +9,13 @@ import cv2 as cv
 import pandas as pd
 import mediapipe as mp
 from pathlib import Path
+from rich.live import Live
+from rich.console import Console, Group
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn, MofNCompleteColumn
+
+
+# setting up terminal output bars
+console = Console(highlight=False)
 
 
 # reducing the number of hardcoded values
@@ -16,7 +23,8 @@ NUM_POSE_LANDMARKS = 33
 NUM_HAND_LANDMARKS = 21
 
 
-def get_pose_and_hand_coords(input_vid: Path, pose_directory_path: Path, hand_directory_path: Path) -> tuple[Path, Path]:
+def get_pose_and_hand_coords(input_vid: Path, pose_directory_path: Path, hand_directory_path: Path, progress=None,
+    frame_task=None) -> tuple[Path, Path, int, int]:
     """Gets Pose and Hand landmark coordinates from a video and writes them to a separate file.
 
     Outputs Poses in (frame_idx, landmark_id, x, y, z) format, and Hands in (frame_idx, hand_idx, landmark_id, x, y, z) format; 
@@ -26,8 +34,10 @@ def get_pose_and_hand_coords(input_vid: Path, pose_directory_path: Path, hand_di
         input_vid: Path to the input video file.
         pose_directory_path: Path to the directory to write the Pose results to.
         hand_directory_path: Path to the directory to write the Hand results to.
+        progress: Rich Progress instance for live updates (optional).
+        frame_task: Rich task ID for the frame subtask (optional).
     Returns:
-       Tuple of (pose_results_path, hand_results_path). 
+       Tuple of (pose_results_path, hand_results_path, total_frames, flagged_frames).
     Raises:
         ValueError: If the video file cannot be opened.
     """
@@ -103,20 +113,24 @@ def get_pose_and_hand_coords(input_vid: Path, pose_directory_path: Path, hand_di
                             cx, cy = int(lm.x * w), int(lm.y * h)
                             hand_file.write(f"{frame_index}, {hand_index}, {id}, {cx}, {cy}, {lm.z}\n")
 
-                        # if only one hand detected, zero-pad the second slot
-                        if len(hand_results.multi_hand_landmarks) == 1:
-                            for id in range(NUM_HAND_LANDMARKS):
-                                hand_file.write(f"{frame_index}, 1, {id}, 0, 0, 0.0\n")
+                    # if only one hand detected, zero-pad the second slot
+                    if len(hand_results.multi_hand_landmarks) == 1:
+                        for id in range(NUM_HAND_LANDMARKS):
+                            hand_file.write(f"{frame_index}, 1, {id}, 0, 0, 0.0\n")
+
+                # update frame subtask with progress updates
+                if progress and frame_task is not None:
+                    progress.update(
+                        frame_task,
+                        description=f"[dim]frames: {total_frames} | hands detected: {total_frames - flagged_frames} | hands missing: {flagged_frames}[/dim]"
+                    )
 
     finally:
         cap.release()
         pose.close()
         hands.close()
 
-    # check flagged frames amount
-    print(f"{input_vid.name}: {total_frames} frames processed, {flagged_frames} flagged for missing hands.")
-
-    return pose_result_file_path, hand_result_file_path
+    return pose_result_file_path, hand_result_file_path, total_frames, flagged_frames
 
 
 def main():
@@ -159,31 +173,50 @@ def main():
         video_paths = video_paths[: args.limit]
 
     # start the process of getting coordinates
-    print(f"split: {args.split} | processing {len(video_paths)} video(s)...")
+    console.print(f"\n[bold cyan]split:[/bold cyan] {args.split} | [bold cyan]videos to process:[/bold cyan] {len(video_paths)}\n")
 
-    for video_path in video_paths:
-        # swap in video label
-        video_id = video_path.stem
-        label = id_to_label.get(video_id, video_id)
+    video_progress = Progress(
+        TextColumn("[bold cyan]{task.description}"),
+        BarColumn(
+            bar_width=40,
+            style="#3d3d3d",
+            complete_style="#B57EDC",
+            finished_style="green",
+        ),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+    )
+    frame_progress = Progress(
+        SpinnerColumn(),
+        TextColumn("{task.description}"),
+    )
 
-        print(f"\n{'─' * 30} processing: {label} ({video_id}) {'─' * 30}\n")
-        pose_path, hand_path = get_pose_and_hand_coords(video_path, pose_dir, hand_dir)
+    with Live(Group(video_progress, frame_progress)):
+        video_task = video_progress.add_task("processing videos...", total=len(video_paths), completed=0)
+        frame_task = frame_progress.add_task("[dim]frames...[/dim]", total=None)
 
-        # manual double checking as videos are processed; can comment out if not needed
-        print(f"pose results: {pose_path}")
-        print(f"hand results: {hand_path}")
+        total_flagged = 0
+        total_frames = 0
 
-        with open(pose_path) as f:
-            print("\npose (first 3 lines)")
-            for _ in range(3):
-                print(f.readline().strip())
+        for video_path in video_paths:
+            video_id = video_path.stem
+            label = id_to_label.get(video_id, video_id)  # swap in video label for readability
 
-        with open(hand_path) as f:
-            print("\nhand (first 3 lines)")
-            for _ in range(3):
-                print(f.readline().strip())
+            video_progress.advance(video_task)
+            video_progress.update(video_task, description=f"processing: [#B57EDC]{label}[/#B57EDC] ([dim]{video_id}[/dim])")
+            frame_progress.reset(frame_task, description="[dim]frames processed: 0[/dim]")
 
-        print(f"\n{'─' * 30} done: {label} ({video_id}) {'─' * 30}\n")
+            pose_path, hand_path, frames, flagged = get_pose_and_hand_coords(
+                video_path, pose_dir, hand_dir, frame_progress, frame_task)
+
+            total_frames += frames
+            total_flagged += flagged
+
+    console.print("\n[bold green]ALL VIDEOS PROCESSED.[/bold green]", justify="center")
+    console.print(f"[dim]pose results saved to[/dim] {pose_dir}", justify="center")
+    console.print(f"[dim]hand results saved to[/dim] {hand_dir}", justify="center")
+    console.print(f"\n[green]total frames processed:[/green] {total_frames}", justify="center")
+    console.print(f"[red]total frames flagged (missing hands):[/red] {total_flagged} ({100*total_flagged/total_frames:.1f}%)", justify="center")
 
 
 if __name__ == "__main__":
