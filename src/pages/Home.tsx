@@ -106,7 +106,7 @@ function FileUploader() {
     <main>
       <div className="flex flex-col lg:flex-row gap-5 justify-center items-stretch w-full px-4 mb-10">
         {/* file upload section */}
-        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover:bg-brand-hover-bg hover:scale-[1.01]">
+        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover hover:scale-[1.01]">
           {!file && (
             <div className="w-full flex-1 flex flex-col justify-center">
               <label
@@ -179,7 +179,7 @@ function FileUploader() {
           </div>
         </div>
         {/* camera recording section */}
-        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover:bg-brand-hover-bg hover:scale-[1.01]">
+        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover hover:scale-[1.01]">
           <div className="w-full text-center flex flex-col items-center">
             <div className="text-4xl mb-1">📹</div>
             <span className="font-bold text-gray-700 text-sm">
@@ -254,7 +254,7 @@ function FileUploader() {
             </button>
             <button
               id="retakeButton"
-              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
               disabled={!recordedVideo}
               onClick={() => {
                 setRecordedVideo(null);
@@ -272,7 +272,7 @@ function FileUploader() {
             </button>
             <button
               id="submitButton"
-              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
               disabled={!rawRecordedBlob}
               onClick={() => {
                 if (streamRef.current) {
