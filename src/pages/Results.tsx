@@ -122,6 +122,17 @@ export default function Results() {
     saveAs(blob, "pose_coordinates_" + Date().toString() + ".json");
   };
 
+  const parsePercent = (valString: string): number => {
+    return parseInt(valString, 10) || 0;
+  };
+
+  const featuresList = [
+    { name: "Handshape", value: currentMatch.features.handshape },
+    { name: "Movement", value: currentMatch.features.movement },
+    { name: "Location", value: currentMatch.features.location },
+    { name: "Palm Orientation", value: currentMatch.features.palm },
+  ];
+
   return (
     <main>
       <h1 className="text-4xl font-extrabold text-neutral-darkest text-center mt-5 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
@@ -180,11 +191,40 @@ export default function Results() {
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
             </p>
-            <div className="space-y-1.5 text-neutral-dark text-sm sm:text-base">
-              <p>Handshape (Confidence: XX%):</p>
-              <p>Movement (Confidence: XX%):</p>
-              <p>Location (Confidence: XX%):</p>
-              <p>Palm Orientation (Confidence: XX%):</p>
+            <div className="flex flex-col gap-3 w-full">
+              {featuresList.map((item) => {
+                const numericValue = parsePercent("50");
+                return (
+                  <div
+                    key={item.name}
+                    className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
+                  >
+                    <span className="text-neutral-dark text-sm sm:text-base font-medium">
+                      {item.name}: ___
+                    </span>
+                    <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
+                      <div className="w-full max-w-48 md:w-60">
+                        <div
+                          className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
+                          role="progressbar"
+                          aria-label={`Progress`}
+                          aria-valuenow={numericValue}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className="progress-bar bg-brand h-full rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${numericValue}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
+                        50
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -247,35 +287,40 @@ export default function Results() {
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
             </p>
-            <div className="space-y-1.5 text-neutral-dark text-sm sm:text-base">
-              <p>
-                Handshape (Confidence:{" "}
-                <span className="text-brand-dark font-bold">
-                  {currentMatch.features.handshape}
-                </span>
-                ):
-              </p>
-              <p>
-                Movement (Confidence:{" "}
-                <span className="text-brand-dark font-bold">
-                  {currentMatch.features.movement}
-                </span>
-                ):
-              </p>
-              <p>
-                Location (Confidence:{" "}
-                <span className="text-brand-dark font-bold">
-                  {currentMatch.features.location}
-                </span>
-                ):
-              </p>
-              <p>
-                Palm Orientation (Confidence:{" "}
-                <span className="text-brand-dark font-bold">
-                  {currentMatch.features.palm}
-                </span>
-                ):
-              </p>
+            <div className="flex flex-col gap-3 w-full">
+              {featuresList.map((item) => {
+                const numericValue = parsePercent(item.value);
+                return (
+                  <div
+                    key={item.name}
+                    className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
+                  >
+                    <span className="text-neutral-dark text-sm sm:text-base font-medium">
+                      {item.name}: ___
+                    </span>
+                    <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
+                      <div className="w-full max-w-48 md:w-60">
+                        <div
+                          className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
+                          role="progressbar"
+                          aria-label={`${item.name} Progress`}
+                          aria-valuenow={numericValue}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className="progress-bar bg-brand h-full rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${numericValue}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
+                        {item.value}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
