@@ -261,13 +261,16 @@ export default function Results() {
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {numericValue}
+                        {"50%"}
                       </span>
                     </div>
                   </div>
                 );
               })}
             </div>
+            <button className="bg-brand hover:bg-brand-hover text-white font-semibold py-2 px-4 mt-5 rounded-lg transition-colors duration-300">
+              Recalculate
+            </button>
           </div>
         </div>
 
