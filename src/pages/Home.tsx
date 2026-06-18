@@ -197,7 +197,7 @@ function FileUploader() {
               <video
                 ref={liveVideoRef}
                 id="preview"
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black -scale-x-100"
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
                 autoPlay
                 muted
                 playsInline
@@ -207,8 +207,7 @@ function FileUploader() {
                 key={recordedVideo}
                 id="recording"
                 src={recordedVideo}
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black [&::-webkit-media-controls-panel]:-scale-x-100"
-                style={{ transform: "scaleX(-1)" }}
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
                 controls
               />
             )}
