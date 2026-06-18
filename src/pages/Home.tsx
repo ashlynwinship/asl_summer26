@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useState, ChangeEvent, useRef } from "react";
+import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
 // import { SyncLoader } from "react-spinners";
 // above will be implemented on home screen when server available
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
+type RecordingStatus = null | "recording" | "stopped" | "counting";
 
 function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -31,22 +32,34 @@ function FileUploader() {
 
   // Video recorder
   const [permission, setPermission] = useState<boolean>(false);
-  const [recordingStatus, setRecordingStatus] = useState<
-    null | "recording" | "stopped"
-  >(null);
+  const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>(null);
+  const [countdown, setCountdown] = useState(3);
   const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
   const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
-
   const [rawRecordedBlob, setRawRecordedBlob] = useState<Blob | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout>;
+    if (recordingStatus === "counting") {
+      if (countdown > 0) {
+        timerId = setTimeout(() => {
+          setCountdown((prev) => prev - 1);
+        }, 1000);
+      } else {
+        startRecording();
+      }
+    }
+    return () => clearTimeout(timerId);
+  }, [recordingStatus, countdown]);
+
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert("The MediaRecorder API is not supported in this browser.");
-      return;
+      return null;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -58,9 +71,11 @@ function FileUploader() {
       if (liveVideoRef.current) {
         liveVideoRef.current.srcObject = stream;
       }
+      return stream;
     } catch (err) {
       console.error("Permission denied or error accessing media devices:", err);
       alert("Could not access camera or microphone.");
+      return null;
     }
   };
 
@@ -96,10 +111,14 @@ function FileUploader() {
   };
 
   const handleCameraAndStart = async () => {
+    let currentStream = streamRef.current;
     if (!permission) {
-      await getCameraPermission();
+      currentStream = await getCameraPermission();
     }
-    startRecording();
+    if (currentStream) {
+      setCountdown(3);
+      setRecordingStatus("counting");
+    }
   };
 
   return (
@@ -186,22 +205,31 @@ function FileUploader() {
               Record your video
             </span>
             <p className="text-xs text-gray-500 max-w-md mt-1 leading-relaxed">
-              Your video will immediately start recording once you click the
-              start button. A playback of your recording will be displayed below
-              once the stop button is clicked.
+              Your video will start recording after a 3-second countdown. A
+              playback of your recording will be displayed below once the stop
+              button is clicked.
             </p>
           </div>
 
           <div className="w-full flex-1 flex items-center justify-center my-4">
             {!recordedVideo ? (
-              <video
-                ref={liveVideoRef}
-                id="preview"
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
-                autoPlay
-                muted
-                playsInline
-              />
+              <div className="relative w-full max-w-140 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black">
+                <video
+                  ref={liveVideoRef}
+                  id="preview"
+                  className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                  autoPlay
+                  muted
+                  playsInline
+                />
+                {recordingStatus === "counting" && (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-all duration-200">
+                    <span className="text-white text-7xl font-bold animate-ping">
+                      {countdown}
+                    </span>
+                  </div>
+                )}
+              </div>
             ) : (
               <video
                 key={recordedVideo}
@@ -220,7 +248,9 @@ function FileUploader() {
               onClick={handleCameraAndStart}
               disabled={recordingStatus === "recording" || !!recordedVideo}
             >
-              Start Recording
+              {recordingStatus === "counting"
+                ? "Preparing..."
+                : "Start Recording"}
             </button>
             <button
               type="button"
