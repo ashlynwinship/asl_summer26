@@ -9,4 +9,5 @@ app.add_middleware(
 
 @app.post("/pose-json")
 async def pose_coordinates_json(item: Item):
+    return {"message": "dummy"}
     
