@@ -89,6 +89,10 @@ export default function Guide() {
               <strong>4.</strong> Preview your video and click "Submit" to see
               the results of the translation.
             </li>
+            <li>
+              <strong>5.</strong> If not satisfied with the results, toggle with
+              the parameters that you want to include and click "Recalculate".
+            </li>
           </ol>
         </div>
 
