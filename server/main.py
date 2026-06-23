@@ -1,18 +1,19 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+    CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
-@app.post("/pose-json")
-async def pose_coordinates_json(item: Item):
-    return {"message": "dummy"}
+@app.post("/submit")
+async def accept_json(request: Request):
+    data = await request.json()
+    return {"message": "JSON received", "time": asyncio.get_event_loop().time()}
 
-@app.post("/run-script")
+@app.post("/api/run-script")
 async def run_script(script: str):
     # check if script exists (available_scripts doesn't exist yet)
     if script not in available_scripts: 
