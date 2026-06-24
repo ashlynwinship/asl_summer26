@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
-import { extractPoseData } from "../utils/userPoseData";
 import { SyncLoader } from "react-spinners";
+import { useLocation } from "react-router-dom";
 
 interface MatchVideo {
   id: number;
@@ -19,29 +18,9 @@ interface MatchVideo {
 
 export default function Results() {
   const location = useLocation();
-
-  const { videoBlob, videoURL } =
-    (location.state as { videoBlob?: Blob; videoURL?: string }) || {};
-  const [poseVectors, setPoseVectors] = useState<number[][] | null>(null);
-  const [isProcessing, setIsProcessing] = useState<boolean>(true);
-
-  useEffect(() => {
-    if (!videoBlob) {
-      setIsProcessing(false);
-      return;
-    }
-
-    setIsProcessing(true);
-    extractPoseData(videoBlob)
-      .then((data) => {
-        setPoseVectors(data);
-        setIsProcessing(false);
-      })
-      .catch((err) => {
-        console.error("MediaPipe Extraction Failed:", err);
-        setIsProcessing(false);
-      });
-  }, [videoBlob]);
+  
+    const { videoURL } =
+      (location.state as { videoURL?: string }) || {};
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const topMatches: MatchVideo[] = [
@@ -105,22 +84,7 @@ export default function Results() {
     3: false,
   });
 
-  const handleResultsDownload = () => {
-    if (!poseVectors) return;
 
-    const jsonString = JSON.stringify(
-      {
-        frameCount: poseVectors.length,
-        landmarksPerFrame: 33,
-        extractedAt: new Date().toISOString(),
-        data: poseVectors,
-      },
-      null,
-      2,
-    );
-    const blob = new Blob([jsonString], { type: "application/json" });
-    saveAs(blob, "pose_coordinates_" + Date().toString() + ".json");
-  };
 
   const parsePercent = (valString: string): number => {
     return parseInt(valString, 10) || 0;
@@ -177,29 +141,6 @@ export default function Results() {
               >
                 Download Video
               </button>
-              {/* //TEMPORARY button for downloading mediapipe analysis file */}
-              {/* delete to the end of "Download Pose Results File" once backend implemented */}
-              <br></br>
-              {!isProcessing && poseVectors && (
-                <button
-                  onClick={handleResultsDownload}
-                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
-                >
-                  Download Pose Results JSON File
-                </button>
-              )}
-              {isProcessing && (
-                <div className="flex flex-col items-center gap-2 mt-2">
-                  <p className="text-sm text-gray-500 font-medium animate-pulse">
-                    Loading Results File...
-                  </p>
-                  <SyncLoader
-                    color="#4a90e2"
-                    size={10}
-                    loading={isProcessing}
-                  />
-                </div>
-              )}
             </div>
           </div>
           {/* user features */}

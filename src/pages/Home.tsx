@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
-// import { SyncLoader } from "react-spinners";
-// above will be implemented on home screen when server available
+import { useLocation } from "react-router-dom";
+import { extractPoseData } from "../utils/userPoseData";
+import { SyncLoader } from "react-spinners";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
@@ -20,6 +21,7 @@ function FileUploader() {
     if (selectedFile) {
       const tempUrl = URL.createObjectURL(selectedFile);
       setVideoURL(tempUrl);
+      setRawRecordedBlob(selectedFile);
     }
   };
 
@@ -27,7 +29,7 @@ function FileUploader() {
 
   const handleRedirect = (): void => {
     if (!file) return;
-    navigate("/results", { state: { videoBlob: file, videoURL: videoURL } });
+    navigate("/results", { state: { videoURL: videoURL } });
   };
 
   // Video recorder
@@ -91,7 +93,7 @@ function FileUploader() {
     };
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: "video/mp4" });
+      const blob = new Blob(chunks, { type: "video/webm" });
       const url = URL.createObjectURL(blob);
       setRawRecordedBlob(blob);
       setRecordedVideo(url);
@@ -120,6 +122,43 @@ function FileUploader() {
       setRecordingStatus("counting");
     }
   };
+    const [poseVectors, setPoseVectors] = useState<number[][] | null>(null);
+    const [isProcessing, setIsProcessing] = useState<boolean>(true);
+  
+    useEffect(() => {
+      if (!rawRecordedBlob) {
+        setIsProcessing(false);
+        return;
+      }
+  
+      setIsProcessing(true);
+      extractPoseData(rawRecordedBlob)
+        .then((data) => {
+          setPoseVectors(data);
+          setIsProcessing(false);
+        })
+        .catch((err) => {
+          console.error("MediaPipe Extraction Failed:", err);
+          setIsProcessing(false);
+        });
+    }, [rawRecordedBlob]);
+
+      const handleResultsDownload = () => {
+        if (!poseVectors) return;
+    
+        const jsonString = JSON.stringify(
+          {
+            frameCount: poseVectors.length,
+            landmarksPerFrame: 33,
+            extractedAt: new Date().toISOString(),
+            data: poseVectors,
+          },
+          null,
+          2,
+        );
+        const jsonBlob = new Blob([jsonString], { type: "application/json" });
+        saveAs(jsonBlob, "pose_coordinates_" + Date().toString() + ".json");
+      };
 
   return (
     <main>
@@ -170,12 +209,31 @@ function FileUploader() {
               <button
                 type="button"
                 className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
-                disabled={!file || uploadStatus === "uploading"}
+                disabled={!file && !rawRecordedBlob || uploadStatus === "uploading"}
                 onClick={handleRedirect}
               >
                 Upload
               </button>
-
+              {!isProcessing && poseVectors &&(
+                <button
+                  onClick={handleResultsDownload}
+                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                  >
+                    Download Pose Results JSON File
+                  </button>
+              )}
+              {isProcessing && (
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <p className="text-sm text-gray-500 font-medium animate-pulse">
+                    Loading Results File...
+                  </p>
+                  <SyncLoader
+                  color="#4a90e2"
+                  size={10}
+                  loading={isProcessing}
+                  ></SyncLoader>
+                </div>
+              )}
               <button
                 type="button"
                 className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
@@ -212,7 +270,7 @@ function FileUploader() {
           </div>
 
           <div className="w-full flex-1 flex items-center justify-center my-4">
-            {!recordedVideo ? (
+            {!rawRecordedBlob || !recordedVideo ? (
               <div className="relative w-full max-w-140 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black">
                 <video
                   ref={liveVideoRef}
@@ -300,11 +358,13 @@ function FileUploader() {
             >
               Retake
             </button>
+              <div>
             <button
               id="submitButton"
               className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
               disabled={!rawRecordedBlob}
               onClick={() => {
+                handleResultsDownload;
                 if (streamRef.current) {
                   streamRef.current
                     .getTracks()
@@ -314,7 +374,6 @@ function FileUploader() {
                 if (rawRecordedBlob && recordedVideo) {
                   navigate("/results", {
                     state: {
-                      videoBlob: rawRecordedBlob,
                       videoURL: recordedVideo,
                     },
                   });
@@ -323,6 +382,27 @@ function FileUploader() {
             >
               Submit
             </button>
+            {!isProcessing && poseVectors && (
+              <button
+                  onClick={handleResultsDownload}
+                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                >
+                  Download Pose Results JSON File
+                </button>
+              )}
+              </div>
+            {isProcessing && (
+              <div className="flex flex-col items-center gap-2 mt-2">
+                <p className="text-sm text-gray-500 font-medium animate-pulse">
+                  Loading pose coordinates...
+                </p>
+                <SyncLoader 
+                color="#4a90e2"
+                size={10}
+                loading={isProcessing}
+                ></SyncLoader>
+                </div>
+            )}
           </div>
         </div>
       </div>
