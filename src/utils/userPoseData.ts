@@ -2,8 +2,6 @@ import {
   FilesetResolver,
   PoseLandmarker,
   PoseLandmarkerResult,
-  HandLandmarker,
-  HandLandmarkerResult,
 } from "@mediapipe/tasks-vision";
 
 // extracting the vectors from video blob (not HTML, as mediapipe cannot read - see code in results).
