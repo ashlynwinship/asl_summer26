@@ -54,17 +54,17 @@ export async function extractPoseData(videoBlob: Blob): Promise<number[][]> {
           // convert current timestamp to ms
           const timestampMs = video.currentTime * 1000;
           // find landmarks for current frame
-          const poseResult: PoseLandmarkerResult = poseLandmarker.detectForVideo(
-            video,
-            timestampMs,
-          );
+          const poseResult: PoseLandmarkerResult =
+            poseLandmarker.detectForVideo(video, timestampMs);
 
           // check for body/pose in current frame
-          if (poseResult.worldLandmarks && poseResult.worldLandmarks.length > 0) {
+          if (
+            poseResult.worldLandmarks &&
+            poseResult.worldLandmarks.length > 0
+          ) {
             // 33 total pose landmarks used by mediapipe. makes array of xyz for each landmark (99 total)
-            const poseFrameVector: number[] = poseResult.worldLandmarks[0].flatMap(
-              (lm) => [lm.x, lm.y, lm.z],
-            );
+            const poseFrameVector: number[] =
+              poseResult.worldLandmarks[0].flatMap((lm) => [lm.x, lm.y, lm.z]);
             poseData.push(poseFrameVector);
           }
           video.currentTime += frameStepSeconds;

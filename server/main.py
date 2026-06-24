@@ -1,8 +1,38 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-import asyncio
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
+from pydantic import BaseModel 
+from typing import Optional, List
+from enum import Enum
+# import asyncio
 
 app = FastAPI()
+
+class Landmark(BaseModel):
+    x: float
+    y: float
+    z: float
+
+class Keyframe(BaseModel):
+    frame_idx: int
+    time_stamp_mdx: int
+    hands: dict # {"right": List[Landmark], "left": List[Landmark]}
+    pose: List[Landmark]
+    landmarks: List[Landmark]
+
+class KeyframePayload(BaseModel):
+    keyframes: List[Keyframe]
+
+class JobStatus(str, Enum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class FeedbackItem(BaseModel):
+    job_id: str
+    status: JobStatus
+    error: Optional[str] = None
+    result: Optional[JobStatus] = None
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]

@@ -18,9 +18,8 @@ interface MatchVideo {
 
 export default function Results() {
   const location = useLocation();
-  
-    const { videoURL } =
-      (location.state as { videoURL?: string }) || {};
+
+  const { videoURL } = (location.state as { videoURL?: string }) || {};
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const topMatches: MatchVideo[] = [
@@ -83,8 +82,6 @@ export default function Results() {
     2: false,
     3: false,
   });
-
-
 
   const parsePercent = (valString: string): number => {
     return parseInt(valString, 10) || 0;

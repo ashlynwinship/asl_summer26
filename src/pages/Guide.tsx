@@ -91,7 +91,8 @@ export default function Guide() {
             </li>
             <li>
               <strong>5.</strong> If not satisfied with the results, toggle with
-              the parameters that you want to include and click "Recalculate".
+              the parameters that you want to include and click "Recalculate"
+              (must have at least one parameter selected).
             </li>
           </ol>
         </div>
