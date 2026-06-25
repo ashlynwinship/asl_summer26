@@ -2,8 +2,6 @@ import {
   FilesetResolver,
   PoseLandmarker,
   PoseLandmarkerResult,
-  HandLandmarker,
-  HandLandmarkerResult,
 } from "@mediapipe/tasks-vision";
 
 // extracting the vectors from video blob (not HTML, as mediapipe cannot read - see code in results).
@@ -42,8 +40,7 @@ export async function extractPoseData(videoBlob: Blob): Promise<number[][]> {
 
     // array for storing coordinates
     const poseData: number[][] = [];
-    const handData: number[][] = [];
-
+    
     video.onloadeddata = async () => {
       try {
         await video.play();
