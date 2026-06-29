@@ -3,17 +3,19 @@ import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
 import { useLocation } from "react-router-dom";
 import { extractPoseData } from "../utils/userPoseData";
+import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { SyncLoader } from "react-spinners";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
 
 function FileUploader() {
+  //file uploading
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoURL, setVideoURL] = useState<string | undefined>(undefined);
+  // const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoURL, setVideoURL] = useState<string | undefined>(undefined);  
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -84,6 +86,8 @@ function FileUploader() {
   const startRecording = async () => {
     if (!streamRef.current) return;
 
+    setIsProcessing(true);
+
     const mediaRecorder = new MediaRecorder(streamRef.current);
     mediaRecorderRef.current = mediaRecorder;
     const chunks: Blob[] = [];
@@ -103,13 +107,17 @@ function FileUploader() {
     setVideoChunks([]);
     mediaRecorder.start();
     setRecordingStatus("recording");
+    startTrackingLoop();
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      setRecordingStatus("stopped");
     }
+    isStreamingRef.current = false;
+    setRecordingStatus("stopped");
+    setPoseVectors([...accumulatedDataRef.current]);
+    setIsProcessing(false);
   };
 
   const handleCameraAndStart = async () => {
@@ -122,26 +130,85 @@ function FileUploader() {
       setRecordingStatus("counting");
     }
   };
-  const [poseVectors, setPoseVectors] = useState<number[][] | null>(null);
-  const [isProcessing, setIsProcessing] = useState<boolean>(true);
+  const [poseVectors, setPoseVectors] = useState<number[][]>([]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(true); //might not need
+  const [landmarker, setLandmarker] = useState<PoseLandmarker | null>(null);
+  const isStreamingRef = useRef<boolean>(false);
+  const accumulatedDataRef = useRef<number[][]>([]);
 
+  // useEffect(() => {
+  //   if (!rawRecordedBlob) {
+  //     setIsProcessing(false);
+  //     return;
+  //   }
+
+  //   setIsProcessing(true);
+  //   extractPoseData(rawRecordedBlob)
+  //     .then((data) => {
+  //       setPoseVectors(data);
+  //       setIsProcessing(false);
+  //     })
+  //     .catch((err) => {
+  //       console.error("MediaPipe Extraction Failed:", err);
+  //       setIsProcessing(false);
+  //     });
+  // }, [rawRecordedBlob]);
   useEffect(() => {
-    if (!rawRecordedBlob) {
-      setIsProcessing(false);
-      return;
-    }
+    const initMediaPipe = async () => {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
+        );
+        const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
+            delegate: "GPU",
+          },
+          runningMode: "VIDEO",
+          outputSegmentationMasks: false,
+        });
+        setLandmarker(poseLandmarker);
+        setIsProcessing(false);
+      } catch (error) {
+        console.error("Failed to initialize MediaPipe Landmarker:", error);
+        setIsProcessing(false);
+      }
+    };
 
-    setIsProcessing(true);
-    extractPoseData(rawRecordedBlob)
-      .then((data) => {
-        setPoseVectors(data);
-        setIsProcessing(false);
-      })
-      .catch((err) => {
-        console.error("MediaPipe Extraction Failed:", err);
-        setIsProcessing(false);
-      });
-  }, [rawRecordedBlob]);
+    void initMediaPipe();
+  }, []);
+
+  const startTrackingLoop = () => {
+    if (!landmarker || !liveVideoRef.current) return;
+
+    isStreamingRef.current = true;
+    accumulatedDataRef.current = [];
+    setPoseVectors([]);
+
+    const video = liveVideoRef.current;
+    
+    const processFrame = () => {
+      if (!isStreamingRef.current) return;
+
+      if (video.readyState >= 2) {
+        const timestamp = performance.now();
+        const result = landmarker.detectForVideo(video, timestamp);
+
+        if (result.worldLandmarks && result.worldLandmarks.length > 0) {
+          const currentFrameVector = result.worldLandmarks[0].flatMap((lm) => [
+            lm.x,
+            lm.y,
+            lm.z,
+          ]);
+          accumulatedDataRef.current.push(currentFrameVector);
+          setPoseVectors([...accumulatedDataRef.current]);
+        }
+      }
+      requestAnimationFrame(processFrame);
+    };
+    requestAnimationFrame(processFrame);
+  }
 
   const handleResultsDownload = () => {
     if (!poseVectors) return;
@@ -216,7 +283,7 @@ function FileUploader() {
               >
                 Upload
               </button>
-              {!isProcessing && poseVectors && (
+              {poseVectors.length > 0 && recordingStatus === "stopped" && (
                 <button
                   onClick={handleResultsDownload}
                   className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
@@ -224,7 +291,7 @@ function FileUploader() {
                   Download Pose Results JSON File
                 </button>
               )}
-              {isProcessing && (
+              {poseVectors.length <= 0 && (
                 <div className="flex flex-col items-center gap-2 mt-2">
                   <p className="text-sm text-gray-500 font-medium animate-pulse">
                     Loading Results File...
@@ -384,7 +451,7 @@ function FileUploader() {
               >
                 Submit
               </button>
-              {!isProcessing && poseVectors && (
+              {poseVectors.length > 0 && recordingStatus === "stopped"  && (
                 <button
                   onClick={handleResultsDownload}
                   className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
@@ -393,7 +460,7 @@ function FileUploader() {
                 </button>
               )}
             </div>
-            {isProcessing && (
+            {poseVectors.length <= 0 && (
               <div className="flex flex-col items-center gap-2 mt-2">
                 <p className="text-sm text-gray-500 font-medium animate-pulse">
                   Loading pose coordinates...
