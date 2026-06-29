@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware 
-from pydantic import BaseModel 
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List
 from enum import Enum
 import uuid
@@ -12,21 +12,36 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
-# request/response models
-class Landmark(BaseModel):
-    x: float
-    y: float
-    z: float
+# # request/response models
+# class Landmark(BaseModel):
+#     x: float
+#     y: float
+#     z: float
 
-# might need to modify based on how we want to structure the data
-class LandmarkFrames(BaseModel):
-    frame_idx: int
-    timestamp_ms: int
-    hands: dict # {"right": List[Landmark] | None, "left": List[Landmark] | None}
-    pose: List[Landmark]
+# # might need to modify based on how we want to structure the data
+# class LandmarkFrames(BaseModel):
+#     frame_idx: int
+#     timestamp_ms: int
+#     hands: dict # {"right": List[Landmark] | None, "left": List[Landmark] | None}
+#     pose: List[Landmark]
 
-class LandmarkFramesPayload(BaseModel):
-    frames: List[LandmarkFrames]
+class FramesPayload(BaseModel):
+    frame_count: int = Field(alias="frameCount") # later rename frontend field to snake_case keys instead of camelCase and remove alias
+    landmarks_per_frame: int = Field(alias="landmarksPerFrame")
+    extracted_at: str = Field(alias="extractedAt") # ISO timestramp string
+    pose: List[List[float]] # one entry per frame, each entry is a flat 99-length list of floats representing the pose landmarks (33 landmarks * xyz)
+    hands: Optional[List[List[float]]] = None # one entry per frame, each entry is a flat 63-length list of floats representing the hand landmarks (21 landmarks * xyz) for both hands, or None if no hands detected (optional until implemented)
+
+    # catch mismatched frame_count and pose length
+    @model_validator(mode="after")
+    def check_counts(self):
+        if len(self.pose) != self.frame_count:
+            raise ValueError("frame_count does not match length of pose data")
+        return self
+
+    class Config:
+        validate_by_name = True # or populate_by_name??
+        validate_by_alias = True
 
 class JobStatus(str, Enum):
     QUEUED = "queued"
@@ -61,7 +76,7 @@ jobs: dict[str, JobResponse] = {}
 
 # API endpoints
 @app.post("/api/jobs", response_model=JobResponse)
-async def create_job(payload: LandmarkFramesPayload):
+async def create_job(payload: FramesPayload):
     job_id = str(uuid.uuid4())
     jobs[job_id] = JobResponse(job_id=job_id, status=JobStatus.QUEUED)
     # simulate job processing: asyncio.create_task(), celery task??
