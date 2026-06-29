@@ -15,7 +15,7 @@ function FileUploader() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   // const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoURL, setVideoURL] = useState<string | undefined>(undefined);  
+  const [videoURL, setVideoURL] = useState<string | undefined>(undefined);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -187,7 +187,7 @@ function FileUploader() {
     setPoseVectors([]);
 
     const video = liveVideoRef.current;
-    
+
     const processFrame = () => {
       if (!isStreamingRef.current) return;
 
@@ -208,7 +208,7 @@ function FileUploader() {
       requestAnimationFrame(processFrame);
     };
     requestAnimationFrame(processFrame);
-  }
+  };
 
   const handleResultsDownload = () => {
     if (!poseVectors) return;
@@ -451,7 +451,7 @@ function FileUploader() {
               >
                 Submit
               </button>
-              {poseVectors.length > 0 && recordingStatus === "stopped"  && (
+              {poseVectors.length > 0 && recordingStatus === "stopped" && (
                 <button
                   onClick={handleResultsDownload}
                   className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"

@@ -40,7 +40,7 @@ export async function extractPoseData(videoBlob: Blob): Promise<number[][]> {
 
     // array for storing coordinates
     const poseData: number[][] = [];
-    
+
     video.onloadeddata = async () => {
       try {
         await video.play();
