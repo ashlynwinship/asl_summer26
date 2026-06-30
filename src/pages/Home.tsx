@@ -3,11 +3,21 @@ import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { saveAs } from "file-saver";
 import { useLocation } from "react-router-dom";
 import { extractPoseData } from "../utils/userPoseData";
-import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
+import {
+  FilesetResolver,
+  PoseLandmarker,
+  HandLandmarker,
+} from "@mediapipe/tasks-vision";
 import { SyncLoader } from "react-spinners";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
+
+interface DetectedHand {
+  label: string; // "right" or "left"
+  score: number; // probability of predicted handedness
+  landmarks: number[]; // flat 63-length list of floats representing the hand landmarks (21 landmarks * xyz)
+}
 
 function FileUploader() {
   //file uploading
@@ -117,6 +127,7 @@ function FileUploader() {
     isStreamingRef.current = false;
     setRecordingStatus("stopped");
     setPoseVectors([...accumulatedDataRef.current]);
+    setHandsVectors([...accumulatedHandsRef.current]);
     setIsProcessing(false);
   };
 
@@ -130,11 +141,23 @@ function FileUploader() {
       setRecordingStatus("counting");
     }
   };
+
+  // pose state
   const [poseVectors, setPoseVectors] = useState<number[][]>([]);
-  const [isProcessing, setIsProcessing] = useState<boolean>(true); //might not need
-  const [landmarker, setLandmarker] = useState<PoseLandmarker | null>(null);
-  const isStreamingRef = useRef<boolean>(false);
+  const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(
+    null,
+  );
   const accumulatedDataRef = useRef<number[][]>([]);
+
+  // hands state
+  const [handsVectors, setHandsVectors] = useState<DetectedHand[][]>([]); // handsVector[frameIdx] = hands detected that frame
+  const [handLandmarker, setHandLandmarker] = useState<HandLandmarker | null>(
+    null,
+  );
+  const accumulatedHandsRef = useRef<DetectedHand[][]>([]); // accumulated hands data across frames
+
+  const [isProcessing, setIsProcessing] = useState<boolean>(true); //might not need
+  const isStreamingRef = useRef<boolean>(false);
 
   // useEffect(() => {
   //   if (!rawRecordedBlob) {
@@ -159,19 +182,31 @@ function FileUploader() {
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
         );
-        const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          outputSegmentationMasks: false,
-        });
-        setLandmarker(poseLandmarker);
+        const [pose, hands] = await Promise.all([
+          PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath:
+                "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
+              delegate: "GPU",
+            },
+            runningMode: "VIDEO",
+            outputSegmentationMasks: false,
+          }),
+          HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath:
+                "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task",
+              delegate: "GPU",
+            },
+            runningMode: "VIDEO",
+            numHands: 2,
+          }),
+        ]);
+        setPoseLandmarker(pose);
+        setHandLandmarker(hands);
         setIsProcessing(false);
       } catch (error) {
-        console.error("Failed to initialize MediaPipe Landmarker:", error);
+        console.error("Failed to initialize MediaPipe Landmarkers:", error);
         setIsProcessing(false);
       }
     };
@@ -179,12 +214,15 @@ function FileUploader() {
     void initMediaPipe();
   }, []);
 
+  // start tracking loop for pose and hands
   const startTrackingLoop = () => {
-    if (!landmarker || !liveVideoRef.current) return;
+    if (!poseLandmarker || !handLandmarker || !liveVideoRef.current) return;
 
     isStreamingRef.current = true;
     accumulatedDataRef.current = [];
+    accumulatedHandsRef.current = [];
     setPoseVectors([]);
+    setHandsVectors([]);
 
     const video = liveVideoRef.current;
 
@@ -193,17 +231,35 @@ function FileUploader() {
 
       if (video.readyState >= 2) {
         const timestamp = performance.now();
-        const result = landmarker.detectForVideo(video, timestamp);
 
-        if (result.worldLandmarks && result.worldLandmarks.length > 0) {
-          const currentFrameVector = result.worldLandmarks[0].flatMap((lm) => [
-            lm.x,
-            lm.y,
-            lm.z,
-          ]);
+        // pose detection
+        const poseResult = poseLandmarker.detectForVideo(video, timestamp);
+        if (poseResult.worldLandmarks && poseResult.worldLandmarks.length > 0) {
+          const currentFrameVector = poseResult.worldLandmarks[0].flatMap(
+            (lm) => [lm.x, lm.y, lm.z],
+          );
           accumulatedDataRef.current.push(currentFrameVector);
           setPoseVectors([...accumulatedDataRef.current]);
         }
+
+        // hands detection
+        const handResult = handLandmarker.detectForVideo(video, timestamp);
+        const frameHands: DetectedHand[] = [];
+        if (handResult.worldLandmarks && handResult.worldLandmarks.length > 0) {
+          handResult.worldLandmarks.forEach((handLandmarks, index) => {
+            const handednessInfo = handResult.handedness[index]?.[0]; // get the first category for the hand (should only be one)
+            if (!handednessInfo) return;
+
+            frameHands.push({
+              label: handednessInfo.categoryName,
+              score: handednessInfo.score,
+              landmarks: handLandmarks.flatMap((lm) => [lm.x, lm.y, lm.z]),
+            });
+          });
+        }
+        // push even when empty to preserve frame-index alignment between pose and hands data
+        accumulatedHandsRef.current.push(frameHands);
+        setHandsVectors([...accumulatedHandsRef.current]); // update state with new hands data
       }
       requestAnimationFrame(processFrame);
     };
@@ -211,20 +267,21 @@ function FileUploader() {
   };
 
   const handleResultsDownload = () => {
-    if (!poseVectors) return;
+    if (!poseVectors || !handsVectors) return;
 
     const jsonString = JSON.stringify(
       {
         frameCount: poseVectors.length,
         landmarksPerFrame: 33,
         extractedAt: new Date().toISOString(),
-        data: poseVectors,
+        pose: poseVectors,
+        hands: handsVectors,
       },
       null,
       2,
     );
     const jsonBlob = new Blob([jsonString], { type: "application/json" });
-    saveAs(jsonBlob, "pose_coordinates_" + Date().toString() + ".json");
+    saveAs(jsonBlob, "landmark_data_" + Date().toString() + ".json");
   };
 
   return (
@@ -283,14 +340,16 @@ function FileUploader() {
               >
                 Upload
               </button>
-              {poseVectors.length > 0 && recordingStatus === "stopped" && (
-                <button
-                  onClick={handleResultsDownload}
-                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
-                >
-                  Download Pose Results JSON File
-                </button>
-              )}
+              {poseVectors.length > 0 &&
+                handsVectors.length > 0 &&
+                recordingStatus === "stopped" && (
+                  <button
+                    onClick={handleResultsDownload}
+                    className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                  >
+                    Download Landmark Data JSON File
+                  </button>
+                )}
               {poseVectors.length <= 0 && (
                 <div className="flex flex-col items-center gap-2 mt-2">
                   <p className="text-sm text-gray-500 font-medium animate-pulse">
@@ -451,19 +510,21 @@ function FileUploader() {
               >
                 Submit
               </button>
-              {poseVectors.length > 0 && recordingStatus === "stopped" && (
-                <button
-                  onClick={handleResultsDownload}
-                  className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
-                >
-                  Download Pose Results JSON File
-                </button>
-              )}
+              {poseVectors.length > 0 &&
+                handsVectors.length > 0 &&
+                recordingStatus === "stopped" && (
+                  <button
+                    onClick={handleResultsDownload}
+                    className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                  >
+                    Download Landmark Results JSON File
+                  </button>
+                )}
             </div>
             {poseVectors.length <= 0 && (
               <div className="flex flex-col items-center gap-2 mt-2">
                 <p className="text-sm text-gray-500 font-medium animate-pulse">
-                  Loading pose coordinates...
+                  Loading landmark data...
                 </p>
                 <SyncLoader
                   color="#4a90e2"
