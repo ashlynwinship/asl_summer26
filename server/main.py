@@ -12,25 +12,18 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["http://localhost:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
-# # request/response models
-# class Landmark(BaseModel):
-#     x: float
-#     y: float
-#     z: float
-
-# # might need to modify based on how we want to structure the data
-# class LandmarkFrames(BaseModel):
-#     frame_idx: int
-#     timestamp_ms: int
-#     hands: dict # {"right": List[Landmark] | None, "left": List[Landmark] | None}
-#     pose: List[Landmark]
+# request/response models
+class DetectedHand(BaseModel):
+    label: str # "right" or "left"
+    score: float # probability of predicted handedness
+    landmarks: List[float] # flat 63-length list of floats representing the hand landmarks (21 landmarks * xyz)
 
 class FramesPayload(BaseModel):
     frame_count: int = Field(alias="frameCount") # later rename frontend field to snake_case keys instead of camelCase and remove alias
     landmarks_per_frame: int = Field(alias="landmarksPerFrame")
     extracted_at: str = Field(alias="extractedAt") # ISO timestramp string
     pose: List[List[float]] # one entry per frame, each entry is a flat 99-length list of floats representing the pose landmarks (33 landmarks * xyz)
-    hands: Optional[List[List[float]]] = None # one entry per frame, each entry is a flat 63-length list of floats representing the hand landmarks (21 landmarks * xyz) for both hands, or None if no hands detected (optional until implemented)
+    hands: Optional[List[List[DetectedHand]]] = None # one entry per frame, each entry is a list of DetectedHand objects (optional until implemented), hands[frame_idx] = list of 0-2 DetectedHand objects for that frame
 
     # catch mismatched frame_count and pose length
     @model_validator(mode="after")
