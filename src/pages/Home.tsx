@@ -73,20 +73,20 @@ function FileUploader() {
   // }, [recordingStatus, countdown]);
 
   useEffect(() => {
-  if (recordingStatus !== "counting") return;
+    if (recordingStatus !== "counting") return;
 
-  const timerId = setTimeout(() => {
-    setCountdown((prev) => {
-      if (prev === 1) {
-        startRecording(); 
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
+    const timerId = setTimeout(() => {
+      setCountdown((prev) => {
+        if (prev === 1) {
+          startRecording();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-  return () => clearTimeout(timerId);
-}, [recordingStatus, countdown]);
+    return () => clearTimeout(timerId);
+  }, [recordingStatus, countdown]);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -292,7 +292,12 @@ function FileUploader() {
 
   // still landmark drwaing
   useEffect(() => {
-    if (!permission || !poseLandmarker || !handLandmarker || !liveVideoRef.current) {
+    if (
+      !permission ||
+      !poseLandmarker ||
+      !handLandmarker ||
+      !liveVideoRef.current
+    ) {
       return;
     }
 
@@ -342,11 +347,37 @@ function FileUploader() {
                 ctx,
                 poseResult.landmarks[0],
                 [
-                  [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8],
-                  [9, 10], [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [17, 19],
-                  [12, 14], [14, 16], [16, 18], [16, 20], [18, 20], [11, 23], [23, 24],
-                  [24, 25], [25, 26], [26, 27], [27, 28], [28, 29], [29, 30], [30, 31],
-                  [27, 31], [28, 32]
+                  [0, 1],
+                  [1, 2],
+                  [2, 3],
+                  [3, 7],
+                  [0, 4],
+                  [4, 5],
+                  [5, 6],
+                  [6, 8],
+                  [9, 10],
+                  [11, 12],
+                  [11, 13],
+                  [13, 15],
+                  [15, 17],
+                  [15, 19],
+                  [17, 19],
+                  [12, 14],
+                  [14, 16],
+                  [16, 18],
+                  [16, 20],
+                  [18, 20],
+                  [11, 23],
+                  [23, 24],
+                  [24, 25],
+                  [25, 26],
+                  [26, 27],
+                  [27, 28],
+                  [28, 29],
+                  [29, 30],
+                  [30, 31],
+                  [27, 31],
+                  [28, 32],
                 ],
                 "#00e676",
                 width,
@@ -368,24 +399,32 @@ function FileUploader() {
                   ctx,
                   landmarks,
                   [
-                    [0, 1], [1, 2], [2, 3], [3, 4],
-                    [0, 5], [5, 6], [6, 7], [7, 8],
-                    [0, 9], [9, 10], [10, 11], [11, 12],
-                    [0, 13], [13, 14], [14, 15], [15, 16],
-                    [0, 17], [17, 18], [18, 19], [19, 20],
+                    [0, 1],
+                    [1, 2],
+                    [2, 3],
+                    [3, 4],
+                    [0, 5],
+                    [5, 6],
+                    [6, 7],
+                    [7, 8],
+                    [0, 9],
+                    [9, 10],
+                    [10, 11],
+                    [11, 12],
+                    [0, 13],
+                    [13, 14],
+                    [14, 15],
+                    [15, 16],
+                    [0, 17],
+                    [17, 18],
+                    [18, 19],
+                    [19, 20],
                   ],
                   "#3b82f6",
                   width,
                   height,
                 );
-                drawLandmarkPoints(
-                  ctx,
-                  landmarks,
-                  "#fbbf24",
-                  3,
-                  width,
-                  height,
-                );
+                drawLandmarkPoints(ctx, landmarks, "#fbbf24", 3, width, height);
               });
             }
           }
@@ -428,7 +467,8 @@ function FileUploader() {
     const jsonString = JSON.stringify(
       {
         frameCount: poseVectors.length,
-        landmarksPerFrame: 33,
+        handLandmarksPerFrame: 33,
+        poseLandmarksPerFrame: 21,
         extractedAt: new Date().toISOString(),
         pose: poseVectors,
         hands: handsVectors,
@@ -653,8 +693,7 @@ function FileUploader() {
                 id="submitButton"
                 className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
                 disabled={!rawRecordedBlob}
-                onClick={() => {
-                  handleResultsDownload;
+                onClick={async () => {
                   if (streamRef.current) {
                     streamRef.current
                       .getTracks()
@@ -662,11 +701,31 @@ function FileUploader() {
                   }
                   setPermission(false);
                   if (rawRecordedBlob && recordedVideo) {
-                    navigate("/results", {
-                      state: {
-                        videoURL: recordedVideo,
-                      },
-                    });
+                    try {
+                      const res = await fetch(
+                        "http://localhost:8000/api/jobs",
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            frame_count: poseVectors.length,
+                            landmarks_per_frame: 33,
+                            extracted_at: new Date().toISOString(),
+                            pose: poseVectors,
+                            hands: handsVectors,
+                          }),
+                        },
+                      );
+                      const data = await res.json();
+                      navigate("/results", {
+                        // add /${data.job_id} later
+                        state: { videoURL: recordedVideo },
+                      });
+                    } catch (error) {
+                      console.error("Error submitting job:", error);
+                    }
                   }
                 }}
               >

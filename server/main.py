@@ -20,7 +20,8 @@ class DetectedHand(BaseModel):
 
 class FramesPayload(BaseModel):
     frame_count: int = Field(alias="frameCount") # later rename frontend field to snake_case keys instead of camelCase and remove alias
-    landmarks_per_frame: int = Field(alias="landmarksPerFrame")
+    poselandmarks_per_frame: int = Field(alias="poseLandmarksPerFrame")
+    handlandmarks_per_frame: int = Field(alias="handLandmarksPerFrame")
     extracted_at: str = Field(alias="extractedAt") # ISO timestramp string
     pose: List[List[float]] # one entry per frame, each entry is a flat 99-length list of floats representing the pose landmarks (33 landmarks * xyz)
     hands: Optional[List[List[DetectedHand]]] = None # one entry per frame, each entry is a list of DetectedHand objects (optional until implemented), hands[frame_idx] = list of 0-2 DetectedHand objects for that frame
@@ -86,7 +87,7 @@ async def dummy_process(job_id: str):
     jobs[job_id].stage = JobStage.CLS1_FEEDBACK
     await asyncio.sleep(5)
     jobs[job_id].status = JobStatus.COMPLETED
-    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[Feedback(feature="feature1", score=0.9, accurate=True)])
+    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[Feedback(feature="Handshape", score=0.9, accurate=True)])
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 async def get_job(job_id: str):
