@@ -20,8 +20,7 @@ class DetectedHand(BaseModel):
 
 class FramesPayload(BaseModel):
     frame_count: int = Field(alias="frameCount") # later rename frontend field to snake_case keys instead of camelCase and remove alias
-    poselandmarks_per_frame: int = Field(alias="poseLandmarksPerFrame")
-    handlandmarks_per_frame: int = Field(alias="handLandmarksPerFrame")
+    landmarks_per_frame: int = Field(alias="landmarksPerFrame")
     extracted_at: str = Field(alias="extractedAt") # ISO timestramp string
     pose: List[List[float]] # one entry per frame, each entry is a flat 99-length list of floats representing the pose landmarks (33 landmarks * xyz)
     hands: Optional[List[List[DetectedHand]]] = None # one entry per frame, each entry is a list of DetectedHand objects (optional until implemented), hands[frame_idx] = list of 0-2 DetectedHand objects for that frame
@@ -44,7 +43,7 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 class JobStage(str, Enum):
-    KEYFRAME = "keyframe"
+    KEYFRAME = "keyframe_selection"
     CLS0_MATCHING = "cls0_matching"
     CLS1_FEEDBACK = "cls1_feedback"
 

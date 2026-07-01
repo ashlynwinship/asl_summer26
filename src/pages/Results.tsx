@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { jsxs } from "react/jsx-runtime";
 
 interface MatchVideo {
   id: number;
@@ -14,6 +15,26 @@ interface MatchVideo {
     location: string;
     palm: string;
   };
+}
+
+interface FeedbackItem {
+  feature: string;
+  score: number;
+  accurate: boolean;
+}
+
+interface JobResult {
+  matched_word: string;
+  match_confidence: number;
+  feedback: FeedbackItem[];
+}
+
+interface JobResponse {
+  job_id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  stage: string | null;
+  error?: string;
+  result?: JobResult;
 }
 
 export default function Results() {
@@ -109,6 +130,54 @@ export default function Results() {
       [name]: !prev[name],
     }));
   };
+
+  // API call to fetch results
+  const { job_id } = useParams<{ job_id: string }>();
+  const [jobData, setJobData] = useState<JobResponse | null>(null);
+
+  useEffect(() => {
+    if (!job_id) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/jobs/${job_id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setJobData(data);
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.log("Error fetching job data:", err);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [job_id]);
+
+  if (!jobData || jobData.status === "queued" || jobData.status === "running") {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-600 font-medium animate-pulse">
+          {jobData?.stage === "keyframe_selection" && "Selecting keyframes..."}
+          {jobData?.stage === "cls0_matching" && "Identifying sign..."}
+          {jobData?.stage === "cls1_feedback" && "Analyzing features..."}
+          {!jobData?.stage && "Processing..."}
+        </p>
+        <SyncLoader color="#4a90e2" size={10} />
+      </main>
+    );
+  }
+
+  if (jobData.status === "failed") {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500 font-medium">
+          Something went wrong: {jobData.error ?? "unknown error"}
+        </p>
+      </main>
+    );
+  }
+
+  const results = jobData.result; // jobData.status === "completed"
 
   return (
     <main>
@@ -240,7 +309,10 @@ export default function Results() {
               </button>
               <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
                 <p className="text-white text-sm font-medium">
-                  {currentMatch.label}
+                  {results?.matched_word +
+                    " (Confidence: " +
+                    (results?.match_confidence ?? 0) * 100 +
+                    "%)"}
                 </p>
               </div>
             </div>
@@ -259,7 +331,7 @@ export default function Results() {
                   <img
                     src={match.thumbnail}
                     className="w-full h-full object-cover"
-                    alt={match.label}
+                    alt={results?.matched_word}
                   />
                 </button>
               ))}
