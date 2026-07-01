@@ -131,6 +131,7 @@ export default function Results() {
     // prevent disabling the last enabled feature
     if (isCurrentlyEnabled && totalEnabled <= 1) {
       setErrorMessage("At least one feature must be enabled.");
+      setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
     setErrorMessage(null);
