@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
 import { useLocation, useParams } from "react-router-dom";
-import { jsxs } from "react/jsx-runtime";
 
 interface MatchVideo {
   id: number;
@@ -124,7 +123,17 @@ export default function Results() {
     "Palm Orientation": true,
   });
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleToggleFeature = (name: string) => {
+    const isCurrentlyEnabled = enabledFeatures[name];
+    const totalEnabled = Object.values(enabledFeatures).filter(Boolean).length;
+    // prevent disabling the last enabled feature
+    if (isCurrentlyEnabled && totalEnabled <= 1) {
+      setErrorMessage("At least one feature must be enabled.");
+      return;
+    }
+    setErrorMessage(null);
     setEnabledFeatures((prev) => ({
       ...prev,
       [name]: !prev[name],
@@ -153,6 +162,7 @@ export default function Results() {
     return () => clearInterval(interval);
   }, [job_id]);
 
+  // loading screen
   if (!jobData || jobData.status === "queued" || jobData.status === "running") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -215,6 +225,11 @@ export default function Results() {
               Features
             </p>
             <div className="flex flex-col gap-3 w-full">
+              {errorMessage && (
+                <div className="text-sm font-medium text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mb-2 animate-fade-in">
+                  {errorMessage}
+                </div>
+              )}
               {featuresList.map((item) => {
                 const isEnabled = enabledFeatures[item.name];
                 const numericValue = parsePercent("50");
@@ -370,7 +385,10 @@ export default function Results() {
                         </div>
                       </div>
                       <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
-                        {item.value}
+                        {(results?.feedback.find((f) => f.feature === item.name)
+                          ?.score ?? 0) *
+                          100 +
+                          "%"}
                       </span>
                     </div>
                   </div>
