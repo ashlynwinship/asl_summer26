@@ -8,6 +8,7 @@ import {
   PoseLandmarker,
   HandLandmarker,
 } from "@mediapipe/tasks-vision";
+import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { SyncLoader } from "react-spinners";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -54,21 +55,38 @@ function FileUploader() {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // useEffect(() => {
+  //   let timerId: ReturnType<typeof setTimeout>;
+  //   if (recordingStatus === "counting") {
+  //     if (countdown > 0) {
+  //       timerId = setTimeout(() => {
+  //         setCountdown((prev) => prev - 1);
+  //       }, 1000);
+  //     } else {
+  //       startRecording();
+  //     }
+  //   }
+  //   return () => clearTimeout(timerId);
+  // }, [recordingStatus, countdown]);
+
   useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout>;
-    if (recordingStatus === "counting") {
-      if (countdown > 0) {
-        timerId = setTimeout(() => {
-          setCountdown((prev) => prev - 1);
-        }, 1000);
-      } else {
-        startRecording();
+  if (recordingStatus !== "counting") return;
+
+  const timerId = setTimeout(() => {
+    setCountdown((prev) => {
+      if (prev === 1) {
+        startRecording(); 
+        return 0;
       }
-    }
-    return () => clearTimeout(timerId);
-  }, [recordingStatus, countdown]);
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearTimeout(timerId);
+}, [recordingStatus, countdown]);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -120,11 +138,69 @@ function FileUploader() {
     startTrackingLoop();
   };
 
+  //Landmark drawing - erase on final deployment (only for debugging and testing right now)
+  const clearOverlay = () => {
+    const canvas = overlayCanvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const drawLandmarkPoints = (
+    ctx: CanvasRenderingContext2D,
+    landmarks: Array<{ x: number; y: number }> | undefined,
+    color: string,
+    radius: number,
+    width: number,
+    height: number,
+  ) => {
+    if (!landmarks) return;
+
+    ctx.save();
+    ctx.fillStyle = color;
+    landmarks.forEach((landmark) => {
+      const x = landmark.x * width;
+      const y = landmark.y * height;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  };
+
+  const drawSkeleton = (
+    ctx: CanvasRenderingContext2D,
+    landmarks: Array<{ x: number; y: number }> | undefined,
+    connections: Array<[number, number]>,
+    color: string,
+    width: number,
+    height: number,
+  ) => {
+    if (!landmarks) return;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    connections.forEach(([start, end]) => {
+      const startPoint = landmarks[start];
+      const endPoint = landmarks[end];
+      if (!startPoint || !endPoint) return;
+
+      ctx.beginPath();
+      ctx.moveTo(startPoint.x * width, startPoint.y * height);
+      ctx.lineTo(endPoint.x * width, endPoint.y * height);
+      ctx.stroke();
+    });
+    ctx.restore();
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
     isStreamingRef.current = false;
+    clearOverlay();
     setRecordingStatus("stopped");
     setPoseVectors([...accumulatedDataRef.current]);
     setHandsVectors([...accumulatedHandsRef.current]);
@@ -214,6 +290,17 @@ function FileUploader() {
     void initMediaPipe();
   }, []);
 
+  // still landmark drwaing
+  useEffect(() => {
+    if (!permission || !poseLandmarker || !handLandmarker || !liveVideoRef.current) {
+      return;
+    }
+
+    if (!isStreamingRef.current) {
+      startTrackingLoop();
+    }
+  }, [permission, poseLandmarker, handLandmarker]);
+
   // start tracking loop for pose and hands
   const startTrackingLoop = () => {
     if (!poseLandmarker || !handLandmarker || !liveVideoRef.current) return;
@@ -225,6 +312,8 @@ function FileUploader() {
     setHandsVectors([]);
 
     const video = liveVideoRef.current;
+    // canvas landmark drawing
+    const canvas = overlayCanvasRef.current;
 
     const processFrame = () => {
       if (!isStreamingRef.current) return;
@@ -232,8 +321,76 @@ function FileUploader() {
       if (video.readyState >= 2) {
         const timestamp = performance.now();
 
-        // pose detection
         const poseResult = poseLandmarker.detectForVideo(video, timestamp);
+        const handResult = handLandmarker.detectForVideo(video, timestamp);
+
+        // still landmark drawing
+
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            const width = video.videoWidth || 640;
+            const height = video.videoHeight || 480;
+            if (canvas.width !== width || canvas.height !== height) {
+              canvas.width = width;
+              canvas.height = height;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (poseResult.landmarks && poseResult.landmarks.length > 0) {
+              drawSkeleton(
+                ctx,
+                poseResult.landmarks[0],
+                [
+                  [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8],
+                  [9, 10], [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [17, 19],
+                  [12, 14], [14, 16], [16, 18], [16, 20], [18, 20], [11, 23], [23, 24],
+                  [24, 25], [25, 26], [26, 27], [27, 28], [28, 29], [29, 30], [30, 31],
+                  [27, 31], [28, 32]
+                ],
+                "#00e676",
+                width,
+                height,
+              );
+              drawLandmarkPoints(
+                ctx,
+                poseResult.landmarks[0],
+                "#ff3b30",
+                4,
+                width,
+                height,
+              );
+            }
+
+            if (handResult.landmarks) {
+              handResult.landmarks.forEach((landmarks) => {
+                drawSkeleton(
+                  ctx,
+                  landmarks,
+                  [
+                    [0, 1], [1, 2], [2, 3], [3, 4],
+                    [0, 5], [5, 6], [6, 7], [7, 8],
+                    [0, 9], [9, 10], [10, 11], [11, 12],
+                    [0, 13], [13, 14], [14, 15], [15, 16],
+                    [0, 17], [17, 18], [18, 19], [19, 20],
+                  ],
+                  "#3b82f6",
+                  width,
+                  height,
+                );
+                drawLandmarkPoints(
+                  ctx,
+                  landmarks,
+                  "#fbbf24",
+                  3,
+                  width,
+                  height,
+                );
+              });
+            }
+          }
+        }
+
         if (poseResult.worldLandmarks && poseResult.worldLandmarks.length > 0) {
           const currentFrameVector = poseResult.worldLandmarks[0].flatMap(
             (lm) => [lm.x, lm.y, lm.z],
@@ -243,7 +400,6 @@ function FileUploader() {
         }
 
         // hands detection
-        const handResult = handLandmarker.detectForVideo(video, timestamp);
         const frameHands: DetectedHand[] = [];
         if (handResult.worldLandmarks && handResult.worldLandmarks.length > 0) {
           handResult.worldLandmarks.forEach((handLandmarks, index) => {
@@ -407,6 +563,12 @@ function FileUploader() {
                   autoPlay
                   muted
                   playsInline
+                />
+                {/* still landmark drawing */}
+                <canvas
+                  ref={overlayCanvasRef}
+                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  style={{ display: "block" }}
                 />
                 {recordingStatus === "counting" && (
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-all duration-200">
