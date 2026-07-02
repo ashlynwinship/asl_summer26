@@ -38,8 +38,45 @@ interface JobResponse {
 
 export default function Results() {
   const location = useLocation();
-
   const { videoURL } = (location.state as { videoURL?: string }) || {};
+
+  // API call to fetch results
+  const { job_id } = useParams<{ job_id: string }>();
+  const [jobData, setJobData] = useState<JobResponse | null>(null);
+
+  useEffect(() => {
+    if (!job_id) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/jobs/${job_id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setJobData(data);
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.log("Error fetching job data:", err);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [job_id]);
+
+  const featuresList = jobData?.result?.feedback ?? [];
+
+  const [enabledFeatures, setEnabledFeatures] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    if (jobData?.result?.feedback) {
+      const initial: Record<string, boolean> = {};
+      jobData.result.feedback.forEach((item) => {
+        initial[item.feature] = true;
+      });
+      setEnabledFeatures(initial);
+    }
+  }, [jobData]);
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const topMatches: MatchVideo[] = [
@@ -107,22 +144,6 @@ export default function Results() {
     return parseInt(valString, 10) || 0;
   };
 
-  const featuresList = [
-    { name: "Handshape", value: currentMatch.features.handshape },
-    { name: "Movement", value: currentMatch.features.movement },
-    { name: "Location", value: currentMatch.features.location },
-    { name: "Palm Orientation", value: currentMatch.features.palm },
-  ];
-
-  const [enabledFeatures, setEnabledFeatures] = useState<
-    Record<string, boolean>
-  >({
-    Handshape: true,
-    Movement: true,
-    Location: true,
-    "Palm Orientation": true,
-  });
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToggleFeature = (name: string) => {
@@ -140,28 +161,6 @@ export default function Results() {
       [name]: !prev[name],
     }));
   };
-
-  // API call to fetch results
-  const { job_id } = useParams<{ job_id: string }>();
-  const [jobData, setJobData] = useState<JobResponse | null>(null);
-
-  useEffect(() => {
-    if (!job_id) return;
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/jobs/${job_id}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setJobData(data);
-        if (data.status === "completed" || data.status === "failed") {
-          clearInterval(interval);
-        }
-      } catch (err) {
-        console.log("Error fetching job data:", err);
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [job_id]);
 
   // loading screen
   if (!jobData || jobData.status === "queued" || jobData.status === "running") {
@@ -232,11 +231,11 @@ export default function Results() {
                 </div>
               )}
               {featuresList.map((item) => {
-                const isEnabled = enabledFeatures[item.name];
-                const numericValue = parsePercent("50");
+                const isEnabled = enabledFeatures[item.feature] ?? true;
+                const numericValue = Math.round(item.score * 100);
                 return (
                   <div
-                    key={item.name}
+                    key={item.feature}
                     className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 p-3 rounded-lg border transition-all duration-300 ease-in-out ${
                       isEnabled
                         ? "bg-white/50 border-neutral-border/40 opacity-100"
@@ -248,15 +247,15 @@ export default function Results() {
                         type="checkbox"
                         className="switch cursor-pointer"
                         checked={isEnabled}
-                        onChange={() => handleToggleFeature(item.name)}
-                        aria-label={`Toggle ${item.name}`}
+                        onChange={() => handleToggleFeature(item.feature)}
+                        aria-label={`Toggle ${item.feature}`}
                       />
                       <span
                         className={`text-sm sm:text-base font-medium transition-colors duration-300 ${
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {item.name}: ___
+                        {item.feature}: ___
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
@@ -266,7 +265,7 @@ export default function Results() {
                             isEnabled ? "bg-gray-200" : "bg-gray-300"
                           }`}
                           role="progressbar"
-                          aria-label={`${item.name}Progress`}
+                          aria-label={`${item.feature}Progress`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
@@ -284,7 +283,7 @@ export default function Results() {
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {"50%"}
+                        {numericValue}%
                       </span>
                     </div>
                   </div>
@@ -325,10 +324,7 @@ export default function Results() {
               </button>
               <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
                 <p className="text-white text-sm font-medium">
-                  {results?.matched_word +
-                    " (Confidence: " +
-                    (results?.match_confidence ?? 0) * 100 +
-                    "%)"}
+                  {` ${results?.matched_word} (Confidence: ${Math.round((results?.match_confidence ?? 0) * 100)}%)`}
                 </p>
               </div>
             </div>
@@ -360,21 +356,21 @@ export default function Results() {
             </p>
             <div className="flex flex-col gap-3 w-full">
               {featuresList.map((item) => {
-                const numericValue = parsePercent(item.value);
+                const numericValue = Math.round(item.score * 100);
                 return (
                   <div
-                    key={item.name}
+                    key={item.feature}
                     className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
                   >
                     <span className="text-neutral-dark text-sm sm:text-base font-medium">
-                      {item.name}: ___
+                      {item.feature}: ___
                     </span>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
                       <div className="w-full max-w-48 md:w-60">
                         <div
                           className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
                           role="progressbar"
-                          aria-label={`${item.name} Progress`}
+                          aria-label={`${item.feature} Progress`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
@@ -386,10 +382,7 @@ export default function Results() {
                         </div>
                       </div>
                       <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
-                        {(results?.feedback.find((f) => f.feature === item.name)
-                          ?.score ?? 0) *
-                          100 +
-                          "%"}
+                        {numericValue}%
                       </span>
                     </div>
                   </div>
