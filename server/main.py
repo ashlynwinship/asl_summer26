@@ -49,7 +49,10 @@ class JobStage(str, Enum):
 
 class Feedback(BaseModel):
     feature: str
-    score: float
+    user_value: str
+    user_confidence: float
+    reference_value: str
+    similarity_score: float
     accurate: bool # idk if need this
 
 class JobResult(BaseModel):
@@ -86,7 +89,12 @@ async def dummy_process(job_id: str):
     jobs[job_id].stage = JobStage.CLS1_FEEDBACK
     await asyncio.sleep(5)
     jobs[job_id].status = JobStatus.COMPLETED
-    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[Feedback(feature="Handshape", score=0.9, accurate=True)])
+    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[
+        Feedback(feature="Handshape", user_value="example", user_confidence=0.9, reference_value="example", similarity_score=0.9, accurate=True), 
+        Feedback(feature="Movement", user_value="example", user_confidence=0.8, reference_value="example", similarity_score=0.8, accurate=True),
+        Feedback(feature="Location", user_value="example", user_confidence=0.85, reference_value="example", similarity_score=0.85, accurate=True),
+        Feedback(feature="Palm Orientation", user_value="example", user_confidence=0.75, reference_value="example", similarity_score=0.75, accurate=True),
+        ])
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 async def get_job(job_id: str):

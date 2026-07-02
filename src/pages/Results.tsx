@@ -18,7 +18,10 @@ interface MatchVideo {
 
 interface FeedbackItem {
   feature: string;
-  score: number;
+  user_value: string;
+  user_confidence: number;
+  reference_value: string;
+  similarity_score: number;
   accurate: boolean;
 }
 
@@ -232,7 +235,7 @@ export default function Results() {
               )}
               {featuresList.map((item) => {
                 const isEnabled = enabledFeatures[item.feature] ?? true;
-                const numericValue = Math.round(item.score * 100);
+                const numericValue = Math.round(item.user_confidence * 100);
                 return (
                   <div
                     key={item.feature}
@@ -255,7 +258,7 @@ export default function Results() {
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {item.feature}: ___
+                        {item.feature}: {item.user_value}
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
@@ -356,27 +359,32 @@ export default function Results() {
             </p>
             <div className="flex flex-col gap-3 w-full">
               {featuresList.map((item) => {
-                const numericValue = Math.round(item.score * 100);
+                const numericValue = Math.round(item.similarity_score * 100);
+                const barColor = item.accurate
+                  ? "bg-green-500"
+                  : numericValue >= 60
+                    ? "bg-yellow-400"
+                    : "bg-red-400";
                 return (
                   <div
                     key={item.feature}
                     className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
                   >
                     <span className="text-neutral-dark text-sm sm:text-base font-medium">
-                      {item.feature}: ___
+                      {item.feature}: {item.reference_value}
                     </span>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
                       <div className="w-full max-w-48 md:w-60">
                         <div
                           className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
                           role="progressbar"
-                          aria-label={`${item.feature} Progress`}
+                          aria-label={`${item.feature} similarity`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
                         >
                           <div
-                            className="progress-bar bg-brand h-full rounded-full transition-all duration-500 ease-out"
+                            className={`progress-bar ${barColor} h-full rounded-full transition-all duration-500 ease-out`}
                             style={{ width: `${numericValue}%` }}
                           />
                         </div>

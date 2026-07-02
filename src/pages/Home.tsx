@@ -719,8 +719,7 @@ function FileUploader() {
                         },
                       );
                       const data = await res.json();
-                      navigate("/results", {
-                        // add /${data.job_id} later
+                      navigate(`/results/${data.job_id}`, {
                         state: { videoURL: recordedVideo },
                       });
                     } catch (error) {
