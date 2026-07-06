@@ -41,12 +41,40 @@ def compute_velocities(
 
     return velocities
 
+def find_signing_region(
+        velocities: list[float],
+        onset_threshold: float = 0.01,
+        min_active_frames: int = 5,
+) -> tuple[int, int]:
+    """ Finds the start and end frame indices of the signing region based on velocity thresholds.
+    Returns a tuple (start_frame, end_frame) inclusive. If no signing region is found, returns (0, len(velocities)-1). """
+    num_frames = len(velocities)
+
+    # find first frame where velocity exceeds threshold and stays elevated for at least min_active_frames
+    start_frame = 0
+    for i in range(num_frames - min_active_frames):
+        window = velocities[i:i + min_active_frames]
+        if sum(v >= onset_threshold for v in window) >= min_active_frames // 2:  # at least half the frames in the window exceed threshold
+            start_frame = max(0, i - 2) # keep 2 frames before onset for context
+            break
+
+    # find last frame where velocity exceeds threshold
+    end_frame = num_frames - 1
+    for i in range(num_frames - 1, min_active_frames, -1):
+        window = velocities[i - min_active_frames:i]
+        if sum(v >= onset_threshold for v in window) >= min_active_frames // 2:
+            end_frame = min(num_frames - 1, i + 2) # keep 2 frames after offset for context
+            break
+    
+    return start_frame, end_frame
+
 def select_keyframes(
         pose: list[list[float]],
         hands: list[list[DetectedHand]] | None,
         min_frame_gap: int = 1,
-        velocity_threshold: float = 0.005, # hand must move across 2cm in a frame to be considered a peak
-        hold_velocity_threshold: float = 0.002, # hand must move less than 0.5cm in a frame to be considered a hold
+        velocity_threshold: float = 0.005, 
+        hold_velocity_threshold: float = 0.002,
+        significant_peak_threshold: float = 0.05
 ) -> list[int]:
     """ Selects keyframes based on velocity peaks (motion) and holds (near-zero velocity after a peak).
     Returns a list of frame indices that CLS0/CLS1 can slice from the pose and hands data """
@@ -55,14 +83,17 @@ def select_keyframes(
     
     velocities = compute_velocities(pose, hands)
     num_frames = len(pose)
+
+    start_frame, end_frame = find_signing_region(velocities)
+
     selected_frames = []
     last_selected = -min_frame_gap # ensure first frame can be selected
 
-    selected_frames.append(0) # always include first frame
-    last_selected = 0
+    selected_frames.append(start_frame) # always include first frame
+    last_selected = start_frame
 
-    for i in range(1, num_frames-1):
-        is_significant_peak = velocities[i] >= 0.05 # always include significant peaks even if they are close together
+    for i in range(start_frame + 1, end_frame):
+        is_significant_peak = velocities[i] >= significant_peak_threshold # always include significant peaks even if they are close together
 
         if is_significant_peak:
             selected_frames.append(i)
@@ -80,7 +111,7 @@ def select_keyframes(
             last_selected = i
    
     # always include the last frame
-    if num_frames - 1 not in selected_frames:
-        selected_frames.append(num_frames - 1)
+    if end_frame not in selected_frames:
+        selected_frames.append(end_frame)
     
     return sorted(selected_frames)

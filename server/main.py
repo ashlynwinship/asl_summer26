@@ -83,20 +83,24 @@ async def create_job(payload: FramesPayload):
     return jobs[job_id]
 
 async def dummy_process(job_id: str):
-    from server.keyframe import compute_velocities, select_keyframes
+    from server.keyframe import compute_velocities, find_signing_region, select_keyframes
     payload = job_payloads[job_id]
 
     await asyncio.sleep(3)  # simulate processing time
     jobs[job_id].stage = JobStage.KEYFRAME
+    velocities = compute_velocities(payload.pose, payload.hands)
+    signing_start, signing_end = find_signing_region(velocities)
     keyframe_indices = select_keyframes(payload.pose, payload.hands)
     keyframe_pose = [payload.pose[i] for i in keyframe_indices]
     keyframe_hands = [payload.hands[i] for i in keyframe_indices] if payload.hands else None
     jobs[job_id].debug = {
         "total_frames": len(payload.pose),
+        "signing_region": {"start": signing_start, "end": signing_end},
+        "signing_region_frames": signing_end - signing_start + 1,
         "keyframes_selected": len(keyframe_indices),
         "keyframe_indices": keyframe_indices,
         "reduction_ratio": round(len(keyframe_indices) / len(payload.pose), 2),
-        "velocities": compute_velocities(payload.pose, payload.hands)
+        "velocities": velocities
     }
 
     await asyncio.sleep(3)
