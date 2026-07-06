@@ -44,9 +44,9 @@ def compute_velocities(
 def select_keyframes(
         pose: list[list[float]],
         hands: list[list[DetectedHand]] | None,
-        min_frame_gap: int = 3,
-        velocity_threshold: float = 0.02, # hand must move across 2cm in a frame to be considered a peak
-        hold_velocity_threshold: float = 0.005, # hand must move less than 0.5cm in a frame to be considered a hold
+        min_frame_gap: int = 1,
+        velocity_threshold: float = 0.005, # hand must move across 2cm in a frame to be considered a peak
+        hold_velocity_threshold: float = 0.002, # hand must move less than 0.5cm in a frame to be considered a hold
 ) -> list[int]:
     """ Selects keyframes based on velocity peaks (motion) and holds (near-zero velocity after a peak).
     Returns a list of frame indices that CLS0/CLS1 can slice from the pose and hands data """
@@ -62,6 +62,13 @@ def select_keyframes(
     last_selected = 0
 
     for i in range(1, num_frames-1):
+        is_significant_peak = velocities[i] >= 0.05 # always include significant peaks even if they are close together
+
+        if is_significant_peak:
+            selected_frames.append(i)
+            last_selected = i
+            continue
+
         if i - last_selected < min_frame_gap:
             continue
 
