@@ -21,6 +21,8 @@ interface DetectedHand {
 }
 
 function FileUploader() {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
   //file uploading
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
@@ -702,22 +704,19 @@ function FileUploader() {
                   setPermission(false);
                   if (rawRecordedBlob && recordedVideo) {
                     try {
-                      const res = await fetch(
-                        "http://localhost:8000/api/jobs",
-                        {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            frame_count: poseVectors.length,
-                            landmarks_per_frame: 33,
-                            extracted_at: new Date().toISOString(),
-                            pose: poseVectors,
-                            hands: handsVectors,
-                          }),
+                      const res = await fetch(`${apiBaseUrl}/api/jobs`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
                         },
-                      );
+                        body: JSON.stringify({
+                          frame_count: poseVectors.length,
+                          landmarks_per_frame: 33,
+                          extracted_at: new Date().toISOString(),
+                          pose: poseVectors,
+                          hands: handsVectors,
+                        }),
+                      });
                       const data = await res.json();
                       navigate(`/results/${data.job_id}`, {
                         state: { videoURL: recordedVideo },

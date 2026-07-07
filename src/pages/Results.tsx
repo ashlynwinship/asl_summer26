@@ -40,6 +40,7 @@ interface JobResponse {
 }
 
 export default function Results() {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
   const { videoURL } = (location.state as { videoURL?: string }) || {};
 
@@ -51,7 +52,7 @@ export default function Results() {
     if (!job_id) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/jobs/${job_id}`);
+        const res = await fetch(`${apiBaseUrl}/api/jobs/${job_id}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setJobData(data);
@@ -63,7 +64,7 @@ export default function Results() {
       }
     }, 1500);
     return () => clearInterval(interval);
-  }, [job_id]);
+  }, [job_id, apiBaseUrl]);
 
   const featuresList = jobData?.result?.feedback ?? [];
 
