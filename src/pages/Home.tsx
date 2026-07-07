@@ -29,6 +29,7 @@ function FileUploader() {
   const [uploadProgress, setUploadProgress] = useState(0);
   // const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState<string | undefined>(undefined);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
@@ -47,10 +48,19 @@ function FileUploader() {
     navigate("/results", { state: { videoURL: videoURL } });
   };
 
+  // useEffect(() => {
+  //   if (file && videoRef.current) {
+  //     videoRef.current.play()
+  //     .then(() => {
+
+  //     })
+  //   });
+
   // Video recorder
   const [permission, setPermission] = useState<boolean>(false);
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>(null);
   const [countdown, setCountdown] = useState(3);
+  const [countdownVisible, setCountdownVisible] = useState(false);
   const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
   const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [rawRecordedBlob, setRawRecordedBlob] = useState<Blob | null>(null);
@@ -59,6 +69,11 @@ function FileUploader() {
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const countdownTimerRef = useRef<number | null>(null);
+  const countdownActiveRef = useRef(false);
+  const countdownRunIdRef = useRef(0);
+  const lastFrameProcessedAtRef = useRef(0);
+  const frameStepMs = 100;
 
   // useEffect(() => {
   //   let timerId: ReturnType<typeof setTimeout>;
@@ -74,21 +89,63 @@ function FileUploader() {
   //   return () => clearTimeout(timerId);
   // }, [recordingStatus, countdown]);
 
-  useEffect(() => {
-    if (recordingStatus !== "counting") return;
+  const clearCountdownTimer = () => {
+    if (countdownTimerRef.current !== null) {
+      window.clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    countdownActiveRef.current = false;
+  };
 
-    const timerId = setTimeout(() => {
-      setCountdown((prev) => {
-        if (prev === 1) {
-          startRecording();
-          return 0;
-        }
-        return prev - 1;
-      });
+  const resetCountdownState = () => {
+    clearCountdownTimer();
+    countdownRunIdRef.current += 1;
+    setCountdownVisible(false);
+    setCountdown(3);
+    setRecordingStatus(null);
+    countdownActiveRef.current = false;
+  };
+
+  useEffect(() => {
+    if (recordingStatus !== "counting") {
+      return;
+    }
+
+    if (countdown === 1) {
+      const timerId = window.setTimeout(() => {
+        clearCountdownTimer();
+        setCountdownVisible(false);
+        setRecordingStatus("recording");
+        void startRecording();
+      }, 1000);
+
+      countdownTimerRef.current = timerId;
+
+      return () => {
+        window.clearTimeout(timerId);
+      };
+    }
+
+    if (countdown <= 0) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setCountdown((prev) => prev - 1);
     }, 1000);
 
-    return () => clearTimeout(timerId);
-  }, [recordingStatus, countdown]);
+    countdownTimerRef.current = timerId;
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [countdown, recordingStatus]);
+
+  useEffect(() => {
+    return () => {
+      clearCountdownTimer();
+    };
+  }, []);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -198,6 +255,8 @@ function FileUploader() {
   };
 
   const stopRecording = () => {
+    clearCountdownTimer();
+
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
@@ -210,13 +269,58 @@ function FileUploader() {
   };
 
   const handleCameraAndStart = async () => {
+    if (countdownActiveRef.current || recordingStatus === "counting") {
+      return;
+    }
+
     let currentStream = streamRef.current;
     if (!permission) {
       currentStream = await getCameraPermission();
     }
     if (currentStream) {
+      resetCountdownState();
+
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = currentStream;
+      }
+
+      const waitForPreview = async () => {
+        if (!liveVideoRef.current) return;
+
+        if (liveVideoRef.current.readyState >= 2) {
+          return;
+        }
+
+        await new Promise<void>((resolve) => {
+          const video = liveVideoRef.current;
+          if (!video) {
+            resolve();
+            return;
+          }
+          const handleLoadedData = () => {
+            video.removeEventListener("loadeddata", handleLoadedData);
+            resolve();
+          };
+          video.addEventListener("loadeddata", handleLoadedData, {
+            once: true,
+          });
+        });
+      };
+
+      await waitForPreview();
+
+      try {
+        await liveVideoRef.current?.play();
+      } catch (err) {
+        console.error("Failed to start preview playback:", err);
+      }
+
+      const runId = countdownRunIdRef.current + 1;
+      countdownRunIdRef.current = runId;
       setCountdown(3);
+      setCountdownVisible(true);
       setRecordingStatus("counting");
+      countdownActiveRef.current = true;
     }
   };
 
@@ -315,6 +419,7 @@ function FileUploader() {
     isStreamingRef.current = true;
     accumulatedDataRef.current = [];
     accumulatedHandsRef.current = [];
+    lastFrameProcessedAtRef.current = 0;
     setPoseVectors([]);
     setHandsVectors([]);
 
@@ -325,8 +430,15 @@ function FileUploader() {
     const processFrame = () => {
       if (!isStreamingRef.current) return;
 
+      const now = performance.now();
+      if (now - lastFrameProcessedAtRef.current < frameStepMs) {
+        requestAnimationFrame(processFrame);
+        return;
+      }
+      lastFrameProcessedAtRef.current = now;
+
       if (video.readyState >= 2) {
-        const timestamp = performance.now();
+        const timestamp = now;
 
         const poseResult = poseLandmarker.detectForVideo(video, timestamp);
         const handResult = handLandmarker.detectForVideo(video, timestamp);
@@ -365,21 +477,16 @@ function FileUploader() {
                   [15, 19],
                   [17, 19],
                   [12, 14],
+                  [12, 24],
                   [14, 16],
                   [16, 18],
                   [16, 20],
                   [18, 20],
                   [11, 23],
                   [23, 24],
-                  [24, 25],
-                  [25, 26],
-                  [26, 27],
-                  [27, 28],
-                  [28, 29],
-                  [29, 30],
-                  [30, 31],
-                  [27, 31],
-                  [28, 32],
+                  [23, 25],
+                  [24, 26],
+                  [25, 27],
                 ],
                 "#00e676",
                 width,
@@ -396,7 +503,14 @@ function FileUploader() {
             }
 
             if (handResult.landmarks) {
-              handResult.landmarks.forEach((landmarks) => {
+              handResult.landmarks.forEach((landmarks, index) => {
+                const handednessLabel =
+                  handResult.handedness[index]?.[0]?.categoryName;
+                const color =
+                  handednessLabel === "Left" ? "#ef4444" : "#3b82f6";
+                const pointColor =
+                  handednessLabel === "Left" ? "#fca5a5" : "#fbbf24";
+
                 drawSkeleton(
                   ctx,
                   landmarks,
@@ -422,11 +536,18 @@ function FileUploader() {
                     [18, 19],
                     [19, 20],
                   ],
-                  "#3b82f6",
+                  color,
                   width,
                   height,
                 );
-                drawLandmarkPoints(ctx, landmarks, "#fbbf24", 3, width, height);
+                drawLandmarkPoints(
+                  ctx,
+                  landmarks,
+                  pointColor,
+                  3,
+                  width,
+                  height,
+                );
               });
             }
           }
@@ -565,10 +686,25 @@ function FileUploader() {
                 className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
                 disabled={!file || uploadStatus === "uploading"}
                 onClick={() => {
+                  resetCountdownState();
                   setFile(null);
                   setUploadStatus(null);
                   setUploadProgress(0);
                   setVideoURL(undefined);
+                  setRecordedVideo(null);
+                  setRawRecordedBlob(null);
+                  setPermission(false);
+                  setCountdownVisible(false);
+                  setCountdown(3);
+                  if (streamRef.current) {
+                    streamRef.current
+                      .getTracks()
+                      .forEach((track) => track.stop());
+                    streamRef.current = null;
+                  }
+                  if (liveVideoRef.current) {
+                    liveVideoRef.current.srcObject = null;
+                  }
                 }}
               >
                 Reset
@@ -612,7 +748,7 @@ function FileUploader() {
                   className="absolute inset-0 w-full h-full pointer-events-none z-10"
                   style={{ display: "block" }}
                 />
-                {recordingStatus === "counting" && (
+                {recordingStatus === "counting" && countdownVisible && (
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-all duration-200">
                     <span className="text-white text-7xl font-bold animate-ping">
                       {countdown}
@@ -636,7 +772,11 @@ function FileUploader() {
               type="button"
               className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
               onClick={handleCameraAndStart}
-              disabled={recordingStatus === "recording" || !!recordedVideo}
+              disabled={
+                recordingStatus === "recording" ||
+                recordingStatus === "counting" ||
+                !!recordedVideo
+              }
             >
               {recordingStatus === "counting"
                 ? "Preparing..."
@@ -677,9 +817,12 @@ function FileUploader() {
               className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
               disabled={!recordedVideo}
               onClick={() => {
+                resetCountdownState();
+
                 setRecordedVideo(null);
                 setRawRecordedBlob(null);
-                setRecordingStatus(null);
+                setCountdownVisible(false);
+                setCountdown(3);
                 if (streamRef.current) {
                   streamRef.current
                     .getTracks()
@@ -740,7 +883,7 @@ function FileUploader() {
                   </button>
                 )}
             </div>
-            {poseVectors.length <= 0 && (
+            {/* {poseVectors.length <= 0 && (
               <div className="flex flex-col items-center gap-2 mt-2">
                 <p className="text-sm text-gray-500 font-medium animate-pulse">
                   Loading landmark data...
@@ -751,7 +894,7 @@ function FileUploader() {
                   loading={isProcessing}
                 ></SyncLoader>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
