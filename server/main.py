@@ -43,13 +43,16 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 class JobStage(str, Enum):
-    KEYFRAME = "keyframe"
+    KEYFRAME = "keyframe_selection"
     CLS0_MATCHING = "cls0_matching"
     CLS1_FEEDBACK = "cls1_feedback"
 
 class Feedback(BaseModel):
     feature: str
-    score: float
+    user_value: str
+    user_confidence: float
+    reference_value: str
+    similarity_score: float
     accurate: bool # idk if need this
 
 class JobResult(BaseModel):
@@ -63,30 +66,59 @@ class JobResponse(BaseModel):
     stage: Optional[JobStage] = None
     error: Optional[str] = None
     result: Optional[JobResult] = None
+    debug: Optional[dict] = None
 
-# needs to be changed to redis
+# eventually move to redis + celery for async job processing, but for now just store in memory
 jobs: dict[str, JobResponse] = {}
+job_payloads: dict[str, FramesPayload] = {}
 
 # API endpoints
 @app.post("/api/jobs", response_model=JobResponse)
 async def create_job(payload: FramesPayload):
     job_id = str(uuid.uuid4())
     jobs[job_id] = JobResponse(job_id=job_id, status=JobStatus.QUEUED)
-    # simulate job processing: asyncio.create_task(), celery task??
+    job_payloads[job_id] = payload # store payload for later processing, in-memory for now, but should be stored in a database or cache like Redis
+    # simulate job processing
     asyncio.create_task(dummy_process(job_id))
     return jobs[job_id]
 
 async def dummy_process(job_id: str):
-    await asyncio.sleep(5)  # simulate processing time
-    jobs[job_id].status = JobStatus.RUNNING
+    from server.keyframe import compute_velocities, find_signing_region, select_keyframes
+    payload = job_payloads[job_id]
+
+    await asyncio.sleep(3)  # simulate processing time
     jobs[job_id].stage = JobStage.KEYFRAME
-    await asyncio.sleep(5)
+    velocities = compute_velocities(payload.pose, payload.hands)
+    signing_start, signing_end = find_signing_region(velocities)
+    keyframe_indices = select_keyframes(payload.pose, payload.hands)
+    keyframe_pose = [payload.pose[i] for i in keyframe_indices]
+    keyframe_hands = [payload.hands[i] for i in keyframe_indices] if payload.hands else None
+    jobs[job_id].debug = {
+        "total_frames": len(payload.pose),
+        "signing_region": {"start": signing_start, "end": signing_end},
+        "signing_region_frames": signing_end - signing_start + 1,
+        "keyframes_selected": len(keyframe_indices),
+        "keyframe_indices": keyframe_indices,
+        "reduction_ratio": round(len(keyframe_indices) / len(payload.pose), 2),
+        "velocities": velocities
+    }
+
+    await asyncio.sleep(3)
     jobs[job_id].stage = JobStage.CLS0_MATCHING
-    await asyncio.sleep(5)
+    # CLS0 receives keyframe_pose and keyframe_hands
+
+    await asyncio.sleep(3)
     jobs[job_id].stage = JobStage.CLS1_FEEDBACK
-    await asyncio.sleep(5)
+    # CLS1 receives keyframe_pose and keyframe_hands
+
+    await asyncio.sleep(3)
     jobs[job_id].status = JobStatus.COMPLETED
-    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[Feedback(feature="feature1", score=0.9, accurate=True)])
+    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[
+        Feedback(feature="Handshape", user_value="example", user_confidence=0.9, reference_value="example", similarity_score=0.9, accurate=True), 
+        Feedback(feature="Movement", user_value="example", user_confidence=0.8, reference_value="example", similarity_score=0.8, accurate=True),
+        Feedback(feature="Location", user_value="example", user_confidence=0.85, reference_value="example", similarity_score=0.85, accurate=True),
+        Feedback(feature="Palm Orientation", user_value="example", user_confidence=0.75, reference_value="example", similarity_score=0.75, accurate=True),
+        ])
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 async def get_job(job_id: str):

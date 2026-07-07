@@ -168,7 +168,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/guide" element={<Guide />} />
-          <Route path="/results" element={<Results />} />
+          <Route path="/results/:job_id" element={<Results />} />
         </Routes>
       </main>
       <Footer />

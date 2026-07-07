@@ -588,7 +588,8 @@ function FileUploader() {
     const jsonString = JSON.stringify(
       {
         frameCount: poseVectors.length,
-        landmarksPerFrame: 33,
+        handLandmarksPerFrame: 33,
+        poseLandmarksPerFrame: 21,
         extractedAt: new Date().toISOString(),
         pose: poseVectors,
         hands: handsVectors,
@@ -835,8 +836,7 @@ function FileUploader() {
                 id="submitButton"
                 className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
                 disabled={!rawRecordedBlob}
-                onClick={() => {
-                  handleResultsDownload;
+                onClick={async () => {
                   if (streamRef.current) {
                     streamRef.current
                       .getTracks()
@@ -844,11 +844,30 @@ function FileUploader() {
                   }
                   setPermission(false);
                   if (rawRecordedBlob && recordedVideo) {
-                    navigate("/results", {
-                      state: {
-                        videoURL: recordedVideo,
-                      },
-                    });
+                    try {
+                      const res = await fetch(
+                        "http://localhost:8000/api/jobs",
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            frame_count: poseVectors.length,
+                            landmarks_per_frame: 33,
+                            extracted_at: new Date().toISOString(),
+                            pose: poseVectors,
+                            hands: handsVectors,
+                          }),
+                        },
+                      );
+                      const data = await res.json();
+                      navigate(`/results/${data.job_id}`, {
+                        state: { videoURL: recordedVideo },
+                      });
+                    } catch (error) {
+                      console.error("Error submitting job:", error);
+                    }
                   }
                 }}
               >
