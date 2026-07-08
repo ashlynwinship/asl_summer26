@@ -71,11 +71,11 @@ def find_signing_region(
 def select_keyframes(
         pose: list[list[float]],
         hands: list[list[DetectedHand]] | None,
+        num_keyframes: int | None = None, # if None, return all keyframes, otherwise return only the top N keyframes by velocity
         min_frame_gap: int = 1,
         velocity_threshold: float = 0.005, 
         hold_velocity_threshold: float = 0.002,
-        significant_peak_threshold: float = 0.05,
-        num_keyframes: int | None = None # if None, return all keyframes, otherwise return only the top N keyframes by velocity
+        significant_peak_threshold: float = 0.05
 ) -> list[int]:
     """ Selects keyframes based on velocity peaks (motion) and holds (near-zero velocity after a peak).
     Returns a list of frame indices that CLS0/CLS1 can slice from the pose and hands data """
@@ -124,6 +124,36 @@ def select_keyframes(
     candidates = [i for i in selected_frames if i not in must_keep]
     candidates_ranked = sorted(candidates, key=lambda x: velocities[x], reverse=True)
 
-    selected_frames = list(must_keep) + candidates_ranked[:num_keyframes - 2]
+    top = list(must_keep) + candidates_ranked[:num_keyframes - 2]
 
-    return sorted(selected_frames)
+    return sorted(top)
+
+def build_classifier_input(
+        pose: list[list[float]],
+        hands: list[list[DetectedHand]] | None,
+        keyframe_indices: list[int],
+) -> np.ndarray:
+    """ Slices pose (and optionally hands) by keyframe indices and stacks into a 2D numpy array of shape (num_keyframes, num_features) for input to CLS0/CLS1. """
+    rows = []
+    for i in keyframe_indices:
+        frame = list(pose[i]) # 33 landmarks * 3 coordinates = 99 floats
+
+        left = next((h for h in (hands[i] if hands else []) if h.label == "Left"), None)
+        right = next((h for h in (hands[i] if hands else []) if h.label == "Right"), None)
+
+        frame.extend(left.landmarks if left else [0.0] * 63) # 21 landmarks * 3 coordinates = 63 floats per hand
+        frame.extend(right.landmarks if right else [0.0] * 63) #
+        
+        rows.append(frame)
+    
+    return np.array(rows, dtype=np.float32)
+    # fixed shape: (num_keyframes, 225)
+
+# -- only need if .npy files are used for classifier input, but for now we are passing the array directly --
+# def save_classifier_input(array: np.ndarray, path: str) -> None:
+#     """ Saves the classifier input array to a .npy file. """
+#     np.save(path, array)
+
+# def load_classifier_input(path: str) -> np.ndarray:
+#     """ Loads a .npy file containing the classifier input array. """
+#     return np.load(path)
