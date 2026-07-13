@@ -114,19 +114,28 @@ def select_keyframes(
     # always include the last frame
     if end_frame not in selected_frames:
         selected_frames.append(end_frame)
-
-    if num_keyframes is None or len(selected_frames) <= num_keyframes:
-        return sorted(selected_frames)
     
-    must_keep = {selected_frames[0], selected_frames[-1]} # always keep the first and last frames
+    # adjust selection to meet num_keyframes if specified
+    if num_keyframes is not None:
+        must_keep = {selected_frames[0], selected_frames[-1]} # always keep the first and last frames
+        candidates = [i for i in selected_frames if i not in must_keep]
+    
+    # if we have more selected frames than requested, rank by velocity and return the top N
+    if len(selected_frames) > num_keyframes: 
+        # rank remaining candidates by velocity (highest = most motion)
+        candidates_ranked = sorted(candidates, key=lambda x: velocities[x], reverse=True)
+        top = list(must_keep) + candidates_ranked[:num_keyframes - 2]
+        selected_frames = sorted(top)
 
-    # rank remaining candidates by velocity (highest = most motion)
-    candidates = [i for i in selected_frames if i not in must_keep]
-    candidates_ranked = sorted(candidates, key=lambda x: velocities[x], reverse=True)
+    # if we have fewer selected frames than requested, rank unselected frames by velocity and add number of frames needed to reach num_keyframes
+    elif len(selected_frames) < num_keyframes: 
+        num_needed = num_keyframes - len(selected_frames)
+        all_region_frames = set(range(start_frame, end_frame + 1))
+        unselected = sorted(all_region_frames - set(selected_frames), key=lambda x: velocities[x], reverse=True)
+        extras = unselected[:num_needed]
+        selected_frames = sorted(selected_frames + extras)
 
-    top = list(must_keep) + candidates_ranked[:num_keyframes - 2]
-
-    return sorted(top)
+    return selected_frames
 
 def build_classifier_input(
         pose: list[list[float]],
