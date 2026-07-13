@@ -132,9 +132,13 @@ def select_keyframes(
         num_needed = num_keyframes - len(selected_frames)
         all_region_frames = set(range(start_frame, end_frame + 1))
         unselected = sorted(all_region_frames - set(selected_frames), key=lambda x: velocities[x], reverse=True)
-        extras = unselected[:num_needed]
-        selected_frames = sorted(selected_frames + extras)
-
+        if len(unselected) >= num_needed:
+            # enough frames in signing region to fill the gap
+            extras = unselected[:num_needed]
+            selected_frames = sorted(selected_frames + extras)
+        else:
+            # not enough frames in signing region, take all of it and pad with zeros
+            selected_frames = sorted(set(selected_frames) | all_region_frames) + [0] * (num_keyframes - len(selected_frames) - len(all_region_frames))
     return selected_frames
 
 def build_classifier_input(

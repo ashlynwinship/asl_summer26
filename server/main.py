@@ -106,6 +106,7 @@ async def dummy_process(job_id: str):
         "signing_region_frames": signing_end - signing_start + 1,
         "keyframes_selected": len(keyframe_indices),
         "num_keyframes_requested": 16,
+        "padded_to_num_keyframes": len(keyframe_indices) < 16,
         "keyframe_indices": keyframe_indices,
         "reduction_ratio": round(len(keyframe_indices) / len(payload.pose), 2),
         "velocities": velocities,
