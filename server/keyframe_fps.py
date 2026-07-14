@@ -55,6 +55,27 @@ def sample_with_hands(data: np.ndarray, target: int = TARGET_FRAMES) -> np.ndarr
     - If hand-frames < target: keep all hand frames, FPS from non-hand frames
       (seeded by hand frames) to fill up to `target`.
     """
+    # special case: exactly 3 frames requested
+    if target == 3:
+        hand_mask = np.array([has_hands(f) for f in data])
+        hand_idx = np.where(hand_mask)[0]
+
+        if len(hand_idx) == 0:
+            # no hand frames: fall back first, middle, last of all frames
+            idx = [0, len(data) // 2, len(data) - 1]
+        elif len(hand_idx) == 1:
+            # only one hand frame: repeat it three times
+            idx = [hand_idx[0]] * 3
+        elif len(hand_idx) == 2:
+            # two hand frames: repeat the first, then the last
+            idx = [hand_idx[0], hand_idx[0], hand_idx[-1]]
+        else:
+            # three or more hand frames: first, middle, last
+            mid = hand_idx[len(hand_idx) // 2]
+            idx = [hand_idx[0], mid, hand_idx[-1]]
+        
+        return data[sorted(set(idx))]
+
     hand_mask = np.array([has_hands(f) for f in data])
     hand_idx = np.where(hand_mask)[0]
     nohand_idx = np.where(~hand_mask)[0]

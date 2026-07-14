@@ -86,50 +86,51 @@ async def create_job(payload: FramesPayload):
     return jobs[job_id]
 
 async def dummy_process(job_id: str):
-    from server.keyframe import compute_velocities, find_signing_region, select_keyframes, build_classifier_input
-    payload = job_payloads[job_id]
+    from server.keyframe import compute_velocities, find_signing_region, select_keyframes, build_classifier_input, build_frame_vector
+    
+    try:
+        jobs[job_id].status = JobStatus.RUNNING
+        payload = job_payloads[job_id]
+        jobs[job_id].stage = JobStage.KEYFRAME
 
-    await asyncio.sleep(3)  # simulate processing time
+        velocities = compute_velocities(payload.pose, payload.hands)
+        signing_start, signing_end = find_signing_region(velocities)
+        keyframe_indices = select_keyframes(payload.pose, payload.hands)
+        classifier_input = build_classifier_input(payload.pose, payload.hands, keyframe_indices)
 
-    jobs[job_id].stage = JobStage.KEYFRAME
-    velocities = compute_velocities(payload.pose, payload.hands)
-    signing_start, signing_end = find_signing_region(velocities)
-    keyframe_indices = select_keyframes(payload.pose, payload.hands, 16)
-    keyframe_pose = [payload.pose[i] for i in keyframe_indices]
-    keyframe_hands = [payload.hands[i] for i in keyframe_indices] if payload.hands else None
+        jobs[job_id].debug = {
+            "total_frames": len(payload.pose),
+            "signing_region": {"start": signing_start, "end": signing_end},
+            "keyframes_selected": len(keyframe_indices),
+            "num_keyframes_requested": 16,
+            "padded_to_num_keyframes": len(keyframe_indices) < 16,
+            "keyframe_indices": keyframe_indices,
+            "reduction_ratio": round(len(keyframe_indices) / len(payload.pose), 2),
+            "velocities": velocities,
+            "classifier_input_shape": classifier_input.shape,
+            "classifier_input": classifier_input.tolist()
+        }
 
-    classifier_input = build_classifier_input(payload.pose, payload.hands, keyframe_indices)
+        jobs[job_id].stage = JobStage.CLS0_MATCHING
+        # CLS0 receives keyframe_pose and keyframe_hands
 
-    jobs[job_id].debug = {
-        "total_frames": len(payload.pose),
-        "signing_region": {"start": signing_start, "end": signing_end},
-        "signing_region_frames": signing_end - signing_start + 1,
-        "keyframes_selected": len(keyframe_indices),
-        "num_keyframes_requested": 16,
-        "padded_to_num_keyframes": len(keyframe_indices) < 16,
-        "keyframe_indices": keyframe_indices,
-        "reduction_ratio": round(len(keyframe_indices) / len(payload.pose), 2),
-        "velocities": velocities,
-        "classifier_input_shape": classifier_input.shape,
-        "classifier_input": classifier_input.tolist()
-    }
+        await asyncio.sleep(3)
+        jobs[job_id].stage = JobStage.CLS1_FEEDBACK
+        # CLS1 receives keyframe_pose and keyframe_hands
 
-    await asyncio.sleep(3)
-    jobs[job_id].stage = JobStage.CLS0_MATCHING
-    # CLS0 receives keyframe_pose and keyframe_hands
-
-    await asyncio.sleep(3)
-    jobs[job_id].stage = JobStage.CLS1_FEEDBACK
-    # CLS1 receives keyframe_pose and keyframe_hands
-
-    await asyncio.sleep(3)
-    jobs[job_id].status = JobStatus.COMPLETED
-    jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[
-        Feedback(feature="Handshape", user_value="example", user_confidence=0.9, reference_value="example", similarity_score=0.9, accurate=True), 
-        Feedback(feature="Movement", user_value="example", user_confidence=0.8, reference_value="example", similarity_score=0.8, accurate=True),
-        Feedback(feature="Location", user_value="example", user_confidence=0.85, reference_value="example", similarity_score=0.85, accurate=True),
-        Feedback(feature="Palm Orientation", user_value="example", user_confidence=0.75, reference_value="example", similarity_score=0.75, accurate=True),
-        ])
+        await asyncio.sleep(3)
+        jobs[job_id].status = JobStatus.COMPLETED
+        jobs[job_id].result = JobResult(matched_word="example", match_confidence=0.95, feedback=[
+            Feedback(feature="Handshape", user_value="example", user_confidence=0.9, reference_value="example", similarity_score=0.9, accurate=True), 
+            Feedback(feature="Movement", user_value="example", user_confidence=0.8, reference_value="example", similarity_score=0.8, accurate=True),
+            Feedback(feature="Location", user_value="example", user_confidence=0.85, reference_value="example", similarity_score=0.85, accurate=True),
+            Feedback(feature="Palm Orientation", user_value="example", user_confidence=0.75, reference_value="example", similarity_score=0.75, accurate=True),
+            ])
+        
+    except Exception as e:
+        import traceback
+        jobs[job_id].status = JobStatus.FAILED
+        jobs[job_id].error = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)
 async def get_job(job_id: str):
