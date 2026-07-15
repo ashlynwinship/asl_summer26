@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 interface MatchVideo {
   id: number;
@@ -16,10 +16,71 @@ interface MatchVideo {
   };
 }
 
-export default function Results() {
-  const location = useLocation();
+interface FeedbackItem {
+  feature: string;
+  user_value: string;
+  user_confidence: number;
+  reference_value: string;
+  similarity_score: number;
+  accurate: boolean;
+}
 
+interface JobResult {
+  matched_word: string;
+  match_confidence: number;
+  feedback: FeedbackItem[];
+}
+
+interface JobResponse {
+  job_id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  stage: string | null;
+  error?: string;
+  result?: JobResult;
+}
+
+export default function Results() {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  const location = useLocation();
   const { videoURL } = (location.state as { videoURL?: string }) || {};
+
+  // API call to fetch results
+  const { job_id } = useParams<{ job_id: string }>();
+  const [jobData, setJobData] = useState<JobResponse | null>(null);
+
+  useEffect(() => {
+    if (!job_id) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/jobs/${job_id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setJobData(data);
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.log("Error fetching job data:", err);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [job_id, apiBaseUrl]);
+
+  const featuresList = jobData?.result?.feedback ?? [];
+
+  const [enabledFeatures, setEnabledFeatures] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    if (jobData?.result?.feedback) {
+      const initial: Record<string, boolean> = {};
+      jobData.result.feedback.forEach((item) => {
+        initial[item.feature] = true;
+      });
+      setEnabledFeatures(initial);
+    }
+  }, [jobData]);
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
   const topMatches: MatchVideo[] = [
@@ -87,28 +148,50 @@ export default function Results() {
     return parseInt(valString, 10) || 0;
   };
 
-  const featuresList = [
-    { name: "Handshape", value: currentMatch.features.handshape },
-    { name: "Movement", value: currentMatch.features.movement },
-    { name: "Location", value: currentMatch.features.location },
-    { name: "Palm Orientation", value: currentMatch.features.palm },
-  ];
-
-  const [enabledFeatures, setEnabledFeatures] = useState<
-    Record<string, boolean>
-  >({
-    Handshape: true,
-    Movement: true,
-    Location: true,
-    "Palm Orientation": true,
-  });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToggleFeature = (name: string) => {
+    const isCurrentlyEnabled = enabledFeatures[name];
+    const totalEnabled = Object.values(enabledFeatures).filter(Boolean).length;
+    // prevent disabling the last enabled feature
+    if (isCurrentlyEnabled && totalEnabled <= 1) {
+      setErrorMessage("At least one feature must be enabled.");
+      setTimeout(() => setErrorMessage(null), 3000);
+      return;
+    }
+    setErrorMessage(null);
     setEnabledFeatures((prev) => ({
       ...prev,
       [name]: !prev[name],
     }));
   };
+
+  // loading screen
+  if (!jobData || jobData.status === "queued" || jobData.status === "running") {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-600 font-medium animate-pulse">
+          {jobData?.stage === "keyframe_selection" && "Selecting keyframes..."}
+          {jobData?.stage === "cls0_matching" && "Identifying sign..."}
+          {jobData?.stage === "cls1_feedback" && "Analyzing features..."}
+          {!jobData?.stage && "Processing..."}
+        </p>
+        <SyncLoader color="#4a90e2" size={10} />
+      </main>
+    );
+  }
+
+  if (jobData.status === "failed") {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500 font-medium">
+          Something went wrong: {jobData.error ?? "unknown error"}
+        </p>
+      </main>
+    );
+  }
+
+  const results = jobData.result; // jobData.status === "completed"
 
   return (
     <main>
@@ -146,12 +229,17 @@ export default function Results() {
               Features
             </p>
             <div className="flex flex-col gap-3 w-full">
+              {errorMessage && (
+                <div className="text-sm font-medium text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mb-2 animate-fade-in">
+                  {errorMessage}
+                </div>
+              )}
               {featuresList.map((item) => {
-                const isEnabled = enabledFeatures[item.name];
-                const numericValue = parsePercent("50");
+                const isEnabled = enabledFeatures[item.feature] ?? true;
+                const numericValue = Math.round(item.user_confidence * 100);
                 return (
                   <div
-                    key={item.name}
+                    key={item.feature}
                     className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 p-3 rounded-lg border transition-all duration-300 ease-in-out ${
                       isEnabled
                         ? "bg-white/50 border-neutral-border/40 opacity-100"
@@ -163,15 +251,15 @@ export default function Results() {
                         type="checkbox"
                         className="switch cursor-pointer"
                         checked={isEnabled}
-                        onChange={() => handleToggleFeature(item.name)}
-                        aria-label={`Toggle ${item.name}`}
+                        onChange={() => handleToggleFeature(item.feature)}
+                        aria-label={`Toggle ${item.feature}`}
                       />
                       <span
                         className={`text-sm sm:text-base font-medium transition-colors duration-300 ${
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {item.name}: ___
+                        {item.feature}: {item.user_value}
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
@@ -181,7 +269,7 @@ export default function Results() {
                             isEnabled ? "bg-gray-200" : "bg-gray-300"
                           }`}
                           role="progressbar"
-                          aria-label={`${item.name}Progress`}
+                          aria-label={`${item.feature}Progress`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
@@ -199,7 +287,7 @@ export default function Results() {
                           isEnabled ? "text-neutral-dark" : "text-gray-400"
                         }`}
                       >
-                        {"50%"}
+                        {numericValue}%
                       </span>
                     </div>
                   </div>
@@ -240,7 +328,7 @@ export default function Results() {
               </button>
               <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
                 <p className="text-white text-sm font-medium">
-                  {currentMatch.label}
+                  {` ${results?.matched_word} (Confidence: ${Math.round((results?.match_confidence ?? 0) * 100)}%)`}
                 </p>
               </div>
             </div>
@@ -259,7 +347,7 @@ export default function Results() {
                   <img
                     src={match.thumbnail}
                     className="w-full h-full object-cover"
-                    alt={match.label}
+                    alt={results?.matched_word}
                   />
                 </button>
               ))}
@@ -272,33 +360,38 @@ export default function Results() {
             </p>
             <div className="flex flex-col gap-3 w-full">
               {featuresList.map((item) => {
-                const numericValue = parsePercent(item.value);
+                const numericValue = Math.round(item.similarity_score * 100);
+                const barColor = item.accurate
+                  ? "bg-green-500"
+                  : numericValue >= 60
+                    ? "bg-yellow-400"
+                    : "bg-red-400";
                 return (
                   <div
-                    key={item.name}
+                    key={item.feature}
                     className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
                   >
                     <span className="text-neutral-dark text-sm sm:text-base font-medium">
-                      {item.name}: ___
+                      {item.feature}: {item.reference_value}
                     </span>
                     <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
                       <div className="w-full max-w-48 md:w-60">
                         <div
                           className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
                           role="progressbar"
-                          aria-label={`${item.name} Progress`}
+                          aria-label={`${item.feature} similarity`}
                           aria-valuenow={numericValue}
                           aria-valuemin={0}
                           aria-valuemax={100}
                         >
                           <div
-                            className="progress-bar bg-brand h-full rounded-full transition-all duration-500 ease-out"
+                            className={`progress-bar ${barColor} h-full rounded-full transition-all duration-500 ease-out`}
                             style={{ width: `${numericValue}%` }}
                           />
                         </div>
                       </div>
                       <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
-                        {item.value}
+                        {numericValue}%
                       </span>
                     </div>
                   </div>
