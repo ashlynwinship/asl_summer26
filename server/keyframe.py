@@ -34,8 +34,8 @@ def compute_velocities(
                     curr_landmarks = np.array(curr_hand.landmarks).reshape(21, 3)
                     prev_landmarks = np.array(matching.landmarks).reshape(21, 3)
                     displacements.append(np.mean(np.linalg.norm(curr_landmarks - prev_landmarks, axis=1)))
-                if displacements:
-                    hands_displacement = np.mean(displacements)
+            if displacements:
+                hands_displacement = np.mean(displacements)
         
         # combined displacement, weighted toward hands if present
         combined = (pose_displacement + 2.0 * hands_displacement) / (3.0 if hands_displacement > 0 else 1.0)
@@ -74,7 +74,6 @@ def find_signing_region(
 def select_keyframes(
         pose: list[list[float]],
         hands: list[list[DetectedHand]] | None,
-        num_keyframes: int | None = None, # if None, return all keyframes, otherwise return only the top N keyframes by velocity
         min_frame_gap: int = 1,
         velocity_threshold: float = 0.005, 
         hold_velocity_threshold: float = 0.002,
