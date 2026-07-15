@@ -1,5 +1,6 @@
 import numpy as np
 
+from server.keyframe_fps import sample_with_hands
 from server.main import DetectedHand
 
 def compute_velocities(
@@ -7,7 +8,8 @@ def compute_velocities(
         hands: list[list[DetectedHand]] | None,
 ) -> list[float]:
     """ Computes velocities for each frame as the mean landmark displacement from the previous frame, weighted toward hand landmarks.
-     Returns a list of velocities, one per frame, with the first frame velocity set to 0. """
+     Returns a list of velocities, one per frame, with the first frame velocity set to 0. 
+    """
     num_frames = len(pose)
     velocities = [0.0]
 
@@ -32,8 +34,8 @@ def compute_velocities(
                     curr_landmarks = np.array(curr_hand.landmarks).reshape(21, 3)
                     prev_landmarks = np.array(matching.landmarks).reshape(21, 3)
                     displacements.append(np.mean(np.linalg.norm(curr_landmarks - prev_landmarks, axis=1)))
-                if displacements:
-                    hands_displacement = np.mean(displacements)
+            if displacements:
+                hands_displacement = np.mean(displacements)
         
         # combined displacement, weighted toward hands if present
         combined = (pose_displacement + 2.0 * hands_displacement) / (3.0 if hands_displacement > 0 else 1.0)
@@ -47,7 +49,8 @@ def find_signing_region(
         min_active_frames: int = 5,
 ) -> tuple[int, int]:
     """ Finds the start and end frame indices of the signing region based on velocity thresholds.
-    Returns a tuple (start_frame, end_frame) inclusive. If no signing region is found, returns (0, len(velocities)-1). """
+    Returns a tuple (start_frame, end_frame) inclusive. If no signing region is found, returns (0, len(velocities)-1).
+    """
     num_frames = len(velocities)
 
     # find first frame where velocity exceeds threshold and stays elevated for at least min_active_frames
@@ -74,16 +77,15 @@ def select_keyframes(
         min_frame_gap: int = 1,
         velocity_threshold: float = 0.005, 
         hold_velocity_threshold: float = 0.002,
-        significant_peak_threshold: float = 0.05,
-        num_keyframes: int | None = None # if None, return all keyframes, otherwise return only the top N keyframes by velocity
+        significant_peak_threshold: float = 0.05
 ) -> list[int]:
     """ Selects keyframes based on velocity peaks (motion) and holds (near-zero velocity after a peak).
-    Returns a list of frame indices that CLS0/CLS1 can slice from the pose and hands data """
+    Returns a list of frame indices that CLS0/CLS1 can slice from the pose and hands data.
+    """
     if not pose:
         return []
     
     velocities = compute_velocities(pose, hands)
-    num_frames = len(pose)
 
     start_frame, end_frame = find_signing_region(velocities)
 
@@ -115,15 +117,58 @@ def select_keyframes(
     if end_frame not in selected_frames:
         selected_frames.append(end_frame)
 
-    if num_keyframes is None or len(selected_frames) <= num_keyframes:
-        return sorted(selected_frames)
+    return selected_frames
+
+# preprocessing for classifiers
+NUM_POSE_LANDMARKS = 33
+NUM_HAND_LANDMARKS = 21
+TARGET_FRAMES = 16
+D = (NUM_POSE_LANDMARKS + NUM_HAND_LANDMARKS * 2) * 3  # 225    
+
+def build_frame_vector(
+        pose_frame: list[float],
+        hand_frames: list[DetectedHand] | None,
+) -> np.ndarray:
+    """ Build a single 225-float frame vector in the format: [pose (99) | left_hand (63) | right_hand (63)]. Missing hands are padded with zeros. 
+    """
+    frame = list(pose_frame) # 99 floats
+
+    left = next((h for h in (hand_frames or []) if h.label == "Left"), None)
+    right = next((h for h in (hand_frames or []) if h.label == "Right"), None)
+
+    frame.extend(left.landmarks if left else [0.0] * 63) # 21 landmarks * 3 coordinates = 63 floats per hand
+    frame.extend(right.landmarks if right else [0.0] * 63) #
+
+    return np.array(frame, dtype = np.float32) # shape (225,)
+
+def build_classifier_input(
+        pose: list[list[float]],
+        hands: list[list[DetectedHand]] | None,
+        keyframe_indices: list[int],
+        target: int = TARGET_FRAMES,
+) -> np.ndarray:
+    """ Converts selected keyframes into a (target, 225) numpy array using hand-aware FPS to hit exactly `target` frames. 
+    """
+    # build full frame vectors for selected keyframes only
+    frames = np.stack([
+        build_frame_vector(pose[i], hands[i] if hands else None) for i in keyframe_indices
+    ]) # shape (len(keyframe_indices), 225)
+
+    # use hand-aware FPS to get exactly target frames
+    sampled = sample_with_hands(frames, target=target)
+
+    # zero-pad if still under target
+    if len(sampled) < target:
+        pad = np.zeros((target - len(sampled), D), dtype=np.float32)
+        sampled = np.concatenate([sampled, pad])
     
-    must_keep = {selected_frames[0], selected_frames[-1]} # always keep the first and last frames
+    return sampled
 
-    # rank remaining candidates by velocity (highest = most motion)
-    candidates = [i for i in selected_frames if i not in must_keep]
-    candidates_ranked = sorted(candidates, key=lambda x: velocities[x], reverse=True)
+# -- only need if .npy files are used for classifier input, but for now we are passing the array directly --
+# def save_classifier_input(array: np.ndarray, path: str) -> None:
+#     """ Saves the classifier input array to a .npy file. """
+#     np.save(path, array)
 
-    selected_frames = list(must_keep) + candidates_ranked[:num_keyframes - 2]
-
-    return sorted(selected_frames)
+# def load_classifier_input(path: str) -> np.ndarray:
+#     """ Loads a .npy file containing the classifier input array. """
+#     return np.load(path)
