@@ -12,7 +12,7 @@ export default function Guide() {
         "The ASL Live Dictionary uses advanced computer vision and machine learning " +
         "algorithms to match the American Sign Language (ASL) sign with the corresponding English word. It captures video input " +
         "from a camera or uses a pre-recorded video, processes the sign in that video, and outputs the closest matches along with video " +
-        "demonstrations of the most similar matches. The tool utilizes a combination of computer vision techniques to detect and track ASL parameter." +
+        "demonstrations of the most similar matches. The tool utilizes a combination of computer vision techniques to detect and track ASL parameter. " +
         "It then applies machine learning models trained on large datasets of ASL " +
         "signs to interpret the video and generate accurate matches.",
     },
@@ -20,9 +20,9 @@ export default function Guide() {
       id: "who",
       label: "Who is the Tool For?",
       content:
-        "The ASL Live Dictionary is designed primarily for students of ASL" +
-        "and anyone interested in learning ASL or improving their skills. It is meant to be a way for learners" +
-        "to look up signs that they only partially remember or do not know the meaning of without needing to search" +
+        "The ASL Live Dictionary is designed primarily for students of ASL " +
+        "and anyone interested in learning ASL or improving their skills. It is meant to be a way for learners " +
+        "to look up signs that they only partially remember or do not know the meaning of without needing to search " +
         "through videos manually.",
     },
     {
@@ -55,7 +55,7 @@ export default function Guide() {
         "Q: I tried to look up a classfier but the tool did not come back with any relevant matches, why? \n" +
         "A: This tool does not work for classifiers due to thier context dependent nature.\n\n" +
         "Q: I hit block on a pop-up about my camera and now the tool will not record a video, why? \n" +
-        "A: You need to allow camera access in order to record a video. Please try reloading the page and allowing camera access when you try recording again." +
+        "A: You need to allow camera access in order to record a video. Please try reloading the page and allowing camera access when you try recording again. " +
         "As a reminder your image is not being used just the vector points of your sign. \n\n",
     },
   ];
@@ -189,26 +189,28 @@ export default function Guide() {
               <div className="text-center bg-brand-light p-4 rounded-xl border border-brand/20">
                 <p className="text-green-600 font-bold mb-2">Aim for This ↓</p>
                 <video
-                  width={450}
-                  height={250}
+                  style={{
+                    width: "450px",
+                    height: "250px",
+                    backgroundColor: "black",
+                  }}
                   className="mx-5 rounded-lg shadow-md"
                   controls
                 >
-                  <source src="/good-vid.mp4" type="video/mp4" />
+                  <source src="/GRANDPARENTS_Cut.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
               <div className="text-center bg-red-50/50 p-4 rounded-xl border border-red-100">
                 <p className="text-red-600 font-bold mb-2">NOT This ↓</p>
-                <video
-                  width={450}
-                  height={250}
+                <iframe
+                  style={{ width: "450px", height: "250px" }}
                   className="mx-5 rounded-lg shadow-md"
-                  controls
-                >
-                  <source src="/bad-vid.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                  src={`https://youtube.com/embed/uOIILzYgxTk?autoplay=0`}
+                  title="How to Ruin Your ASL Teacher's Day"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
             </div>
           )}
