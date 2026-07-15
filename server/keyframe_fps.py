@@ -17,7 +17,6 @@ Output frames are always returned in original temporal order.
 from typing import Optional
 
 import numpy as np
-import tensorflow as tf
 
 NUM_POSE_LANDMARKS = 33
 NUM_HAND_LANDMARKS = 21
@@ -99,71 +98,3 @@ def sample_with_hands(data: np.ndarray, target: int = TARGET_FRAMES) -> np.ndarr
         selected = hand_idx
 
     return data[selected]
-
-
-def load_and_sample_keyframes(path: tf.Tensor, label: tf.Tensor, target: int = TARGET_FRAMES):
-    """`dataset.map` fn: load an (N, 225) landmark .npy from `path` and hand-aware-sample it to `target` frames.
-
-    `path` is a scalar tf.string tensor; `label` is passed through unchanged.
-    Returns `(frames, label)` where `frames` has static shape (target, D). Clips
-    with fewer than `target` available frames are zero-padded at the end (pair
-    with a Keras `Masking(mask_value=0.0)` layer so the LSTM ignores the padding).
-
-    Usage:
-        dataset = dataset.map(load_and_sample_keyframes, num_parallel_calls=tf.data.AUTOTUNE)
-    """
-    D = (NUM_POSE_LANDMARKS + NUM_HAND_LANDMARKS * 2) * 3
-
-    def _load(p):
-        data = np.load(p.decode("utf-8"))
-        sampled = sample_with_hands(data, target=target).astype(np.float32)
-        if len(sampled) < target:
-            pad = np.zeros((target - len(sampled), D), dtype=np.float32)
-            sampled = np.concatenate([sampled, pad])
-        return sampled
-
-    frames = tf.numpy_function(_load, [path], tf.float32)
-    frames.set_shape((target, D))
-    return frames, label
-
-
-if __name__ == "__main__":
-    D = (NUM_POSE_LANDMARKS + NUM_HAND_LANDMARKS * 2) * 3  # 225
-    rng = np.random.default_rng(0)
-
-    def make_frame(with_hands: bool) -> np.ndarray:
-        frame = rng.standard_normal(D)
-        if not with_hands:
-            frame[NUM_POSE_LANDMARKS * 3:] = 0.0
-        return frame
-
-    # Case 1: hand-frames >= target (30 hand frames, 10 non-hand)
-    frames = np.stack([make_frame(i % 3 != 0) for i in range(40)])
-    hand_count = sum(has_hands(f) for f in frames)
-    out = sample_with_hands(frames, target=16)
-    assert out.shape == (16, D)
-    assert hand_count >= 16
-    print(f"[case 1] hand_frames={hand_count} N=40 -> {out.shape[0]} frames (FPS among hands only)")
-
-    # Case 2: hand-frames < target (5 hand frames, 35 non-hand) -> pad from non-hand
-    frames = np.stack([make_frame(i < 5) for i in range(40)])
-    hand_count = sum(has_hands(f) for f in frames)
-    out = sample_with_hands(frames, target=16)
-    out_hand_count = sum(has_hands(f) for f in out)
-    assert out.shape == (16, D)
-    assert out_hand_count == 5, f"expected all 5 hand frames kept, got {out_hand_count}"
-    print(f"[case 2] hand_frames={hand_count} N=40 -> {out.shape[0]} frames ({out_hand_count} with hands, padded from non-hand)")
-
-    # Case 3: no hand frames at all -> plain FPS fallback
-    frames = np.stack([make_frame(False) for _ in range(40)])
-    out = sample_with_hands(frames, target=16)
-    assert out.shape == (16, D)
-    print(f"[case 3] hand_frames=0 N=40 -> {out.shape[0]} frames (plain FPS fallback)")
-
-    # Case 4: N < target overall -> return everything available
-    frames = np.stack([make_frame(True) for _ in range(10)])
-    out = sample_with_hands(frames, target=16)
-    assert out.shape == (10, D)
-    print(f"[case 4] N=10 < target=16 -> {out.shape[0]} frames (all hand frames returned)")
-
-    print("\nAll checks passed.")
