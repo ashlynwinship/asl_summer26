@@ -1,24 +1,28 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, ChangeEvent, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  ChangeEvent,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import { saveAs } from "file-saver";
 import { useLocation } from "react-router-dom";
-import { extractPoseData } from "../utils/userPoseData";
-import {
-  FilesetResolver,
-  PoseLandmarker,
-  HandLandmarker,
-} from "@mediapipe/tasks-vision";
-import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { SyncLoader } from "react-spinners";
+import { clearCanvas, drawLandmarkOverlay } from "../utils/landmarkDrawing";
+import {
+  DetectedHand,
+  extractLandmarkVectors,
+  initMediaPipe,
+} from "../utils/mediapipe";
+import {
+  createMediaRecorder,
+  startCameraStream,
+  stopMediaTracks,
+} from "../utils/recording";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
-
-interface DetectedHand {
-  label: string; // "right" or "left"
-  score: number; // probability of predicted handedness
-  landmarks: number[]; // flat 63-length list of floats representing the hand landmarks (21 landmarks * xyz)
-}
 
 function FileUploader() {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -30,14 +34,21 @@ function FileUploader() {
   // const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoURL, setVideoURL] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [uploadDataReady, setUploadDataReady] = useState(false);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0] ?? null;
+    resetLandmarkData();
     setFile(selectedFile);
+    setRecordedVideo(null);
+    setUploadDataReady(false);
     if (selectedFile) {
       const tempUrl = URL.createObjectURL(selectedFile);
       setVideoURL(tempUrl);
       setRawRecordedBlob(selectedFile);
+    } else {
+      setVideoURL(undefined);
+      setRawRecordedBlob(null);
     }
   };
 
@@ -68,13 +79,33 @@ function FileUploader() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const uploadOverlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const countdownTimerRef = useRef<number | null>(null);
   const countdownActiveRef = useRef(false);
   const countdownRunIdRef = useRef(0);
   const lastFrameProcessedAtRef = useRef(0);
+  const uploadTrackingFrameRef = useRef<number | null>(null);
+  const uploadTrackingActiveRef = useRef(false);
+  const uploadLastProcessedTimeRef = useRef(0);
   const frameStepMs = 100;
 
+  const clearCountdownTimer = () => {
+    if (countdownTimerRef.current !== null) {
+      window.clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    countdownActiveRef.current = false;
+  };
+
+  const resetCountdownState = () => {
+    clearCountdownTimer();
+    setCountdownVisible(false);
+    setCountdown(3);
+    setRecordingStatus(null);
+  };
+
+  //original original code
   // useEffect(() => {
   //   let timerId: ReturnType<typeof setTimeout>;
   //   if (recordingStatus === "counting") {
@@ -88,75 +119,93 @@ function FileUploader() {
   //   }
   //   return () => clearTimeout(timerId);
   // }, [recordingStatus, countdown]);
-
-  const clearCountdownTimer = () => {
-    if (countdownTimerRef.current !== null) {
-      window.clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    countdownActiveRef.current = false;
-  };
-
-  const resetCountdownState = () => {
-    clearCountdownTimer();
-    countdownRunIdRef.current += 1;
-    setCountdownVisible(false);
-    setCountdown(3);
-    setRecordingStatus(null);
-    countdownActiveRef.current = false;
-  };
-
   useEffect(() => {
     if (recordingStatus !== "counting") {
       return;
     }
 
-    if (countdown === 1) {
-      const timerId = window.setTimeout(() => {
-        clearCountdownTimer();
-        setCountdownVisible(false);
-        setRecordingStatus("recording");
-        void startRecording();
-      }, 1000);
-
-      countdownTimerRef.current = timerId;
-
-      return () => {
-        window.clearTimeout(timerId);
-      };
-    }
-
     if (countdown <= 0) {
+      clearCountdownTimer();
+      setCountdownVisible(false);
+      setRecordingStatus("recording");
+      void startRecording();
       return;
     }
 
-    const timerId = window.setTimeout(() => {
+    countdownActiveRef.current = true;
+    countdownTimerRef.current = window.setInterval(() => {
       setCountdown((prev) => prev - 1);
     }, 1000);
 
-    countdownTimerRef.current = timerId;
-
     return () => {
-      window.clearTimeout(timerId);
+      if (countdownTimerRef.current !== null) {
+        window.clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
     };
-  }, [countdown, recordingStatus]);
+  }, [recordingStatus, countdown]);
 
-  useEffect(() => {
-    return () => {
-      clearCountdownTimer();
-    };
-  }, []);
+  // const clearCountdownTimer = () => {
+  //   if (countdownTimerRef.current !== null) {
+  //     window.clearTimeout(countdownTimerRef.current);
+  //     countdownTimerRef.current = null;
+  //   }
+  //   countdownActiveRef.current = false;
+  // };
+
+  // const resetCountdownState = () => {
+  //   clearCountdownTimer();
+  //   countdownRunIdRef.current += 1;
+  //   setCountdownVisible(false);
+  //   setCountdown(3);
+  //   setRecordingStatus(null);
+  //   countdownActiveRef.current = false;
+  // };
+
+  // useEffect(() => {
+  //   if (recordingStatus !== "counting") {
+  //     return;
+  //   }
+
+  //   if (countdown === 1) {
+  //     const timerId = window.setTimeout(() => {
+  //       clearCountdownTimer();
+  //       setCountdownVisible(false);
+  //       setRecordingStatus("recording");
+  //       void startRecording();
+  //     }, 1000);
+
+  //     countdownTimerRef.current = timerId;
+
+  //     return () => {
+  //       window.clearTimeout(timerId);
+  //     };
+  //   }
+
+  //   if (countdown <= 0) {
+  //     return;
+  //   }
+
+  //   const timerId = window.setTimeout(() => {
+  //     setCountdown((prev) => prev - 1);
+  //   }, 1000);
+
+  //   countdownTimerRef.current = timerId;
+
+  //   return () => {
+  //     window.clearTimeout(timerId);
+  //   };
+  // }, [countdown, recordingStatus]);
+
+  // useEffect(() => {
+  //   return () => {
+  //     clearCountdownTimer();
+  //   };
+  // }, []);
 
   const getCameraPermission = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert("The MediaRecorder API is not supported in this browser.");
-      return null;
-    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
+      const stream = await startCameraStream();
       streamRef.current = stream;
       setPermission(true);
       if (liveVideoRef.current) {
@@ -173,9 +222,10 @@ function FileUploader() {
   const startRecording = async () => {
     if (!streamRef.current) return;
 
+    clearCountdownTimer();
     setIsProcessing(true);
 
-    const mediaRecorder = new MediaRecorder(streamRef.current);
+    const mediaRecorder = createMediaRecorder(streamRef.current);
     mediaRecorderRef.current = mediaRecorder;
     const chunks: Blob[] = [];
 
@@ -194,64 +244,60 @@ function FileUploader() {
     setVideoChunks([]);
     mediaRecorder.start();
     setRecordingStatus("recording");
-    startTrackingLoop();
+    //startTrackingLoop();
   };
 
   //Landmark drawing - erase on final deployment (only for debugging and testing right now)
   const clearOverlay = () => {
-    const canvas = overlayCanvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    clearCanvas(overlayCanvasRef.current);
+  };
+
+  const clearUploadOverlay = () => {
+    clearCanvas(uploadOverlayCanvasRef.current);
+  };
+
+  const stopUploadTrackingLoop = () => {
+    uploadTrackingActiveRef.current = false;
+    if (uploadTrackingFrameRef.current !== null) {
+      window.cancelAnimationFrame(uploadTrackingFrameRef.current);
+      uploadTrackingFrameRef.current = null;
     }
+    clearUploadOverlay();
   };
 
-  const drawLandmarkPoints = (
-    ctx: CanvasRenderingContext2D,
-    landmarks: Array<{ x: number; y: number }> | undefined,
-    color: string,
-    radius: number,
-    width: number,
-    height: number,
-  ) => {
-    if (!landmarks) return;
-
-    ctx.save();
-    ctx.fillStyle = color;
-    landmarks.forEach((landmark) => {
-      const x = landmark.x * width;
-      const y = landmark.y * height;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.restore();
+  const resetLandmarkData = () => {
+    stopUploadTrackingLoop();
+    isStreamingRef.current = false;
+    clearOverlay();
+    clearUploadOverlay();
+    accumulatedDataRef.current = [];
+    accumulatedHandsRef.current = [];
+    uploadAccumulatedDataRef.current = [];
+    uploadAccumulatedHandsRef.current = [];
+    setPoseVectors([]);
+    setHandsVectors([]);
+    setUploadPoseVectors([]);
+    setUploadHandsVectors([]);
+    setUploadDataReady(false);
   };
 
-  const drawSkeleton = (
-    ctx: CanvasRenderingContext2D,
-    landmarks: Array<{ x: number; y: number }> | undefined,
-    connections: Array<[number, number]>,
-    color: string,
-    width: number,
-    height: number,
-  ) => {
-    if (!landmarks) return;
+  const resetUploadLandmarkData = () => {
+    stopUploadTrackingLoop();
+    clearUploadOverlay();
+    uploadAccumulatedDataRef.current = [];
+    uploadAccumulatedHandsRef.current = [];
+    setUploadPoseVectors([]);
+    setUploadHandsVectors([]);
+    setUploadDataReady(false);
+  };
 
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    connections.forEach(([start, end]) => {
-      const startPoint = landmarks[start];
-      const endPoint = landmarks[end];
-      if (!startPoint || !endPoint) return;
-
-      ctx.beginPath();
-      ctx.moveTo(startPoint.x * width, startPoint.y * height);
-      ctx.lineTo(endPoint.x * width, endPoint.y * height);
-      ctx.stroke();
-    });
-    ctx.restore();
+  const resetRecordingLandmarkData = () => {
+    isStreamingRef.current = false;
+    clearOverlay();
+    accumulatedDataRef.current = [];
+    accumulatedHandsRef.current = [];
+    setPoseVectors([]);
+    setHandsVectors([]);
   };
 
   const stopRecording = () => {
@@ -278,7 +324,10 @@ function FileUploader() {
       currentStream = await getCameraPermission();
     }
     if (currentStream) {
-      resetCountdownState();
+      clearCountdownTimer();
+      setCountdownVisible(false);
+      setCountdown(3);
+      setRecordingStatus("recording");
 
       if (liveVideoRef.current) {
         liveVideoRef.current.srcObject = currentStream;
@@ -324,19 +373,25 @@ function FileUploader() {
     }
   };
 
-  // pose state
+  // pose state - RECORDING
   const [poseVectors, setPoseVectors] = useState<number[][]>([]);
-  const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(
-    null,
-  );
+  const [poseLandmarker, setPoseLandmarker] = useState<any>(null);
   const accumulatedDataRef = useRef<number[][]>([]);
 
-  // hands state
-  const [handsVectors, setHandsVectors] = useState<DetectedHand[][]>([]); // handsVector[frameIdx] = hands detected that frame
-  const [handLandmarker, setHandLandmarker] = useState<HandLandmarker | null>(
-    null,
-  );
-  const accumulatedHandsRef = useRef<DetectedHand[][]>([]); // accumulated hands data across frames
+  // hands state - RECORDING
+  const [handsVectors, setHandsVectors] = useState<DetectedHand[][]>([]);
+  const [handLandmarker, setHandLandmarker] = useState<any>(null);
+  const accumulatedHandsRef = useRef<DetectedHand[][]>([]);
+
+  // pose state - UPLOAD
+  const [uploadPoseVectors, setUploadPoseVectors] = useState<number[][]>([]);
+  const uploadAccumulatedDataRef = useRef<number[][]>([]);
+
+  // hands state - UPLOAD
+  const [uploadHandsVectors, setUploadHandsVectors] = useState<
+    DetectedHand[][]
+  >([]);
+  const uploadAccumulatedHandsRef = useRef<DetectedHand[][]>([]);
 
   const [isProcessing, setIsProcessing] = useState<boolean>(true); //might not need
   const isStreamingRef = useRef<boolean>(false);
@@ -359,31 +414,9 @@ function FileUploader() {
   //     });
   // }, [rawRecordedBlob]);
   useEffect(() => {
-    const initMediaPipe = async () => {
+    const loadMediaPipe = async () => {
       try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
-        );
-        const [pose, hands] = await Promise.all([
-          PoseLandmarker.createFromOptions(vision, {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
-              delegate: "GPU",
-            },
-            runningMode: "VIDEO",
-            outputSegmentationMasks: false,
-          }),
-          HandLandmarker.createFromOptions(vision, {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task",
-              delegate: "GPU",
-            },
-            runningMode: "VIDEO",
-            numHands: 2,
-          }),
-        ]);
+        const { pose, hands } = await initMediaPipe();
         setPoseLandmarker(pose);
         setHandLandmarker(hands);
         setIsProcessing(false);
@@ -393,10 +426,24 @@ function FileUploader() {
       }
     };
 
-    void initMediaPipe();
+    void loadMediaPipe();
   }, []);
 
-  // still landmark drwaing
+  // still landmark drawing
+  // useEffect(() => {
+  //   if (
+  //     !permission ||
+  //     !poseLandmarker ||
+  //     !handLandmarker ||
+  //     !liveVideoRef.current
+  //   ) {
+  //     return;
+  //   }
+
+  //   if (!isStreamingRef.current) {
+  //     startTrackingLoop();
+  //   }
+  // }, [permission, poseLandmarker, handLandmarker]);
   useEffect(() => {
     if (
       !permission ||
@@ -407,14 +454,284 @@ function FileUploader() {
       return;
     }
 
-    if (!isStreamingRef.current) {
+    if (recordingStatus === "recording") {
+      // Start the loop only when actively recording
       startTrackingLoop();
+    } else {
+      // Stop the loop and reset the flag if stop recording
+      isStreamingRef.current = false;
+      clearOverlay();
     }
-  }, [permission, poseLandmarker, handLandmarker]);
+
+    return () => {
+      isStreamingRef.current = false;
+    };
+  }, [recordingStatus, permission, poseLandmarker, handLandmarker]);
+  //start
+
+  useEffect(() => {
+    if (!file || !videoURL || !poseLandmarker || !handLandmarker) {
+      stopUploadTrackingLoop();
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    const startUploadTracking = () => {
+      stopUploadTrackingLoop();
+      uploadTrackingActiveRef.current = true;
+      uploadLastProcessedTimeRef.current = 0;
+      uploadAccumulatedDataRef.current = [];
+      uploadAccumulatedHandsRef.current = [];
+      setUploadPoseVectors([]);
+      setUploadHandsVectors([]);
+      setUploadDataReady(false);
+
+      const canvas = uploadOverlayCanvasRef.current;
+      const finalizeUploadLandmarks = () => {
+        uploadTrackingActiveRef.current = false;
+        clearUploadOverlay();
+        setUploadPoseVectors([...uploadAccumulatedDataRef.current]);
+        setUploadHandsVectors([...uploadAccumulatedHandsRef.current]);
+        setUploadDataReady(true);
+      };
+
+      const processFrame = () => {
+        if (!uploadTrackingActiveRef.current || !video) {
+          return;
+        }
+
+        if (
+          video.ended ||
+          (video.duration > 0 && video.currentTime >= video.duration - 0.01)
+        ) {
+          finalizeUploadLandmarks();
+          return;
+        }
+
+        const playbackTimeMs = video.currentTime * 1000;
+        if (playbackTimeMs - uploadLastProcessedTimeRef.current < frameStepMs) {
+          uploadTrackingFrameRef.current =
+            window.requestAnimationFrame(processFrame);
+          return;
+        }
+        uploadLastProcessedTimeRef.current = playbackTimeMs;
+
+        if (video.readyState >= 2) {
+          const timestamp = performance.now();
+          const poseResult = poseLandmarker.detectForVideo(video, timestamp);
+          const handResult = handLandmarker.detectForVideo(video, timestamp);
+
+          if (canvas) {
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              const width = video.videoWidth || 640;
+              const height = video.videoHeight || 480;
+              if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+              }
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+              drawLandmarkOverlay({
+                ctx,
+                poseResult,
+                handResult,
+                width,
+                height,
+              });
+            }
+          }
+
+          const {
+            poseVectors: currentPoseVectors,
+            handsVectors: currentHandsVectors,
+          } = extractLandmarkVectors({ poseResult, handResult });
+          if (currentPoseVectors.length > 0) {
+            uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
+          }
+          uploadAccumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
+        }
+
+        uploadTrackingFrameRef.current =
+          window.requestAnimationFrame(processFrame);
+      };
+
+      video.src = videoURL;
+      video.load();
+      video.currentTime = 0;
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      void video.play().catch((error) => {
+        console.error("Failed to autoplay uploaded video:", error);
+      });
+
+      const handleLoadedData = () => {
+        uploadTrackingFrameRef.current =
+          window.requestAnimationFrame(processFrame);
+      };
+
+      const handleVideoEnded = () => {
+        finalizeUploadLandmarks();
+      };
+
+      video.addEventListener("loadeddata", handleLoadedData, { once: true });
+      video.addEventListener("ended", handleVideoEnded, { once: true });
+      return () => {
+        video.removeEventListener("loadeddata", handleLoadedData);
+        video.removeEventListener("ended", handleVideoEnded);
+      };
+    };
+
+    const handlePlaybackReady = () => {
+      void startUploadTracking();
+    };
+
+    handlePlaybackReady();
+
+    return () => {
+      stopUploadTrackingLoop();
+    };
+  }, [file, videoURL, poseLandmarker, handLandmarker]);
+
+  //end
+
+  //realstart
+  // useEffect(() => {
+  //   if (!file || !videoURL || !poseLandmarker || !handLandmarker) {
+  //     stopUploadTrackingLoop();
+  //     return;
+  //   }
+
+  //   const video = videoRef.current;
+  //   if (!video) {
+  //     return;
+  //   }
+
+  //   let active = true;
+
+  //   // Triggered every time the video successfully jumps to our target timestamp
+  //   const handleSeeked = () => {
+  //     if (!active) return;
+  //     processCurrentFrameAndStep();
+  //   };
+
+  //   // Triggered when the initial video frame loads
+  //   const handleLoadedData = () => {
+  //     if (!active) return;
+  //     processCurrentFrameAndStep();
+  //   };
+
+  //   const finalizeUploadLandmarks = () => {
+  //     active = false;
+  //     uploadTrackingActiveRef.current = false;
+  //     clearUploadOverlay();
+  //     setUploadPoseVectors([...uploadAccumulatedDataRef.current]);
+  //     setUploadHandsVectors([...uploadAccumulatedHandsRef.current]);
+  //     setUploadDataReady(true);
+  //   };
+
+  //   const stepSeconds = frameStepMs / 1000; // e.g., 100ms becomes 0.1s
+
+  //   const processCurrentFrameAndStep = () => {
+  //     if (!active || !video) return;
+
+  //     // 1. Process the decoded frame we just seeked to
+  //     if (video.readyState >= 2) {
+  //       // Use performance.now() so MediaPipe always sees a strictly increasing timestamp
+  //       const timestamp = performance.now();
+  //       const poseResult = poseLandmarker.detectForVideo(video, timestamp);
+  //       const handResult = handLandmarker.detectForVideo(video, timestamp);
+
+  //       const canvas = uploadOverlayCanvasRef.current;
+  //       if (canvas) {
+  //         const ctx = canvas.getContext("2d");
+  //         if (ctx) {
+  //           const width = video.videoWidth || 640;
+  //           const height = video.videoHeight || 480;
+  //           if (canvas.width !== width || canvas.height !== height) {
+  //             canvas.width = width;
+  //             canvas.height = height;
+  //           }
+  //           ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  //           drawLandmarkOverlay({
+  //             ctx,
+  //             poseResult,
+  //             handResult,
+  //             width,
+  //             height,
+  //           });
+  //         }
+  //       }
+
+  //       const {
+  //         poseVectors: currentPoseVectors,
+  //         handsVectors: currentHandsVectors,
+  //       } = extractLandmarkVectors({ poseResult, handResult });
+
+  //       if (currentPoseVectors.length > 0) {
+  //         // Fix: Save to upload-specific accumulated arrays
+  //         uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
+  //       }
+  //       uploadAccumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
+  //     }
+
+  //     // 2. Decide if we reached the end of the video
+  //     const nextTime = video.currentTime + stepSeconds;
+  //     if (nextTime >= video.duration) {
+  //       finalizeUploadLandmarks();
+  //       return;
+  //     }
+
+  //     // 3. Move the playhead forward. This automatically triggers 'handleSeeked' above!
+  //     video.currentTime = nextTime;
+  //   };
+
+  //   // Initialize clean tracking states
+  //   stopUploadTrackingLoop();
+  //   uploadTrackingActiveRef.current = true;
+  //   uploadAccumulatedDataRef.current = [];
+  //   uploadAccumulatedHandsRef.current = [];
+  //   setUploadPoseVectors([]);
+  //   setUploadHandsVectors([]);
+  //   setUploadDataReady(false);
+
+  //   // Keep the video PAUSED so it doesn't run ahead of MediaPipe
+  //   video.src = videoURL;
+  //   video.load();
+  //   video.currentTime = 0;
+  //   video.muted = true;
+  //   video.playsInline = true;
+  //   video.pause();
+
+  //   // Listeners to drive our programmatic playback step-by-step
+  //   video.addEventListener("seeked", handleSeeked);
+  //   video.addEventListener("loadeddata", handleLoadedData, { once: true });
+
+  //   // Clean up cleanly on unmount / re-upload
+  //   return () => {
+  //     active = false;
+  //     stopUploadTrackingLoop();
+  //     video.removeEventListener("seeked", handleSeeked);
+  //     video.removeEventListener("loadeddata", handleLoadedData);
+  //   };
+  // }, [file, videoURL, poseLandmarker, handLandmarker]);
+  // //realend
 
   // start tracking loop for pose and hands
   const startTrackingLoop = () => {
-    if (!poseLandmarker || !handLandmarker || !liveVideoRef.current) return;
+    if (
+      !poseLandmarker ||
+      !handLandmarker ||
+      !liveVideoRef.current ||
+      recordingStatus !== "recording"
+    )
+      return;
 
     isStreamingRef.current = true;
     accumulatedDataRef.current = [];
@@ -456,151 +773,53 @@ function FileUploader() {
             }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (poseResult.landmarks && poseResult.landmarks.length > 0) {
-              drawSkeleton(
-                ctx,
-                poseResult.landmarks[0],
-                [
-                  [0, 1],
-                  [1, 2],
-                  [2, 3],
-                  [3, 7],
-                  [0, 4],
-                  [4, 5],
-                  [5, 6],
-                  [6, 8],
-                  [9, 10],
-                  [11, 12],
-                  [11, 13],
-                  [13, 15],
-                  [15, 17],
-                  [15, 19],
-                  [17, 19],
-                  [12, 14],
-                  [12, 24],
-                  [14, 16],
-                  [16, 18],
-                  [16, 20],
-                  [18, 20],
-                  [11, 23],
-                  [23, 24],
-                  [23, 25],
-                  [24, 26],
-                  [25, 27],
-                ],
-                "#00e676",
-                width,
-                height,
-              );
-              drawLandmarkPoints(
-                ctx,
-                poseResult.landmarks[0],
-                "#ff3b30",
-                4,
-                width,
-                height,
-              );
-            }
-
-            if (handResult.landmarks) {
-              handResult.landmarks.forEach((landmarks, index) => {
-                const handednessLabel =
-                  handResult.handedness[index]?.[0]?.categoryName;
-                const color =
-                  handednessLabel === "Left" ? "#ef4444" : "#3b82f6";
-                const pointColor =
-                  handednessLabel === "Left" ? "#fca5a5" : "#fbbf24";
-
-                drawSkeleton(
-                  ctx,
-                  landmarks,
-                  [
-                    [0, 1],
-                    [1, 2],
-                    [2, 3],
-                    [3, 4],
-                    [0, 5],
-                    [5, 6],
-                    [6, 7],
-                    [7, 8],
-                    [0, 9],
-                    [9, 10],
-                    [10, 11],
-                    [11, 12],
-                    [0, 13],
-                    [13, 14],
-                    [14, 15],
-                    [15, 16],
-                    [0, 17],
-                    [17, 18],
-                    [18, 19],
-                    [19, 20],
-                  ],
-                  color,
-                  width,
-                  height,
-                );
-                drawLandmarkPoints(
-                  ctx,
-                  landmarks,
-                  pointColor,
-                  3,
-                  width,
-                  height,
-                );
-              });
-            }
+            drawLandmarkOverlay({
+              ctx,
+              poseResult,
+              handResult,
+              width,
+              height,
+            });
           }
         }
 
-        if (poseResult.worldLandmarks && poseResult.worldLandmarks.length > 0) {
-          const currentFrameVector = poseResult.worldLandmarks[0].flatMap(
-            (lm) => [lm.x, lm.y, lm.z],
-          );
-          accumulatedDataRef.current.push(currentFrameVector);
+        const {
+          poseVectors: currentPoseVectors,
+          handsVectors: currentHandsVectors,
+        } = extractLandmarkVectors({ poseResult, handResult });
+        if (currentPoseVectors.length > 0) {
+          accumulatedDataRef.current.push(currentPoseVectors[0]);
           setPoseVectors([...accumulatedDataRef.current]);
         }
-
-        // hands detection
-        const frameHands: DetectedHand[] = [];
-        if (handResult.worldLandmarks && handResult.worldLandmarks.length > 0) {
-          handResult.worldLandmarks.forEach((handLandmarks, index) => {
-            const handednessInfo = handResult.handedness[index]?.[0]; // get the first category for the hand (should only be one)
-            if (!handednessInfo) return;
-
-            frameHands.push({
-              label: handednessInfo.categoryName,
-              score: handednessInfo.score,
-              landmarks: handLandmarks.flatMap((lm) => [lm.x, lm.y, lm.z]),
-            });
-          });
-        }
-        // push even when empty to preserve frame-index alignment between pose and hands data
-        accumulatedHandsRef.current.push(frameHands);
-        setHandsVectors([...accumulatedHandsRef.current]); // update state with new hands data
+        accumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
+        setHandsVectors([...accumulatedHandsRef.current]);
       }
       requestAnimationFrame(processFrame);
     };
     requestAnimationFrame(processFrame);
   };
 
-  const handleResultsDownload = () => {
-    if (!poseVectors || !handsVectors) return;
+  const handleResultsDownload = (source: "upload" | "recording") => {
+    const isUpload = source === "upload";
+    const poses = isUpload ? uploadPoseVectors : poseVectors;
+    const hands = isUpload ? uploadHandsVectors : handsVectors;
+
+    if (!poses || !hands) return;
 
     const jsonString = JSON.stringify(
       {
-        frameCount: poseVectors.length,
+        frameCount: poses.length,
         handLandmarksPerFrame: 33,
         poseLandmarksPerFrame: 21,
         extractedAt: new Date().toISOString(),
-        pose: poseVectors,
-        hands: handsVectors,
+        pose: poses,
+        hands: hands,
       },
       null,
       2,
     );
     const jsonBlob = new Blob([jsonString], { type: "application/json" });
-    saveAs(jsonBlob, "landmark_data_" + Date().toString() + ".json");
+    saveAs(jsonBlob, `landmark_data_${source}_${Date().toString()}.json`);
   };
 
   return (
@@ -608,39 +827,70 @@ function FileUploader() {
       <div className="flex flex-col lg:flex-row gap-5 justify-center items-stretch w-full px-4 mb-10">
         {/* file upload section */}
         <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover hover:scale-[1.01]">
-          {!file && (
-            <div className="w-full flex-1 flex flex-col justify-center">
-              <label
-                htmlFor="upload-input"
-                className="flex flex-col items-center justify-center w-full min-h-75 p-6 border-2 border-dashed border-brand-dark rounded-xl cursor-pointer bg-brand-light hover:bg-brand-alt-bg transition-colors"
-              >
-                <span className="flex flex-col items-center text-center text-sm text-gray-600 gap-2">
-                  <div className="text-4xl mb-2">📁</div>
-                  <span>
-                    Drag and drop file here or{" "}
-                    <strong className="text-brand font-bold">Browse</strong>
+          {!file &&
+            recordingStatus !== "recording" &&
+            recordingStatus !== "counting" &&
+            poseVectors.length <= 0 && (
+              <div className="w-full flex-1 flex flex-col justify-center">
+                <label
+                  htmlFor="upload-input"
+                  className="flex flex-col items-center justify-center w-full min-h-75 p-6 border-2 border-dashed border-brand-dark rounded-xl cursor-pointer bg-brand-light hover:bg-brand-alt-bg transition-colors"
+                >
+                  <span className="flex flex-col items-center text-center text-sm text-gray-600 gap-2">
+                    <div className="text-4xl mb-2">📁</div>
+                    <span>
+                      Drag and drop file here or{" "}
+                      <strong className="text-brand font-bold">Browse</strong>
+                    </span>
+                    <p className="text-xs text-gray-400">
+                      Accepted formats: MP4, MOV, WebM
+                    </p>
                   </span>
-                  <p className="text-xs text-gray-400">
-                    Accepted formats: MP4, MOV, WebM
-                  </p>
-                </span>
-              </label>
-              <input
-                id="upload-input"
-                type="file"
-                accept="video/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+                </label>
+                <input
+                  id="upload-input"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            )}
+          {(recordingStatus === "recording" ||
+            recordingStatus === "counting" ||
+            (!file && rawRecordedBlob)) && (
+            <div className="mt-2.5 text-center flex-1 flex flex-col items-center justify-center w-full">
+              <div className="w-full max-w-125 aspect-video rounded-lg border-2 border-neutral-dark bg-gray-900/90 flex items-center justify-center text-center px-6 mb-3">
+                <p className="text-sm text-gray-200">
+                  Currently live recording. Upload video disabled.
+                </p>
+              </div>
+              {/* <p
+            //   className="text-sm text-transparent select-none"
+            //   aria-hidden="true"
+            // >
+            //   Placeholder
+            // </p> */}
             </div>
           )}
           {file && (
             <div className="mt-2.5 text-center flex-1 flex flex-col items-center justify-center">
-              <video
-                src={videoURL}
-                className="w-full max-w-125 rounded-lg border-2 border-neutral-dark object-cover aspect-video mb-3"
-                controls
-              />
+              <div className="relative w-full max-w-125 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black mb-3">
+                <video
+                  ref={videoRef}
+                  src={videoURL}
+                  className="w-full h-full object-cover"
+                  controls
+                  autoPlay
+                  playsInline
+                  muted
+                />
+                <canvas
+                  ref={uploadOverlayCanvasRef}
+                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  style={{ display: "block" }}
+                />
+              </div>
               <p className="text-gray-700 text-sm">
                 <strong className="text-brand">Uploaded Video:</strong>{" "}
                 {file.name}
@@ -653,23 +903,33 @@ function FileUploader() {
                 type="button"
                 className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
                 disabled={
-                  (!file && !rawRecordedBlob) || uploadStatus === "uploading"
+                  (!file && !rawRecordedBlob) ||
+                  uploadStatus === "uploading" ||
+                  uploadDataReady === false
                 }
                 onClick={handleRedirect}
               >
                 Upload
               </button>
-              {poseVectors.length > 0 &&
-                handsVectors.length > 0 &&
-                recordingStatus === "stopped" && (
+              {/* {file && !uploadDataReady && (
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <p className="text-sm text-gray-500 font-medium animate-pulse">
+                    Processing uploaded video landmarks...
+                  </p>
+                </div>
+              )} */}
+              {uploadPoseVectors.length > 0 &&
+                uploadHandsVectors.length > 0 &&
+                file &&
+                uploadDataReady && (
                   <button
-                    onClick={handleResultsDownload}
+                    onClick={() => handleResultsDownload("upload")}
                     className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
                   >
                     Download Landmark Data JSON File
                   </button>
                 )}
-              {poseVectors.length <= 0 && (
+              {/* {poseVectors.length <= 0 && !file && (
                 <div className="flex flex-col items-center gap-2 mt-2">
                   <p className="text-sm text-gray-500 font-medium animate-pulse">
                     Loading Results File...
@@ -680,31 +940,24 @@ function FileUploader() {
                     loading={isProcessing}
                   ></SyncLoader>
                 </div>
-              )}
+              )} */}
               <button
                 type="button"
                 className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
-                disabled={!file || uploadStatus === "uploading"}
+                disabled={
+                  !file ||
+                  recordedVideo !== null ||
+                  recordingStatus === "recording"
+                }
                 onClick={() => {
-                  resetCountdownState();
+                  resetUploadLandmarkData();
                   setFile(null);
-                  setUploadStatus(null);
-                  setUploadProgress(0);
                   setVideoURL(undefined);
-                  setRecordedVideo(null);
                   setRawRecordedBlob(null);
                   setPermission(false);
                   setCountdownVisible(false);
                   setCountdown(3);
-                  if (streamRef.current) {
-                    streamRef.current
-                      .getTracks()
-                      .forEach((track) => track.stop());
-                    streamRef.current = null;
-                  }
-                  if (liveVideoRef.current) {
-                    liveVideoRef.current.srcObject = null;
-                  }
+                  stopMediaTracks(streamRef.current);
                 }}
               >
                 Reset
@@ -732,7 +985,21 @@ function FileUploader() {
           </div>
 
           <div className="w-full flex-1 flex items-center justify-center my-4">
-            {!rawRecordedBlob || !recordedVideo ? (
+            {file ? (
+              <div className="w-full max-w-140 aspect-video rounded-lg border-2 border-neutral-dark bg-gray-900/90 flex items-center justify-center text-center px-6">
+                <p className="text-sm text-gray-200">
+                  Currently using upload video. Live recording disabled.
+                </p>
+              </div>
+            ) : recordedVideo ? (
+              <video
+                key={recordedVideo}
+                id="recording"
+                src={recordedVideo}
+                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
+                controls
+              />
+            ) : (
               <div className="relative w-full max-w-140 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black">
                 <video
                   ref={liveVideoRef}
@@ -756,14 +1023,6 @@ function FileUploader() {
                   </div>
                 )}
               </div>
-            ) : (
-              <video
-                key={recordedVideo}
-                id="recording"
-                src={recordedVideo}
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
-                controls
-              />
             )}
           </div>
 
@@ -773,6 +1032,7 @@ function FileUploader() {
               className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
               onClick={handleCameraAndStart}
               disabled={
+                !!file ||
                 recordingStatus === "recording" ||
                 recordingStatus === "counting" ||
                 !!recordedVideo
@@ -785,14 +1045,10 @@ function FileUploader() {
             <button
               type="button"
               className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
-              disabled={recordingStatus !== "recording"}
+              disabled={!!file || recordingStatus !== "recording"}
               onClick={() => {
                 stopRecording();
-                if (streamRef.current) {
-                  streamRef.current
-                    .getTracks()
-                    .forEach((track) => track.stop());
-                }
+                stopMediaTracks(streamRef.current);
                 setPermission(false);
               }}
             >
@@ -817,17 +1073,12 @@ function FileUploader() {
               className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
               disabled={!recordedVideo}
               onClick={() => {
-                resetCountdownState();
-
+                resetRecordingLandmarkData();
                 setRecordedVideo(null);
                 setRawRecordedBlob(null);
                 setCountdownVisible(false);
                 setCountdown(3);
-                if (streamRef.current) {
-                  streamRef.current
-                    .getTracks()
-                    .forEach((track) => track.stop());
-                }
+                stopMediaTracks(streamRef.current);
                 setPermission(false);
               }}
             >
@@ -837,36 +1088,37 @@ function FileUploader() {
               <button
                 id="submitButton"
                 className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
-                disabled={!rawRecordedBlob}
+                disabled={
+                  (!rawRecordedBlob && !file) ||
+                  (file ? !uploadDataReady : false)
+                }
                 onClick={async () => {
-                  if (streamRef.current) {
-                    streamRef.current
-                      .getTracks()
-                      .forEach((track) => track.stop());
-                  }
+                  stopMediaTracks(streamRef.current);
                   setPermission(false);
-                  if (rawRecordedBlob && recordedVideo) {
-                    try {
-                      const res = await fetch(`${apiBaseUrl}/api/jobs`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          frame_count: poseVectors.length,
-                          landmarks_per_frame: 33,
-                          extracted_at: new Date().toISOString(),
-                          pose: poseVectors,
-                          hands: handsVectors,
-                        }),
-                      });
-                      const data = await res.json();
-                      navigate(`/results/${data.job_id}`, {
-                        state: { videoURL: recordedVideo },
-                      });
-                    } catch (error) {
-                      console.error("Error submitting job:", error);
-                    }
+                  const activeBlob = rawRecordedBlob ?? (file ? file : null);
+                  const activeVideoUrl = recordedVideo ?? videoURL ?? null;
+                  const poses = file ? uploadPoseVectors : poseVectors;
+                  const hands = file ? uploadHandsVectors : handsVectors;
+                  try {
+                    const res = await fetch(`${apiBaseUrl}/api/jobs`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        frame_count: poses.length,
+                        landmarks_per_frame: 33,
+                        extracted_at: new Date().toISOString(),
+                        pose: poses,
+                        hands: hands,
+                      }),
+                    });
+                    const data = await res.json();
+                    navigate(`/results/${data.job_id}`, {
+                      state: { videoURL: activeVideoUrl },
+                    });
+                  } catch (error) {
+                    console.error("Error submitting job:", error);
                   }
                 }}
               >
@@ -876,10 +1128,10 @@ function FileUploader() {
                 handsVectors.length > 0 &&
                 recordingStatus === "stopped" && (
                   <button
-                    onClick={handleResultsDownload}
+                    onClick={() => handleResultsDownload("recording")}
                     className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
                   >
-                    Download Landmark Results JSON File
+                    Download Live Landmark Results JSON File
                   </button>
                 )}
             </div>
