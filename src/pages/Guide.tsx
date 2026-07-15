@@ -10,18 +10,20 @@ export default function Guide() {
       label: "What is the Tool Doing?",
       content:
         "The ASL Live Dictionary uses advanced computer vision and machine learning " +
-        "algorithms to match American Sign Language (ASL) with the corresponding English word. It captures video input " +
-        "from a camera, processes the sign language gestures, and outputs the closest match along with video " +
-        "demonstrations of the top most accurate matches. The tool utilizes a combination of computer vision techniques to detect and track hand movements " +
-        "and body language. It then applies machine learning models trained on large datasets of ASL " +
-        "gestures to interpret the signs and generate accurate pairs.",
+        "algorithms to match the American Sign Language (ASL) sign with the corresponding English word. It captures video input " +
+        "from a camera or uses a pre-recorded video, processes the sign in that video, and outputs the closest matches along with video " +
+        "demonstrations of the most similar matches. The tool utilizes a combination of computer vision techniques to detect and track ASL parameter." +
+        "It then applies machine learning models trained on large datasets of ASL " +
+        "signs to interpret the video and generate accurate matches.",
     },
     {
       id: "who",
       label: "Who is the Tool For?",
       content:
-        "The ASL Live Dictionary is designed for educators, researchers, " +
-        "and anyone interested in learning or improving their ASL skills.",
+        "The ASL Live Dictionary is designed primarily for students of ASL" +
+        "and anyone interested in learning ASL or improving their skills. It is meant to be a way for learners" +
+        "to look up signs that they only partially remember or do not know the meaning of without needing to search" +
+        "through videos manually.",
     },
     {
       id: "tips",
@@ -33,7 +35,7 @@ export default function Guide() {
         "3. Position yourself in front of a plain background to avoid distractions.\n" +
         "4. Keep your hands within the camera frame at all times for accurate matches.\n" +
         "5. Ensure the video is clear and well-lit for better match accuracy.\n\n" +
-        "Note: If the video doesn't meet the criteria, the match may be inaccurate or fail to process.",
+        "N.B.: If the video doesn't meet the criteria, the match may be inaccurate or fail to process.",
     },
     {
       id: "data",
@@ -46,7 +48,15 @@ export default function Guide() {
     {
       id: "faq",
       label: "FAQ",
-      content: <strong className="underline">FAQ</strong>,
+      content:
+        "Q: Why were none of the signs that were best matches the sign that I was looking for? \n " +
+        "A: The current dataset of this tool is limited and is mostly comprised of commonly used ASL signs. " +
+        " In addition only some proper nouns (e.g. names, states, and cities) and numbers are included in the dataset and therefore are unlikely to process. \n\n" +
+        "Q: I tried to look up a classfier but the tool did not come back with any relevant matches, why? \n" +
+        "A: This tool does not work for classifiers due to thier context dependent nature.\n\n" +
+        "Q: I hit block on a pop-up about my camera and now the tool will not record a video, why? \n" +
+        "A: You need to allow camera access in order to record a video. Please try reloading the page and allowing camera access when you try recording again." +
+        "As a reminder your image is not being used just the vector points of your sign. \n\n",
     },
   ];
 
