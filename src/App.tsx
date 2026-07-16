@@ -85,15 +85,18 @@ type Header = {
   title: string;
   subtitle?: string;
   content?: ReactNode;
+  image?: string;
 };
 
 const headers: Record<string, Header> = {
   "/": {
     title: "Welcome to ASL Live Dictionary!",
-    subtitle:
-      "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
-      "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good " +
-      "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
+    // subtitle:
+    //   "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
+    //   "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good " +
+    //   "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
+    image:
+      "https://github.com/ashlynwinship/asl_summer26/blob/508f42a48f9529baae613fa29bcf7bbb429f0852/public/ASLWelcome.webp",
   },
   "/guide": {
     title: "User Guide",
@@ -138,6 +141,16 @@ function Header({ collapsed, onToggle }: HeaderProps) {
             <p className="font-head text-[25px] m-2.5 max-w-4xl">
               {header.subtitle}
             </p>
+          )}
+
+          {header.image && (
+            <div className="mt-6 max-w-md w-full">
+              <img
+                src={header.image}
+                alt="Header visual"
+                className="w-full h-auto rounded-lg shadow-md"
+              />
+            </div>
           )}
         </div>
       )}
