@@ -48,6 +48,11 @@ export default function Results() {
   const { job_id } = useParams<{ job_id: string }>();
   const [jobData, setJobData] = useState<JobResponse | null>(null);
 
+  // modal states
+  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isMissingModalOpen, setIsMissingModalOpen] = useState(false);
+  const [selectedMatchLabel, setSelectedMatchLabel] = useState("");
+
   useEffect(() => {
     if (!job_id) return;
     const interval = setInterval(async () => {
@@ -164,6 +169,11 @@ export default function Results() {
       ...prev,
       [name]: !prev[name],
     }));
+  };
+
+  const openSignModal = (label: string) => {
+    setSelectedMatchLabel(label);
+    setIsSignModalOpen(true);
   };
 
   // loading screen
@@ -352,7 +362,17 @@ export default function Results() {
                 </button>
               ))}
             </div>
+            {/* "this is my sign" for current top match */}
+            <button
+              onClick={() =>
+                openSignModal(results?.matched_word || `Match ${activeIdx + 1}`)
+              }
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow"
+            >
+              This is my sign
+            </button>
           </div>
+
           {/* match details */}
           <div className="w-full mt-6 pt-6 border-t border-neutral-border text-left">
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
@@ -452,10 +472,145 @@ export default function Results() {
                   </p>
                 </div>
               </div>
+              {/* "this is my sign" for potential matches */}
+              <button
+                onClick={() => openSignModal(`Match ${item}`)}
+                className="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow"
+              >
+                This is my sign
+              </button>
             </div>
           ))}
         </div>
       </div>
+      {/* sticky bottom bar for sign not found */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-border py-4 px-6 flex justify-center shadow-lg z-40">
+        <button
+          onClick={() => setIsMissingModalOpen(true)}
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-transform active:scale-95"
+        >
+          My sign is not here
+        </button>
+      </div>
+
+      {/* modal: "this is my sign" */}
+      {isSignModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in relative">
+            <h3 className="text-2xl font-bold text-neutral-darkest mb-3">
+              Confirm Your Selection
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Please confirm that <strong>{selectedMatchLabel}</strong> is the
+              sign you intended to find.
+            </p>
+            <div className="bg-brand-light p-4 rounded-lg mb-6 text-sm text-left border border-neutral-border/40">
+              <p className="font-semibold text-neutral-darkest mb-1">
+                📝 Feedback Surveys
+              </p>
+              <p className="text-gray-600 mb-2">
+                Help us improve the recognition accuracy by answering a few
+                short questions.
+              </p>
+              <a
+                href="https://forms.gle/eAfhaNG49MGtescw5"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline font-medium inline-block"
+              >
+                Feedback Survey
+              </a>
+              <a
+                href="https://forms.gle/ZiiSs1Cs2C2mbfnA7"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline font-medium inline-block"
+              >
+                List of Signs for Testing (only fill out once)
+              </a>
+            </div>
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => setIsSignModalOpen(false)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  alert("Thank you for confirming!");
+                  setIsSignModalOpen(false);
+                }}
+                className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* modal: "my sign is not here" */}
+      {isMissingModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in relative">
+            <h3 className="text-2xl font-bold text-red-600 mb-3">
+              Help Us Debug
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Can we use your uploaded video to debug what happened? We will
+              completely delete the video after resolving the bug.{" "}
+            </p>
+            <div className="bg-neutral-panel p-4 rounded-lg mb-6 text-sm text-left border border-neutral-border/40">
+              <p className="font-semibold text-neutral-darkest mb-1">
+                📝 Feedback Survey
+              </p>
+              <p className="text-gray-600 mb-2">
+                What word were you trying to sign?
+              </p>
+              <p className="text-gray-600 mb-2">
+                Help us improve the recognition accuracy by answering a few
+                short questions.
+              </p>
+              <a
+                href="https://forms.gle/eAfhaNG49MGtescw5"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline font-medium inline-block"
+              >
+                Feedback Survey
+              </a>
+              <a
+                href="https://forms.gle/ZiiSs1Cs2C2mbfnA7"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline font-medium inline-block"
+              >
+                List of Signs for Testing (only fill out once)
+              </a>
+            </div>
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => setIsMissingModalOpen(false)}
+                className="px-4 py-2 text-gray-500 hover:text-gray-700 font-semibold"
+              >
+                No, Thanks
+              </button>
+              <button
+                onClick={() => {
+                  alert(
+                    "Thank you! Your video and feedback have been flagged for debugging.",
+                  );
+                  setIsMissingModalOpen(false);
+                }}
+                className="px-5 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg font-semibold transition-colors"
+              >
+                Yes, Allow Debugging
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
