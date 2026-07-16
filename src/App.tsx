@@ -82,21 +82,20 @@ function ScrollToTop() {
 }
 
 type Header = {
+  image?: string;
   title: string;
   subtitle?: string;
   content?: ReactNode;
-  image?: string;
 };
 
 const headers: Record<string, Header> = {
   "/": {
-    title: "Welcome to ASL Live Dictionary!",
+    image: "/ASLWelcome.webp",
+    title: "To ASL Live Dictionary!",
     // subtitle:
     //   "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
     //   "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good " +
     //   "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
-    image:
-      "https://github.com/ashlynwinship/asl_summer26/blob/508f42a48f9529baae613fa29bcf7bbb429f0852/public/ASLWelcome.webp",
   },
   "/guide": {
     title: "User Guide",
@@ -123,7 +122,7 @@ function Header({ collapsed, onToggle }: HeaderProps) {
         collapsed ? "py-2 px-5 min-h-20" : "px-5 pt-10 pb-16"
       }`}
     >
-      <button
+      {/* <button
         type="button"
         className="absolute right-5 bottom-5 font-button text-[15px] text-[#1f1f1f] bg-white border border-neutral-border rounded-full py-2 px-3.5 cursor-pointer shadow-sm hover:bg-[#f7f7f7]"
         onClick={onToggle}
@@ -131,9 +130,18 @@ function Header({ collapsed, onToggle }: HeaderProps) {
         aria-label={collapsed ? "Expand header" : "Collapse header"}
       >
         {collapsed ? "▼ See more" : "▲ See less"}
-      </button>
+      </button> */}
       {!collapsed && (
         <div className="flex flex-col items-center relative">
+          {header.image && (
+            <div className="mt-6 max-w-md w-full">
+              <img
+                src={header.image}
+                alt="Header visual"
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+          )}
           <h1 className="font-head text-[50px] leading-tight m-0">
             {header.title}
           </h1>
@@ -141,16 +149,6 @@ function Header({ collapsed, onToggle }: HeaderProps) {
             <p className="font-head text-[25px] m-2.5 max-w-4xl">
               {header.subtitle}
             </p>
-          )}
-
-          {header.image && (
-            <div className="mt-6 max-w-md w-full">
-              <img
-                src={header.image}
-                alt="Header visual"
-                className="w-full h-auto rounded-lg shadow-md"
-              />
-            </div>
           )}
         </div>
       )}
