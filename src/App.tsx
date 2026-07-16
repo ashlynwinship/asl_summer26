@@ -90,7 +90,7 @@ type Header = {
 
 const headers: Record<string, Header> = {
   "/": {
-    image: "/ASLWelcome.webp",
+    image: "/ASLWELCOMEIMAGE.PNG",
     title: "To ASL Live Dictionary!",
     // subtitle:
     //   "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
