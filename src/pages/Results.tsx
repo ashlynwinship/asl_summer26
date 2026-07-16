@@ -555,7 +555,7 @@ export default function Results() {
         <button
           onClick={() => setIsMissingModalOpen(true)}
           disabled={hasSubmittedFeedback}
-          className={`font-semibold py-3 px-8 rounded-lg shadow-md transition-transform active:scale-95 ${
+          className={`font-semibold py-2 px-4 rounded-lg shadow-md transition-transform active:scale-95 ${
             hasSubmittedFeedback
               ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
               : "bg-red-500 hover:bg-red-600 text-white"
@@ -644,7 +644,7 @@ export default function Results() {
                 value={intendedWord}
                 onChange={(e) => setIntendedWord(e.target.value)}
                 placeholder="Enter word"
-                className="w-full px-3 py-2 border border-neutral-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 text-neutral-600 border border-neutral-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
             <div className="bg-neutral-panel p-4 rounded-lg mb-6 text-sm text-left border border-neutral-border/40">
