@@ -92,66 +92,33 @@ const headers: Record<string, Header> = {
   "/": {
     image: "/ASLWELCOMEIMAGE.PNG",
     title: "To ASL Live Dictionary!",
-    // subtitle:
-    //   "This is going to be content. Written here is a paragraph explaining an overview of the application, " +
-    //   "as well as linking to the user guide. I am writing a bunch of stuff just so the paragraph looks good " +
-    //   "and fills up the space. This is just a placeholder for now, but it will be replaced with actual content later on.",
-  },
-  "/guide": {
-    title: "User Guide",
-    subtitle: "Learn how to film and submit a clear recording.",
-  },
-  "/results": {
-    title: "Results",
-    subtitle: "Review your top matches and their feature breakdown.",
   },
 };
 
-type HeaderProps = {
-  collapsed: boolean;
-  onToggle: () => void;
-};
-
-function Header({ collapsed, onToggle }: HeaderProps) {
+function Header() {
   const location = useLocation();
+  if (location.pathname !== "/") {
+    return null;
+  }
+
   const header = headers[location.pathname] ?? headers["/"];
 
   return (
-    <header
-      className={`bg-neutral-panel text-center text-black relative transition-all duration-250 ease-in-out whitespace-pre-line ${
-        collapsed ? "py-2 px-5 min-h-20" : "px-5 pt-10 pb-16"
-      }`}
-    >
-      {/* <button
-        type="button"
-        className="absolute right-5 bottom-5 font-button text-[15px] text-[#1f1f1f] bg-white border border-neutral-border rounded-full py-2 px-3.5 cursor-pointer shadow-sm hover:bg-[#f7f7f7]"
-        onClick={onToggle}
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? "Expand header" : "Collapse header"}
-      >
-        {collapsed ? "▼ See more" : "▲ See less"}
-      </button> */}
-      {!collapsed && (
-        <div className="flex flex-col items-center relative">
-          {header.image && (
-            <div className="mt-6 max-w-md w-full">
-              <img
-                src={header.image}
-                alt="Header visual"
-                className="w-full h-auto rounded-lg"
-              />
-            </div>
-          )}
-          <h1 className="font-head text-[50px] leading-tight m-0">
-            {header.title}
-          </h1>
-          {header.subtitle && (
-            <p className="font-head text-[25px] m-2.5 max-w-4xl">
-              {header.subtitle}
-            </p>
-          )}
-        </div>
-      )}
+    <header className="bg-neutral-panel text-center text-black relative transition-all duration-250 ease-in-out whitespace-pre-line px-2 pt-2 pb-10">
+      <div className="flex flex-col items-center relative">
+        {header.image && (
+          <div className="mt-6">
+            <img
+              src={header.image}
+              alt="Header visual"
+              className="rounded-lg"
+            />
+          </div>
+        )}
+        <h1 className="font-head text-[50px] leading-tight mt-2">
+          {header.title}
+        </h1>
+      </div>
     </header>
   );
 }
@@ -170,10 +137,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Header
-        collapsed={headerCollapsed}
-        onToggle={() => setHeaderCollapsed((isCollapsed) => !isCollapsed)}
-      />
+      <Header />
       <Navigation />
       <main className="w-[min(1450px,98%)] mx-auto box-border grid grid-rows-[auto_1fr_auto] min-h-dvh">
         <Routes>
