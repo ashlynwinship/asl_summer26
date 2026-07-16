@@ -53,6 +53,10 @@ export default function Results() {
   const [isMissingModalOpen, setIsMissingModalOpen] = useState(false);
   const [selectedMatchLabel, setSelectedMatchLabel] = useState("");
 
+  // user testing data
+  const [intendedWord, setIntendedWord] = useState("");
+  const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState(false);
+
   useEffect(() => {
     if (!job_id) return;
     const interval = setInterval(async () => {
@@ -172,8 +176,57 @@ export default function Results() {
   };
 
   const openSignModal = (label: string) => {
+    if (hasSubmittedFeedback) return;
     setSelectedMatchLabel(label);
     setIsSignModalOpen(true);
+  };
+
+  // handle confirming match result
+  const handleConfirmSign = async () => {
+    setHasSubmittedFeedback(true);
+    setIsSignModalOpen(false);
+    // send feedback to backend
+    try {
+      await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          matchedCorrectly: true,
+          chosenLabel: selectedMatchLabel,
+        }),
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    }
+    alert(`Thank you! Feedback recorded for ${selectedMatchLabel}.`);
+  };
+
+  // handle missing sign form submission
+  const handleConfirmMissingSign = async () => {
+    setHasSubmittedFeedback(true);
+    setIsMissingModalOpen(false);
+    // send feedback to backend
+    try {
+      await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          matchedCorrectly: false,
+          intendedWord: intendedWord,
+          allowVideoUse: true,
+        }),
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    }
+    alert(
+      `Thank you! Your video and feedback have been flagged for debugging.`,
+    );
+    setIntendedWord("");
   };
 
   // loading screen
@@ -367,9 +420,16 @@ export default function Results() {
               onClick={() =>
                 openSignModal(results?.matched_word || `Match ${activeIdx + 1}`)
               }
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow"
+              disabled={hasSubmittedFeedback}
+              className={`font-semibold py-2 px-6 rounded-lg transition-colors shadow ${
+                hasSubmittedFeedback
+                  ? "mt-4 bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                  : "mt-4 bg-green-600 hover:bg-green-700 text-white"
+              }`}
             >
-              This is my sign
+              {hasSubmittedFeedback
+                ? "Feedback Submitted"
+                : "This is my sign"}{" "}
             </button>
           </div>
 
@@ -475,21 +535,33 @@ export default function Results() {
               {/* "this is my sign" for potential matches */}
               <button
                 onClick={() => openSignModal(`Match ${item}`)}
-                className="mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow"
+                disabled={hasSubmittedFeedback}
+                className={`mt-4 text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow ${
+                  hasSubmittedFeedback
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
               >
-                This is my sign
+                {hasSubmittedFeedback
+                  ? "Feedback Submitted"
+                  : "This is my sign"}{" "}
               </button>
             </div>
           ))}
         </div>
       </div>
-      {/* sticky bottom bar for sign not found */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-border py-4 px-6 flex justify-center shadow-lg z-40">
+      {/* sign not found */}
+      <div className="mt-2 bottom-0 left-0 right-0 py-4 px-6 flex justify-center">
         <button
           onClick={() => setIsMissingModalOpen(true)}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-transform active:scale-95"
+          disabled={hasSubmittedFeedback}
+          className={`font-semibold py-2 px-4 rounded-lg shadow-md transition-transform active:scale-95 ${
+            hasSubmittedFeedback
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+              : "bg-red-500 hover:bg-red-600 text-white"
+          }`}
         >
-          My sign is not here
+          {hasSubmittedFeedback ? "Feedback Completed" : "My sign is not here"}
         </button>
       </div>
 
@@ -501,7 +573,8 @@ export default function Results() {
               Confirm Your Selection
             </h3>
             <p className="text-gray-600 mb-6">
-              Please confirm that <strong>{selectedMatchLabel}</strong> is the
+              Please confirm that{" "}
+              <span className="underline">{selectedMatchLabel}</span> is the
               sign you intended to find.
             </p>
             <div className="bg-brand-light p-4 rounded-lg mb-6 text-sm text-left border border-neutral-border/40">
@@ -532,15 +605,12 @@ export default function Results() {
             <div className="flex gap-4 justify-end">
               <button
                 onClick={() => setIsSignModalOpen(false)}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-500 hover:text-gray-700 font-semibold"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  alert("Thank you for confirming!");
-                  setIsSignModalOpen(false);
-                }}
+                onClick={handleConfirmSign}
                 className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
               >
                 Confirm
@@ -561,6 +631,22 @@ export default function Results() {
               Can we use your uploaded video to debug what happened? We will
               completely delete the video after resolving the bug.{" "}
             </p>
+            <div className="mb-4">
+              <label
+                htmlFor="intendedWordInput"
+                className="block text-sm font-semibold text-neutral-darkest mb-1"
+              >
+                What word were you trying to sign?
+              </label>
+              <input
+                type="text"
+                id="intendedWordInput"
+                value={intendedWord}
+                onChange={(e) => setIntendedWord(e.target.value)}
+                placeholder="Enter word"
+                className="w-full px-3 py-2 text-neutral-600 border border-neutral-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
             <div className="bg-neutral-panel p-4 rounded-lg mb-6 text-sm text-left border border-neutral-border/40">
               <p className="font-semibold text-neutral-darkest mb-1">
                 📝 Feedback Survey
@@ -594,18 +680,18 @@ export default function Results() {
                 onClick={() => setIsMissingModalOpen(false)}
                 className="px-4 py-2 text-gray-500 hover:text-gray-700 font-semibold"
               >
-                No, Thanks
+                Cancel
               </button>
               <button
-                onClick={() => {
-                  alert(
-                    "Thank you! Your video and feedback have been flagged for debugging.",
-                  );
-                  setIsMissingModalOpen(false);
-                }}
-                className="px-5 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg font-semibold transition-colors"
+                onClick={handleConfirmMissingSign}
+                disabled={!intendedWord.trim()}
+                className={`px-5 py-2 rounded-lg font-semibold transition-colors ${
+                  intendedWord.trim()
+                    ? "bg-brand hover:bg-brand-hover text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
               >
-                Yes, Allow Debugging
+                Allow and Submit
               </button>
             </div>
           </div>

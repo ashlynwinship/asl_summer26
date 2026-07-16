@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List
@@ -71,9 +71,19 @@ class JobResponse(BaseModel):
     result: Optional[JobResult] = None
     debug: Optional[dict] = None
 
-# eventually move to redis + celery for async job processing, but for now just store in memory
+class UserTestingFeedback(BaseModel):
+    matched_correctly: bool = Field(alias="matchedCorrectly")
+    chosen_label: Optional[str] = Field(default=None, alias="chosenLabel")
+    intended_word: Optional[str] = Field(default=None, alias="intendedWord")
+    allow_video_debugging: Optional[bool] = Field(default=None, alias="allowVideoDebugging")
+
+    class Config: 
+        populate_by_name = True
+
+# eventually move to redis/celery/postgresql for async job processing, but for now just store in memory
 jobs: dict[str, JobResponse] = {}
 job_payloads: dict[str, FramesPayload] = {}
+feedback_store: dict[str, UserTestingFeedback] = {}
 
 # API endpoints
 @app.post("/api/jobs", response_model=JobResponse)
@@ -136,3 +146,21 @@ async def get_job(job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+@app.post("/api/jobs/{job_id}/feedback", status_code=status.HTTP_201_CREATED)
+async def save_user_feedback(job_id: str, feedback: UserTestingFeedback):
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    feedback_store[job_id] = feedback
+
+    # log feedback for now
+    print(f"\n[FEEDBACK REECEIVED] Job ID: {job_id}")
+    print(f"Matched Correctly: {feedback.matched_correctly}")
+    if feedback.matched_correctly:
+        print(f"User Confirmed Match: {feedback.chosen_label}")
+    else: 
+        print(f"User Intended Word: {feedback.intended_word}")
+        print(f"User Allowed Video Debugging: {feedback.allow_video_debugging}")
+    print("-" * 40)
+    
+    return {"message": "Feedback submitted successfully."}
