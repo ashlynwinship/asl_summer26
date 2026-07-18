@@ -108,41 +108,6 @@ jobs: dict[str, JobResponse] = {}
 job_payloads: dict[str, FramesPayload] = {}
 
 
-# Classifier functions
-def load_ensemble(checkpoints_dir=WEIGHTS_DIR, device=None):
-    """One-time setup: load label map + all 4 stream models. Returns a dict
-    you pass to run_inference() for every subsequent prediction."""
-    device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
-    checkpoints_dir = Path(checkpoints_dir)
-    label_map = load_label_map(checkpoints_dir)
-    models, alpha = load_models(
-        checkpoints_dir, num_class=len(label_map), device=device
-    )
-    return {
-        "models": models,
-        "alpha": alpha,
-        "idx_to_gloss": {v: k for k, v in label_map.items()},
-        "device": device,
-    }
-
-
-def run_inference(raw, ensemble, top_k=5):
-    """Per-request inference. raw: (16, 225) float32 array (not a path --
-    main.py already has this in memory as classifier_input)."""
-    combined, per_stream_scores = predict(
-        raw, ensemble["models"], ensemble["alpha"], ensemble["device"]
-    )
-    top_idx = np.argsort(combined)[-top_k:][::-1]
-    top_k_results = [
-        (ensemble["idx_to_gloss"].get(int(i), "?"), float(combined[i])) for i in top_idx
-    ]
-    return {
-        "combined": combined,
-        "per_stream_scores": per_stream_scores,
-        "top_k": top_k_results,
-    }
-
-
 # API endpoints
 @app.post("/api/jobs", response_model=JobResponse)
 async def create_job(payload: FramesPayload):
