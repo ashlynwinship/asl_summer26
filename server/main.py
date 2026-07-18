@@ -160,9 +160,7 @@ async def dummy_process(job_id: str):
         }
 
         jobs[job_id].stage = JobStage.CLS0_MATCHING
-        inference = await asyncio.to_thread(
-            run_inference, classifier_input, app.state.ensemble
-        )
+        inference = run_inference(classifier_input, app.state.ensemble)  # TEMP: was asyncio.to_thread, testing for a threading deadlock
         top_matches = [
             Match(word=gloss, confidence=score)
             for gloss, score in inference["top_k"][:5]
