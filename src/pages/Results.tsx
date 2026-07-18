@@ -3,17 +3,9 @@ import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
 import { useLocation, useParams } from "react-router-dom";
 
-interface MatchVideo {
-  id: number;
-  src: string;
-  thumbnail: string;
-  label: string;
-  features: {
-    handshape: string;
-    movement: string;
-    location: string;
-    palm: string;
-  };
+interface Match {
+  word: string;
+  confidence: number;
 }
 
 interface FeedbackItem {
@@ -26,9 +18,8 @@ interface FeedbackItem {
 }
 
 interface JobResult {
-  matched_word: string;
-  match_confidence: number;
-  feedback: FeedbackItem[];
+  matches: Match[]; // ranked top-k candidates, matches[0] is the top pick
+  feedback: FeedbackItem[]; // only computed against matches[0]
 }
 
 interface JobResponse {
@@ -92,44 +83,6 @@ export default function Results() {
   }, [jobData]);
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
-  const topMatches: MatchVideo[] = [
-    {
-      id: 1,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 1 (Confidence: 95%)",
-      features: {
-        handshape: "95%",
-        movement: "92%",
-        location: "98%",
-        palm: "90%",
-      },
-    },
-    {
-      id: 2,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 2 (Confidence: 85%)",
-      features: {
-        handshape: "85%",
-        movement: "80%",
-        location: "87%",
-        palm: "82%",
-      },
-    },
-    {
-      id: 3,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 3 (Confidence: 75%)",
-      features: {
-        handshape: "75%",
-        movement: "72%",
-        location: "70%",
-        palm: "78%",
-      },
-    },
-  ];
 
   const handleDownload = () => {
     if (videoURL) {
@@ -137,21 +90,7 @@ export default function Results() {
     }
   };
 
-  const nextSlide = (): void => {
-    setActiveIdx((prev) => (prev + 1) % topMatches.length);
-  };
-
-  const prevSlide = (): void => {
-    setActiveIdx((prev) => (prev - 1 + topMatches.length) % topMatches.length);
-  };
-
-  const currentMatch = topMatches[activeIdx];
-
-  const [isVisible, setIsVisible] = useState<{ [key: number]: boolean }>({
-    1: false,
-    2: false,
-    3: false,
-  });
+  const [isVisible, setIsVisible] = useState<{ [key: number]: boolean }>({});
 
   const parsePercent = (valString: string): number => {
     return parseInt(valString, 10) || 0;
@@ -255,6 +194,25 @@ export default function Results() {
   }
 
   const results = jobData.result; // jobData.status === "completed"
+  const allMatches = results?.matches ?? [];
+  const topThree = allMatches.slice(0, 3);
+  const otherMatches = allMatches.slice(3, 5);
+  const currentMatch = topThree[activeIdx];
+
+  // no reference clips wired up yet; these paths are intentionally broken
+  // until per-gloss reference videos exist
+  const getMatchVideoSrc = (word: string) => `/videos/${word}.mp4`;
+  const getMatchThumbnailSrc = (word: string) => `/videos/${word}.png`;
+
+  const nextSlide = (): void => {
+    if (!topThree.length) return;
+    setActiveIdx((prev) => (prev + 1) % topThree.length);
+  };
+
+  const prevSlide = (): void => {
+    if (!topThree.length) return;
+    setActiveIdx((prev) => (prev - 1 + topThree.length) % topThree.length);
+  };
 
   return (
     <main>
@@ -371,12 +329,14 @@ export default function Results() {
             </h2>
             {/* slideshow */}
             <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border group mb-4">
-              <video
-                key={currentMatch.id}
-                src={currentMatch.src}
-                className="w-full h-full object-cover"
-                controls
-              />
+              {currentMatch && (
+                <video
+                  key={currentMatch.word}
+                  src={getMatchVideoSrc(currentMatch.word)}
+                  className="w-full h-full object-cover"
+                  controls
+                />
+              )}
               <button
                 onClick={prevSlide}
                 className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/70 w-9 h-9 flex items-center justify-center rounded-full text-xl font-bold transition-all cursor-pointer select-none"
@@ -391,15 +351,16 @@ export default function Results() {
               </button>
               <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
                 <p className="text-white text-sm font-medium">
-                  {` ${results?.matched_word} (Confidence: ${Math.round((results?.match_confidence ?? 0) * 100)}%)`}
+                  {currentMatch &&
+                    ` ${currentMatch.word} (Confidence: ${Math.round(currentMatch.confidence * 100)}%)`}
                 </p>
               </div>
             </div>
             {/* caption */}
             <div className="flex flex-row gap-3 justify-center max-w-xs mx-auto">
-              {topMatches.map((match, idx) => (
+              {topThree.map((match, idx) => (
                 <button
-                  key={match.id}
+                  key={match.word}
                   onClick={() => setActiveIdx(idx)}
                   className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all ${
                     idx === activeIdx
@@ -408,9 +369,9 @@ export default function Results() {
                   }`}
                 >
                   <img
-                    src={match.thumbnail}
+                    src={getMatchThumbnailSrc(match.word)}
                     className="w-full h-full object-cover"
-                    alt={results?.matched_word}
+                    alt={match.word}
                   />
                 </button>
               ))}
@@ -418,9 +379,9 @@ export default function Results() {
             {/* "this is my sign" for current top match */}
             <button
               onClick={() =>
-                openSignModal(results?.matched_word || `Match ${activeIdx + 1}`)
+                currentMatch && openSignModal(currentMatch.word)
               }
-              disabled={hasSubmittedFeedback}
+              disabled={hasSubmittedFeedback || !currentMatch}
               className={`font-semibold py-2 px-6 rounded-lg transition-colors shadow ${
                 hasSubmittedFeedback
                   ? "mt-4 bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
@@ -438,46 +399,52 @@ export default function Results() {
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
             </p>
-            <div className="flex flex-col gap-3 w-full">
-              {featuresList.map((item) => {
-                const numericValue = Math.round(item.similarity_score * 100);
-                const barColor = item.accurate
-                  ? "bg-green-500"
-                  : numericValue >= 60
-                    ? "bg-yellow-400"
-                    : "bg-red-400";
-                return (
-                  <div
-                    key={item.feature}
-                    className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
-                  >
-                    <span className="text-neutral-dark text-sm sm:text-base font-medium">
-                      {item.feature}: {item.reference_value}
-                    </span>
-                    <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
-                      <div className="w-full max-w-48 md:w-60">
-                        <div
-                          className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
-                          role="progressbar"
-                          aria-label={`${item.feature} similarity`}
-                          aria-valuenow={numericValue}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                        >
-                          <div
-                            className={`progress-bar ${barColor} h-full rounded-full transition-all duration-500 ease-out`}
-                            style={{ width: `${numericValue}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
-                        {numericValue}%
+            {activeIdx === 0 ? (
+              <div className="flex flex-col gap-3 w-full">
+                {featuresList.map((item) => {
+                  const numericValue = Math.round(item.similarity_score * 100);
+                  const barColor = item.accurate
+                    ? "bg-green-500"
+                    : numericValue >= 60
+                      ? "bg-yellow-400"
+                      : "bg-red-400";
+                  return (
+                    <div
+                      key={item.feature}
+                      className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 bg-white/50 p-3 rounded-lg border border-neutral-border/40"
+                    >
+                      <span className="text-neutral-dark text-sm sm:text-base font-medium">
+                        {item.feature}: {item.reference_value}
                       </span>
+                      <div className="sm:col-span-2 flex items-center justify-end gap-3 w-full">
+                        <div className="w-full max-w-48 md:w-60">
+                          <div
+                            className="progress bg-gray-200 h-2.5 rounded-full w-full overflow-hidden"
+                            role="progressbar"
+                            aria-label={`${item.feature} similarity`}
+                            aria-valuenow={numericValue}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                          >
+                            <div
+                              className={`progress-bar ${barColor} h-full rounded-full transition-all duration-500 ease-out`}
+                              style={{ width: `${numericValue}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-neutral-dark text-sm sm:text-base font-semibold sm:text-right">
+                          {numericValue}%
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Feature comparison is only available for the top match.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -492,63 +459,59 @@ export default function Results() {
             corresponding sign.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="flex flex-col items-center p-5 bg-neutral-panel rounded-xl border border-neutral-border shadow-sm"
-            >
-              <div className="w-full flex flex-col items-center">
-                {!isVisible[item] && (
-                  <button
-                    className="font-button w-full max-w-70 aspect-video bg-brand text-white text-lg font-semibold rounded-lg shadow hover:bg-brand-hover active:scale-95 transition-all uppercase tracking-wider cursor-pointer"
-                    onClick={() => setIsVisible({ ...isVisible, [item]: true })}
-                  >
-                    View Match {item}
-                  </button>
-                )}
-                {isVisible[item] && (
-                  <div className="w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border">
-                    <video
-                      key={currentMatch.id}
-                      src={currentMatch.src}
-                      className="w-full h-full object-cover"
-                      controls
-                    />
-                  </div>
-                )}
-                <div className="w-full mt-4 p-4 bg-white rounded-lg border border-neutral-border text-xs sm:text-sm text-neutral-dark space-y-1">
-                  <p>
-                    Handshape (Confidence: {currentMatch.features.handshape}):
-                  </p>
-                  <p>
-                    Movement (Confidence: {currentMatch.features.movement}):
-                  </p>
-                  <p>
-                    Location (Confidence: {currentMatch.features.location}):
-                  </p>
-                  <p>
-                    Palm Orientation (Confidence: {currentMatch.features.palm}):
-                  </p>
-                </div>
-              </div>
-              {/* "this is my sign" for potential matches */}
-              <button
-                onClick={() => openSignModal(`Match ${item}`)}
-                disabled={hasSubmittedFeedback}
-                className={`mt-4 text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow ${
-                  hasSubmittedFeedback
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
+        {otherMatches.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No additional matches available.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {otherMatches.map((match, idx) => (
+              <div
+                key={match.word}
+                className="flex flex-col items-center p-5 bg-neutral-panel rounded-xl border border-neutral-border shadow-sm"
               >
-                {hasSubmittedFeedback
-                  ? "Feedback Submitted"
-                  : "This is my sign"}{" "}
-              </button>
-            </div>
-          ))}
-        </div>
+                <div className="w-full flex flex-col items-center">
+                  {!isVisible[idx] && (
+                    <button
+                      className="font-button w-full max-w-70 aspect-video bg-brand text-white text-lg font-semibold rounded-lg shadow hover:bg-brand-hover active:scale-95 transition-all uppercase tracking-wider cursor-pointer"
+                      onClick={() => setIsVisible({ ...isVisible, [idx]: true })}
+                    >
+                      View Match {idx + 4}
+                    </button>
+                  )}
+                  {isVisible[idx] && (
+                    <div className="w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border">
+                      <video
+                        key={match.word}
+                        src={getMatchVideoSrc(match.word)}
+                        className="w-full h-full object-cover"
+                        controls
+                      />
+                    </div>
+                  )}
+                  <div className="w-full mt-4 p-4 bg-white rounded-lg border border-neutral-border text-xs sm:text-sm text-neutral-dark space-y-1">
+                    <p className="font-semibold">{match.word}</p>
+                    <p>Confidence: {Math.round(match.confidence * 100)}%</p>
+                  </div>
+                </div>
+                {/* "this is my sign" for potential matches */}
+                <button
+                  onClick={() => openSignModal(match.word)}
+                  disabled={hasSubmittedFeedback}
+                  className={`mt-4 text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow ${
+                    hasSubmittedFeedback
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  }`}
+                >
+                  {hasSubmittedFeedback
+                    ? "Feedback Submitted"
+                    : "This is my sign"}{" "}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       {/* sign not found */}
       <div className="mt-2 bottom-0 left-0 right-0 py-4 px-6 flex justify-center">
