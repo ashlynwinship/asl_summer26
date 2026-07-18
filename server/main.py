@@ -88,10 +88,16 @@ class Feedback(BaseModel):
     accurate: bool  # idk if need this
 
 
+class Match(BaseModel):
+    word: str
+    confidence: float
+
+
 class JobResult(BaseModel):
-    matched_word: str
-    match_confidence: float
-    feedback: List[Feedback]
+    matches: List[Match]  # ranked top-k candidates, matches[0] is the top pick
+    feedback: List[
+        Feedback
+    ]  # CLS1 feedback is only computed against matches[0], not the other candidates
 
 
 class JobResponse(BaseModel):
@@ -157,7 +163,10 @@ async def dummy_process(job_id: str):
         inference = await asyncio.to_thread(
             run_inference, classifier_input, app.state.ensemble
         )
-        gloss, score = inference["top_k"][0]
+        top_matches = [
+            Match(word=gloss, confidence=score)
+            for gloss, score in inference["top_k"][:5]
+        ]
 
         await asyncio.sleep(3)
         jobs[job_id].stage = JobStage.CLS1_FEEDBACK
@@ -166,8 +175,7 @@ async def dummy_process(job_id: str):
         await asyncio.sleep(3)
         jobs[job_id].status = JobStatus.COMPLETED
         jobs[job_id].result = JobResult(
-            matched_word=gloss,
-            match_confidence=score,
+            matches=top_matches,
             feedback=[
                 Feedback(
                     feature="Handshape",
