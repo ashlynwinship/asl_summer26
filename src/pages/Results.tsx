@@ -378,9 +378,7 @@ export default function Results() {
             </div>
             {/* "this is my sign" for current top match */}
             <button
-              onClick={() =>
-                currentMatch && openSignModal(currentMatch.word)
-              }
+              onClick={() => currentMatch && openSignModal(currentMatch.word)}
               disabled={hasSubmittedFeedback || !currentMatch}
               className={`font-semibold py-2 px-6 rounded-lg transition-colors shadow ${
                 hasSubmittedFeedback
@@ -474,7 +472,9 @@ export default function Results() {
                   {!isVisible[idx] && (
                     <button
                       className="font-button w-full max-w-70 aspect-video bg-brand text-white text-lg font-semibold rounded-lg shadow hover:bg-brand-hover active:scale-95 transition-all uppercase tracking-wider cursor-pointer"
-                      onClick={() => setIsVisible({ ...isVisible, [idx]: true })}
+                      onClick={() =>
+                        setIsVisible({ ...isVisible, [idx]: true })
+                      }
                     >
                       View Match {idx + 4}
                     </button>
@@ -614,9 +614,9 @@ export default function Results() {
               <p className="font-semibold text-neutral-darkest mb-1">
                 📝 Feedback Survey
               </p>
-              <p className="text-gray-600 mb-2">
+              {/* <p className="text-gray-600 mb-2">
                 What word were you trying to sign?
-              </p>
+              </p> */}
               <p className="text-gray-600 mb-2">
                 Help us improve the recognition accuracy by answering a few
                 short questions.
