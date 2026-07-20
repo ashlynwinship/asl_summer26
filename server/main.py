@@ -1,10 +1,34 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 from contextlib import asynccontextmanager
 from typing import Optional, List
-from server.slgcn import load_ensemble, run_inference
+#uncomment when deploy
+#from server.slgcn import load_ensemble, run_inference
+#delete when deploy
+
+USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
+
+if USE_MOCK_INFERENCE:
+    def load_ensemble(checkpoints_dir=None):
+        print("[MOCK] Skipping real model load, using fake ensemble")
+        return None
+
+    def run_inference(classifier_input, ensemble):
+        print("[MOCK] Returning fake inference results")
+        return {
+            "top_k": [
+                ("HELLO", 0.95),
+                ("THANKS", 0.87),
+                ("PLEASE", 0.72),
+                ("SORRY", 0.65),
+                ("YES", 0.51),
+                ("NO", 0.45)
+            ]
+        }
+else:
+    from server.slgcn import load_ensemble, run_inference
 from enum import Enum
 import uuid
 import asyncio
@@ -45,7 +69,6 @@ class FramesPayload(BaseModel):
     frame_count: int = Field(
         alias="frameCount"
     )  # later rename frontend field to snake_case keys instead of camelCase and remove alias
-    landmarks_per_frame: int = Field(alias="landmarksPerFrame")
     extracted_at: str = Field(alias="extractedAt")  # ISO timestramp string
     pose: List[
         List[float]
@@ -107,6 +130,15 @@ class JobResponse(BaseModel):
     error: Optional[str] = None
     result: Optional[JobResult] = None
     debug: Optional[dict] = None
+
+class UserFeedback(BaseModel):
+    # chosen_label: str
+    video_consent: bool
+    # match_rank: int
+    # match_score: float
+    # dataset_video_id: Optional[int]=None
+    # is_correct_match_listed: bool
+    # open_response_text: Optional[str] = None
 
 
 # eventually move to redis + celery for async job processing, but for now just store in memory
@@ -181,33 +213,33 @@ async def dummy_process(job_id: str):
             feedback=[
                 Feedback(
                     feature="Handshape",
-                    user_value="example",
+                    user_value="user example 1",
                     user_confidence=0.9,
-                    reference_value="example",
+                    reference_value="ref example 1",
                     similarity_score=0.9,
                     accurate=True,
                 ),
                 Feedback(
                     feature="Movement",
-                    user_value="example",
+                    user_value="user example 2",
                     user_confidence=0.8,
-                    reference_value="example",
+                    reference_value="ref example 2",
                     similarity_score=0.8,
                     accurate=True,
                 ),
                 Feedback(
                     feature="Location",
-                    user_value="example",
+                    user_value="user example 3",
                     user_confidence=0.85,
-                    reference_value="example",
+                    reference_value="ref example 3",
                     similarity_score=0.85,
                     accurate=True,
                 ),
                 Feedback(
                     feature="Palm Orientation",
-                    user_value="example",
+                    user_value="user example 4",
                     user_confidence=0.75,
-                    reference_value="example",
+                    reference_value="ref example 4",
                     similarity_score=0.75,
                     accurate=True,
                 ),
@@ -227,3 +259,42 @@ async def get_job(job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+# @app.post("/api/jobs/{job_id}/feedback", status_code=status.HTTP_201_CREATED)
+# async def save_user_feedback(job_id: str, feedback: UserFeedback):
+#     # if job_id not in jobs:
+#     #     raise HTTPException(status_code=404, detail="Job not found")
+#     # feedback_store[job_id] = feedback
+
+#     # log feedback for now
+#     print(f"\n[FEEDBACK REECEIVED] Job ID: {job_id}")
+#     print(f"Matched Correctly: {feedback.is_correct_match_listed}")
+#     if feedback.is_correct_match_listed:
+#         print(f"User Confirmed Match: {feedback.chosen_label}")
+#     else: 
+#         print(f"User Intended Word: {feedback.open_response_text}")
+#         print(f"User Allowed Video Debugging: {feedback.allow_video_debugging}")
+#     print("-" * 40)
+    
+#     return {"message": "Feedback submitted successfully."}
+class UserFeedbackPayload(BaseModel):
+    matchedCorrectly: bool
+    chosenLabel: Optional[str] = None
+    intendedWord: Optional[str] = None
+    allowVideoUse: Optional[bool] = False
+
+# --- Add this route handler to main.py ---
+
+@app.post("/api/jobs/{job_id}/feedback")
+async def submit_feedback(job_id: str, payload: UserFeedbackPayload):
+    # Verify the job exists
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Store or log the feedback (e.g., save to a database, file, or log)
+    print(f"Received feedback for job {job_id}: {payload.model_dump_json()}")
+
+    # Optional: Update the stored job object
+    # jobs[job_id].user_feedback = payload.dict()
+
+    return {"status": "success", "message": "Feedback recorded"}
