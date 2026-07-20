@@ -809,8 +809,6 @@ function FileUploader() {
     const jsonString = JSON.stringify(
       {
         frameCount: poses.length,
-        handLandmarksPerFrame: 33,
-        poseLandmarksPerFrame: 21,
         extractedAt: new Date().toISOString(),
         pose: poses,
         hands: hands,
