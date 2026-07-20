@@ -160,9 +160,11 @@ async def dummy_process(job_id: str):
         }
 
         jobs[job_id].stage = JobStage.CLS0_MATCHING
+        print(f"[{job_id}] calling run_inference, input shape={classifier_input.shape}", flush=True)
         inference = await asyncio.to_thread(
             run_inference, classifier_input, app.state.ensemble
         )
+        print(f"[{job_id}] run_inference returned: {inference['top_k']}", flush=True)
         top_matches = [
             Match(word=gloss, confidence=score)
             for gloss, score in inference["top_k"][:5]
