@@ -41,7 +41,7 @@ function Navigation() {
 
   return (
     <nav
-      className={`sticky left-0 right-0 bg-gray-200 transition-[top] duration-300 z-1000 ${
+      className={`sticky left-0 right-0 bg-gray-300 transition-[top] duration-300 z-1000 ${
         visible ? "top-0" : "-top-12.5"
       }`}
     >
