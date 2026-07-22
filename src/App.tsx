@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import {
   BrowserRouter,
   Link,
+  NavLink,
   Route,
   Routes,
   useLocation,
@@ -49,18 +50,31 @@ function Navigation() {
           ASL Live Dictionary
         </Link>
         <div className="block">
-          <Link
+          <NavLink
             to="/"
-            className="text-black py-3.5 px-4 no-underline text-xl transition-colors hover:bg-brand-alt hover:py-3.25"
+            end
+            className={({ isActive }) =>
+              `py-3.5 px-4 no-underline text-xl transition-colors ${
+                isActive
+                  ? "bg-brand-alt text-white"
+                  : "text-black hover:bg-brand-alt hover:text-white"
+              }`
+            }
           >
             Home
-          </Link>
-          <Link
+          </NavLink>
+          <NavLink
             to="/guide"
-            className="text-black py-3.5 px-4 no-underline text-xl transition-colors hover:bg-brand-alt hover:py-3.25"
+            className={({ isActive }) =>
+              `py-3.5 px-4 no-underline text-xl transition-colors ${
+                isActive
+                  ? "bg-brand-alt text-white" // Active styles
+                  : "text-black hover:bg-brand-alt hover:text-white" // Inactive styles
+              }`
+            }
           >
             User Guide
-          </Link>
+          </NavLink>
         </div>
       </div>
     </nav>
