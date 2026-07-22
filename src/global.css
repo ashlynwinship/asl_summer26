@@ -10,11 +10,12 @@
   --color-brand-darker: #2e5c8a;
   --color-brand-hover-bg: #f0f7ff;
   --color-brand-alt-bg: #e8f0f7;
+  --color-brand-alt: #a01d1d;
 
   --color-neutral-dark: #333333;
   --color-neutral-darkest: #111111;
   --color-neutral-bg: #f0f2f5;
-  --color-neutral-panel: #f1f1f1;
+  --color-neutral-panel: #f1f1f1df;
   --color-neutral-border: #d7d7d7;
 
   --font-head: "Playfair Display", serif;

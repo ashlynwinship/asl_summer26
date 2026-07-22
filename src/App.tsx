@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import {
   BrowserRouter,
   Link,
+  NavLink,
   Route,
   Routes,
   useLocation,
@@ -40,27 +41,40 @@ function Navigation() {
 
   return (
     <nav
-      className={`sticky left-0 right-0 bg-neutral-dark transition-[top] duration-300 z-1000 ${
+      className={`sticky left-0 right-0 bg-gray-300 transition-[top] duration-300 z-1000 ${
         visible ? "top-0" : "-top-12.5"
       }`}
     >
-      <div className="list-none py-3.25 flex justify-between items-center bg-neutral-dark font-head">
-        <Link to="/" className="text-white no-underline px-3 text-2xl">
+      <div className="list-none py-3.25 flex justify-between items-center font-head">
+        <Link to="/" className="text-brand-alt no-underline px-3 text-2xl">
           ASL Live Dictionary
         </Link>
         <div className="block">
-          <Link
+          <NavLink
             to="/"
-            className="text-white py-3.5 px-4 no-underline text-xl transition-colors hover:bg-neutral-darkest hover:py-3.25"
+            end
+            className={({ isActive }) =>
+              `py-3.5 px-4 no-underline text-xl transition-colors ${
+                isActive
+                  ? "bg-brand-alt text-white"
+                  : "text-black hover:bg-brand-alt hover:text-white"
+              }`
+            }
           >
             Home
-          </Link>
-          <Link
+          </NavLink>
+          <NavLink
             to="/guide"
-            className="text-white py-3.5 px-4 no-underline text-xl transition-colors hover:bg-neutral-darkest hover:py-3.25"
+            className={({ isActive }) =>
+              `py-3.5 px-4 no-underline text-xl transition-colors ${
+                isActive
+                  ? "bg-brand-alt text-white" // Active styles
+                  : "text-black hover:bg-brand-alt hover:text-white" // Inactive styles
+              }`
+            }
           >
             User Guide
-          </Link>
+          </NavLink>
         </div>
       </div>
     </nav>
@@ -81,48 +95,6 @@ function ScrollToTop() {
   return null;
 }
 
-type Header = {
-  image?: string;
-  title: string;
-  subtitle?: string;
-  content?: ReactNode;
-};
-
-const headers: Record<string, Header> = {
-  "/": {
-    image: "/ASLWELCOMEIMAGE.PNG",
-    title: "To ASL Live Dictionary!",
-  },
-};
-
-function Header() {
-  const location = useLocation();
-  if (location.pathname !== "/") {
-    return null;
-  }
-
-  const header = headers[location.pathname] ?? headers["/"];
-
-  return (
-    <header className="bg-neutral-panel text-center text-black relative transition-all duration-250 ease-in-out whitespace-pre-line px-2 pt-2 pb-10">
-      <div className="flex flex-col items-center relative">
-        {header.image && (
-          <div className="mt-6">
-            <img
-              src={header.image}
-              alt="Header visual"
-              className="rounded-lg"
-            />
-          </div>
-        )}
-        <h1 className="font-head text-[50px] leading-tight mt-2">
-          {header.title}
-        </h1>
-      </div>
-    </header>
-  );
-}
-
 function Footer() {
   return (
     <footer className="bg-neutral-dark text-white flex justify-center relative top-2.5 bottom-0 w-full py-4">
@@ -132,14 +104,11 @@ function Footer() {
 }
 
 export default function App() {
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Header />
       <Navigation />
-      <main className="w-[min(1450px,98%)] mx-auto box-border grid grid-rows-[auto_1fr_auto] min-h-dvh">
+      <main className="mx-auto box-border grid grid-rows-[auto_1fr_auto] min-h-dvh">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/guide" element={<Guide />} />
