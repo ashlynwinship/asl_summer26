@@ -679,7 +679,7 @@ function FileUploader() {
                 <video
                   key={recordedVideo}
                   src={recordedVideo}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                   controls
                 />
               ) : (
