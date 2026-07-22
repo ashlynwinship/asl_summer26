@@ -105,20 +105,6 @@ function FileUploader() {
     setRecordingStatus(null);
   };
 
-  //original original code
-  // useEffect(() => {
-  //   let timerId: ReturnType<typeof setTimeout>;
-  //   if (recordingStatus === "counting") {
-  //     if (countdown > 0) {
-  //       timerId = setTimeout(() => {
-  //         setCountdown((prev) => prev - 1);
-  //       }, 1000);
-  //     } else {
-  //       startRecording();
-  //     }
-  //   }
-  //   return () => clearTimeout(timerId);
-  // }, [recordingStatus, countdown]);
   useEffect(() => {
     if (recordingStatus !== "counting") {
       return;
@@ -144,64 +130,6 @@ function FileUploader() {
       }
     };
   }, [recordingStatus, countdown]);
-
-  // const clearCountdownTimer = () => {
-  //   if (countdownTimerRef.current !== null) {
-  //     window.clearTimeout(countdownTimerRef.current);
-  //     countdownTimerRef.current = null;
-  //   }
-  //   countdownActiveRef.current = false;
-  // };
-
-  // const resetCountdownState = () => {
-  //   clearCountdownTimer();
-  //   countdownRunIdRef.current += 1;
-  //   setCountdownVisible(false);
-  //   setCountdown(3);
-  //   setRecordingStatus(null);
-  //   countdownActiveRef.current = false;
-  // };
-
-  // useEffect(() => {
-  //   if (recordingStatus !== "counting") {
-  //     return;
-  //   }
-
-  //   if (countdown === 1) {
-  //     const timerId = window.setTimeout(() => {
-  //       clearCountdownTimer();
-  //       setCountdownVisible(false);
-  //       setRecordingStatus("recording");
-  //       void startRecording();
-  //     }, 1000);
-
-  //     countdownTimerRef.current = timerId;
-
-  //     return () => {
-  //       window.clearTimeout(timerId);
-  //     };
-  //   }
-
-  //   if (countdown <= 0) {
-  //     return;
-  //   }
-
-  //   const timerId = window.setTimeout(() => {
-  //     setCountdown((prev) => prev - 1);
-  //   }, 1000);
-
-  //   countdownTimerRef.current = timerId;
-
-  //   return () => {
-  //     window.clearTimeout(timerId);
-  //   };
-  // }, [countdown, recordingStatus]);
-
-  // useEffect(() => {
-  //   return () => {
-  //     clearCountdownTimer();
-  //   };
-  // }, []);
 
   const getCameraPermission = async () => {
     try {
@@ -396,23 +324,6 @@ function FileUploader() {
   const [isProcessing, setIsProcessing] = useState<boolean>(true); //might not need
   const isStreamingRef = useRef<boolean>(false);
 
-  // useEffect(() => {
-  //   if (!rawRecordedBlob) {
-  //     setIsProcessing(false);
-  //     return;
-  //   }
-
-  //   setIsProcessing(true);
-  //   extractPoseData(rawRecordedBlob)
-  //     .then((data) => {
-  //       setPoseVectors(data);
-  //       setIsProcessing(false);
-  //     })
-  //     .catch((err) => {
-  //       console.error("MediaPipe Extraction Failed:", err);
-  //       setIsProcessing(false);
-  //     });
-  // }, [rawRecordedBlob]);
   useEffect(() => {
     const loadMediaPipe = async () => {
       try {
@@ -429,21 +340,6 @@ function FileUploader() {
     void loadMediaPipe();
   }, []);
 
-  // still landmark drawing
-  // useEffect(() => {
-  //   if (
-  //     !permission ||
-  //     !poseLandmarker ||
-  //     !handLandmarker ||
-  //     !liveVideoRef.current
-  //   ) {
-  //     return;
-  //   }
-
-  //   if (!isStreamingRef.current) {
-  //     startTrackingLoop();
-  //   }
-  // }, [permission, poseLandmarker, handLandmarker]);
   useEffect(() => {
     if (
       !permission ||
@@ -598,131 +494,6 @@ function FileUploader() {
     };
   }, [file, videoURL, poseLandmarker, handLandmarker]);
 
-  //end
-
-  //realstart
-  // useEffect(() => {
-  //   if (!file || !videoURL || !poseLandmarker || !handLandmarker) {
-  //     stopUploadTrackingLoop();
-  //     return;
-  //   }
-
-  //   const video = videoRef.current;
-  //   if (!video) {
-  //     return;
-  //   }
-
-  //   let active = true;
-
-  //   // Triggered every time the video successfully jumps to our target timestamp
-  //   const handleSeeked = () => {
-  //     if (!active) return;
-  //     processCurrentFrameAndStep();
-  //   };
-
-  //   // Triggered when the initial video frame loads
-  //   const handleLoadedData = () => {
-  //     if (!active) return;
-  //     processCurrentFrameAndStep();
-  //   };
-
-  //   const finalizeUploadLandmarks = () => {
-  //     active = false;
-  //     uploadTrackingActiveRef.current = false;
-  //     clearUploadOverlay();
-  //     setUploadPoseVectors([...uploadAccumulatedDataRef.current]);
-  //     setUploadHandsVectors([...uploadAccumulatedHandsRef.current]);
-  //     setUploadDataReady(true);
-  //   };
-
-  //   const stepSeconds = frameStepMs / 1000; // e.g., 100ms becomes 0.1s
-
-  //   const processCurrentFrameAndStep = () => {
-  //     if (!active || !video) return;
-
-  //     // 1. Process the decoded frame we just seeked to
-  //     if (video.readyState >= 2) {
-  //       // Use performance.now() so MediaPipe always sees a strictly increasing timestamp
-  //       const timestamp = performance.now();
-  //       const poseResult = poseLandmarker.detectForVideo(video, timestamp);
-  //       const handResult = handLandmarker.detectForVideo(video, timestamp);
-
-  //       const canvas = uploadOverlayCanvasRef.current;
-  //       if (canvas) {
-  //         const ctx = canvas.getContext("2d");
-  //         if (ctx) {
-  //           const width = video.videoWidth || 640;
-  //           const height = video.videoHeight || 480;
-  //           if (canvas.width !== width || canvas.height !== height) {
-  //             canvas.width = width;
-  //             canvas.height = height;
-  //           }
-  //           ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  //           drawLandmarkOverlay({
-  //             ctx,
-  //             poseResult,
-  //             handResult,
-  //             width,
-  //             height,
-  //           });
-  //         }
-  //       }
-
-  //       const {
-  //         poseVectors: currentPoseVectors,
-  //         handsVectors: currentHandsVectors,
-  //       } = extractLandmarkVectors({ poseResult, handResult });
-
-  //       if (currentPoseVectors.length > 0) {
-  //         // Fix: Save to upload-specific accumulated arrays
-  //         uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
-  //       }
-  //       uploadAccumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
-  //     }
-
-  //     // 2. Decide if we reached the end of the video
-  //     const nextTime = video.currentTime + stepSeconds;
-  //     if (nextTime >= video.duration) {
-  //       finalizeUploadLandmarks();
-  //       return;
-  //     }
-
-  //     // 3. Move the playhead forward. This automatically triggers 'handleSeeked' above!
-  //     video.currentTime = nextTime;
-  //   };
-
-  //   // Initialize clean tracking states
-  //   stopUploadTrackingLoop();
-  //   uploadTrackingActiveRef.current = true;
-  //   uploadAccumulatedDataRef.current = [];
-  //   uploadAccumulatedHandsRef.current = [];
-  //   setUploadPoseVectors([]);
-  //   setUploadHandsVectors([]);
-  //   setUploadDataReady(false);
-
-  //   // Keep the video PAUSED so it doesn't run ahead of MediaPipe
-  //   video.src = videoURL;
-  //   video.load();
-  //   video.currentTime = 0;
-  //   video.muted = true;
-  //   video.playsInline = true;
-  //   video.pause();
-
-  //   // Listeners to drive our programmatic playback step-by-step
-  //   video.addEventListener("seeked", handleSeeked);
-  //   video.addEventListener("loadeddata", handleLoadedData, { once: true });
-
-  //   // Clean up cleanly on unmount / re-upload
-  //   return () => {
-  //     active = false;
-  //     stopUploadTrackingLoop();
-  //     video.removeEventListener("seeked", handleSeeked);
-  //     video.removeEventListener("loadeddata", handleLoadedData);
-  //   };
-  // }, [file, videoURL, poseLandmarker, handLandmarker]);
-  // //realend
-
   // start tracking loop for pose and hands
   const startTrackingLoop = () => {
     if (
@@ -820,276 +591,148 @@ function FileUploader() {
     saveAs(jsonBlob, `landmark_data_${source}_${Date().toString()}.json`);
   };
 
+  const [activeTab, setActiveTab] = useState<"record" | "upload">("record");
+
   return (
-    <main>
-      <div className="flex flex-col lg:flex-row gap-5 justify-center items-stretch w-full px-4 mb-10">
-        {/* file upload section */}
-        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover hover:scale-[1.01]">
-          {!file &&
-            recordingStatus !== "recording" &&
-            recordingStatus !== "counting" &&
-            poseVectors.length <= 0 && (
-              <div className="w-full flex-1 flex flex-col justify-center">
-                <label
-                  htmlFor="upload-input"
-                  className="flex flex-col items-center justify-center w-full min-h-75 p-6 border-2 border-dashed border-brand-dark rounded-xl cursor-pointer bg-brand-light hover:bg-brand-alt-bg transition-colors"
-                >
-                  <span className="flex flex-col items-center text-center text-sm text-gray-600 gap-2">
-                    <div className="text-4xl mb-2">📁</div>
-                    <span>
-                      Drag and drop file here or{" "}
-                      <strong className="text-brand font-bold">Browse</strong>
-                    </span>
-                    <p className="text-xs text-gray-400">
-                      Accepted formats: MP4, MOV, WebM
-                    </p>
-                  </span>
-                </label>
-                <input
-                  id="upload-input"
-                  type="file"
-                  accept="video/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </div>
-            )}
-          {(recordingStatus === "recording" ||
-            recordingStatus === "counting" ||
-            (!file && rawRecordedBlob)) && (
-            <div className="mt-2.5 text-center flex-1 flex flex-col items-center justify-center w-full">
-              <div className="w-full max-w-125 aspect-video rounded-lg border-2 border-neutral-dark bg-gray-900/90 flex items-center justify-center text-center px-6 mb-3">
-                <p className="text-sm text-gray-200">
-                  Currently live recording. Upload video disabled.
-                </p>
-              </div>
-              {/* <p
-            //   className="text-sm text-transparent select-none"
-            //   aria-hidden="true"
-            // >
-            //   Placeholder
-            // </p> */}
-            </div>
-          )}
-          {file && (
-            <div className="mt-2.5 text-center flex-1 flex flex-col items-center justify-center">
-              <div className="relative w-full max-w-125 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black mb-3">
-                <video
-                  ref={videoRef}
-                  src={videoURL}
-                  className="w-full h-full object-cover"
-                  controls
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas
-                  ref={uploadOverlayCanvasRef}
-                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
-                  style={{ display: "block" }}
-                />
-              </div>
-              <p className="text-gray-700 text-sm">
-                <strong className="text-brand">Uploaded Video:</strong>{" "}
-                {file.name}
-              </p>
-            </div>
-          )}
-          <div className="w-full mt-4">
-            <div className="flex flex-row gap-2.5 justify-center">
-              <button
-                type="button"
-                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
-                disabled={
-                  (!file && !rawRecordedBlob) ||
-                  uploadStatus === "uploading" ||
-                  uploadDataReady === false
-                }
-                onClick={handleRedirect}
-              >
-                Upload
-              </button>
-              {/* {file && !uploadDataReady && (
-                <div className="flex flex-col items-center gap-2 mt-2">
-                  <p className="text-sm text-gray-500 font-medium animate-pulse">
-                    Processing uploaded video landmarks...
-                  </p>
-                </div>
-              )} */}
-              {uploadPoseVectors.length > 0 &&
-                uploadHandsVectors.length > 0 &&
-                file &&
-                uploadDataReady && (
-                  <button
-                    onClick={() => handleResultsDownload("upload")}
-                    className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
-                  >
-                    Download Landmark Data JSON File
-                  </button>
-                )}
-              {/* {poseVectors.length <= 0 && !file && (
-                <div className="flex flex-col items-center gap-2 mt-2">
-                  <p className="text-sm text-gray-500 font-medium animate-pulse">
-                    Loading Results File...
-                  </p>
-                  <SyncLoader
-                    color="#4a90e2"
-                    size={10}
-                    loading={isProcessing}
-                  ></SyncLoader>
-                </div>
-              )} */}
-              <button
-                type="button"
-                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors self-center hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-default"
-                disabled={
-                  !file ||
-                  recordedVideo !== null ||
-                  recordingStatus === "recording"
-                }
-                onClick={() => {
-                  resetUploadLandmarkData();
-                  setFile(null);
-                  setVideoURL(undefined);
-                  setRawRecordedBlob(null);
-                  setPermission(false);
-                  setCountdownVisible(false);
-                  setCountdown(3);
-                  stopMediaTracks(streamRef.current);
-                }}
-              >
-                Reset
-              </button>
-            </div>
-            {uploadStatus && (
-              <div className="text-center mt-2 text-sm text-gray-500 font-medium">
-                {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}
-              </div>
-            )}
-          </div>
-        </div>
-        {/* camera recording section */}
-        <div className="flex flex-col items-center justify-between w-full max-w-150 min-h-130 p-6 border-2 border-neutral-dark rounded-xl bg-brand-light transition-all duration-300 ease-in-out hover hover:scale-[1.01]">
-          <div className="w-full text-center flex flex-col items-center">
-            <div className="text-4xl mb-1">📹</div>
-            <span className="font-bold text-gray-700 text-sm">
+    <main className="w-full flex flex-col items-center justify-center px-4 mb-16">
+      {/* tab controls */}
+      <div className="relative flex items-center bg-gray-200/80 p-1.5 rounded-full mb-8 w-full max-w-sm shadow-inner">
+        <div
+          className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-[#9E2A2B] rounded-full transition-all duration-300 ease-in-out shadow-md ${
+            activeTab === "record" ? "left-1.5" : "left-[calc(50%+3px)]"
+          }`}
+        />
+        <button
+          type="button"
+          onClick={() => setActiveTab("record")}
+          className={`relative z-10 flex-1 py-2.5 text-center text-sm font-bold tracking-wide transition-colors duration-200 ${
+            activeTab === "record"
+              ? "text-white"
+              : "text-gray-700 hover:text-gray-900"
+          }`}
+        >
+          RECORD
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("upload")}
+          className={`relative z-10 flex-1 py-2.5 text-center text-sm font-bold tracking-wide transition-colors duration-200 ${
+            activeTab === "upload"
+              ? "text-white"
+              : "text-gray-700 hover:text-gray-900"
+          }`}
+        >
+          UPLOAD
+        </button>
+      </div>
+      {/* tab content container */}
+      <div className="w-full max-w-2xl bg-[#EAEAEA] rounded-2xl p-8 border border-gray-300/60 shadow-lg transition-all duration-300">
+        {/* record content */}
+        {activeTab === "record" && (
+          <div className="flex flex-col items-center text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2 tracking-tight">
               Record your video
-            </span>
-            <p className="text-xs text-gray-500 max-w-md mt-1 leading-relaxed">
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 max-w-md mb-6 leading-relaxed">
               Your video will start recording after a 3-second countdown. A
               playback of your recording will be displayed below once the stop
               button is clicked.
             </p>
-          </div>
 
-          <div className="w-full flex-1 flex items-center justify-center my-4">
-            {file ? (
-              <div className="w-full max-w-140 aspect-video rounded-lg border-2 border-neutral-dark bg-gray-900/90 flex items-center justify-center text-center px-6">
-                <p className="text-sm text-gray-200">
-                  Currently using upload video. Live recording disabled.
-                </p>
-              </div>
-            ) : recordedVideo ? (
-              <video
-                key={recordedVideo}
-                id="recording"
-                src={recordedVideo}
-                className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
-                controls
-              />
-            ) : (
-              <div className="relative w-full max-w-140 aspect-video rounded-lg overflow-hidden border-2 border-neutral-dark bg-black">
+            <div className="w-full aspect-video bg-gray-900 rounded-xl border border-gray-400/50 flex items-center justify-center relative overflow-hidden shadow-inner">
+              {recordedVideo ? (
                 <video
-                  ref={liveVideoRef}
-                  id="preview"
-                  className="w-full max-w-140 aspect-video border-2 border-neutral-dark rounded-lg object-cover bg-black"
-                  autoPlay
-                  muted
-                  playsInline
+                  key={recordedVideo}
+                  src={recordedVideo}
+                  className="w-full h-full object-contain"
+                  controls
                 />
-                {/* still landmark drawing */}
-                <canvas
-                  ref={overlayCanvasRef}
-                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
-                  style={{ display: "block" }}
-                />
-                {recordingStatus === "counting" && countdownVisible && (
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center transition-all duration-200">
-                    <span className="text-white text-7xl font-bold animate-ping">
-                      {countdown}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <video
+                    ref={liveVideoRef}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    playsInline
+                  />
+                  <canvas
+                    ref={overlayCanvasRef}
+                    className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  />
+                  {recordingStatus === "counting" && countdownVisible && (
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-20">
+                      <span className="text-white text-8xl font-black animate-pulse">
+                        {countdown}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-          <div className="w-full flex flex-col gap-3">
-            <button
-              type="button"
-              className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
-              onClick={handleCameraAndStart}
-              disabled={
-                !!file ||
-                recordingStatus === "recording" ||
-                recordingStatus === "counting" ||
-                !!recordedVideo
-              }
-            >
-              {recordingStatus === "counting"
-                ? "Preparing..."
-                : "Start Recording"}
-            </button>
-            <button
-              type="button"
-              className="font-button py-2 px-5 text-base text-white bg-brand rounded-md cursor-pointer transition-colors hover:bg-brand-hover disabled:bg-brand-hover/40 disabled:cursor-not-allowed"
-              disabled={!!file || recordingStatus !== "recording"}
-              onClick={() => {
-                stopRecording();
-                stopMediaTracks(streamRef.current);
-                setPermission(false);
-              }}
-            >
-              Stop Recording
-            </button>
-          </div>
-          <div className="w-full flex flex-row gap-2 justify-center flex-wrap border-t border-gray-200 pt-4">
-            <button
-              id="download"
-              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              disabled={!recordedVideo}
-              onClick={() => {
-                if (recordedVideo) {
-                  saveAs(recordedVideo, "recorded_video.webm");
-                }
-              }}
-            >
-              Download Video
-            </button>
-            <button
-              id="retakeButton"
-              className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
-              disabled={!recordedVideo}
-              onClick={() => {
-                resetRecordingLandmarkData();
-                setRecordedVideo(null);
-                setRawRecordedBlob(null);
-                setCountdownVisible(false);
-                setCountdown(3);
-                stopMediaTracks(streamRef.current);
-                setPermission(false);
-              }}
-            >
-              Retake
-            </button>
-            <div>
+            <div className="grid grid-cols-2 gap-4 w-full mt-6">
               <button
-                id="submitButton"
-                className="py-1.5 px-4 text-sm font-medium border border-gray-300 rounded-md bg-white text-green-600 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+                type="button"
+                onClick={handleCameraAndStart}
                 disabled={
-                  (!rawRecordedBlob && !file) ||
-                  (file ? !uploadDataReady : false)
+                  recordingStatus === "recording" ||
+                  recordingStatus === "counting" ||
+                  !!recordedVideo
                 }
+                className="py-3 px-4 text-sm font-bold text-white bg-[#34A853] hover:bg-[#2E9647] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {recordingStatus === "counting"
+                  ? "Preparing..."
+                  : "Start Recording"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  stopRecording();
+                  stopMediaTracks(streamRef.current);
+                  setPermission(false);
+                }}
+                disabled={recordingStatus !== "recording"}
+                className="py-3 px-4 text-sm font-bold text-white bg-[#EA4335] hover:bg-[#D93025] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Stop Recording
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-300/70 w-full">
+              <button
+                type="button"
+                disabled={!recordedVideo}
+                onClick={() =>
+                  recordedVideo && saveAs(recordedVideo, "recorded_video.webm")
+                }
+                className="px-5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Download Video
+              </button>
+
+              <button
+                type="button"
+                disabled={!recordedVideo}
+                onClick={() => {
+                  resetRecordingLandmarkData();
+                  setRecordedVideo(null);
+                  setRawRecordedBlob(null);
+                  setCountdownVisible(false);
+                  setCountdown(3);
+                  stopMediaTracks(streamRef.current);
+                  setPermission(false);
+                }}
+                className="px-5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Retake
+              </button>
+
+              <button
+                type="button"
+                disabled={!rawRecordedBlob}
                 onClick={async () => {
                   stopMediaTracks(streamRef.current);
                   setPermission(false);
@@ -1119,6 +762,7 @@ function FileUploader() {
                     console.error("Error submitting job:", error);
                   }
                 }}
+                className="px-8 py-2 text-xs font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Submit
               </button>
@@ -1133,20 +777,111 @@ function FileUploader() {
                   </button>
                 )}
             </div>
-            {/* {poseVectors.length <= 0 && (
-              <div className="flex flex-col items-center gap-2 mt-2">
-                <p className="text-sm text-gray-500 font-medium animate-pulse">
-                  Loading landmark data...
-                </p>
-                <SyncLoader
-                  color="#4a90e2"
-                  size={10}
-                  loading={isProcessing}
-                ></SyncLoader>
-              </div>
-            )} */}
           </div>
-        </div>
+        )}
+        {/* upload content */}
+        {activeTab === "upload" && (
+          <div className="flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 tracking-tight">
+              Upload your video
+            </h2>
+            <div className="w-full aspect-video bg-gray-300/80 rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center text-center p-6 relative overflow-hidden group hover:border-[#9E2A2B] hover:bg-gray-300/50 transition-all duration-200">
+              {!file && (
+                <label
+                  htmlFor="upload-input"
+                  className="cursor-pointer w-full h-full flex flex-col items-center justify-center"
+                >
+                  <div className="w-12 h-12 mb-3 text-gray-500 group-hover:scale-110 transition-transform duration-200">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-700 font-medium text-sm sm:text-base">
+                    Browse <span className="font-bold text-gray-900">or</span>{" "}
+                    drag & drop file here.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    Accepted formats: .mov, .mp4, .webm
+                  </p>
+                </label>
+              )}
+              {file && (
+                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    src={videoURL}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                  <canvas
+                    ref={uploadOverlayCanvasRef}
+                    className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  />
+                </div>
+              )}
+              <input
+                id="upload-input"
+                type="file"
+                accept="video/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+            <div className="w-full mt-4">
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-8 w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetUploadLandmarkData();
+                    setFile(null);
+                    setVideoURL(undefined);
+                    setRawRecordedBlob(null);
+                    setPermission(false);
+                    setCountdownVisible(false);
+                    setCountdown(3);
+                    stopMediaTracks(streamRef.current);
+                  }}
+                  disabled={!file}
+                  className="px-8 py-2.5 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRedirect}
+                  disabled={!file || uploadStatus === "uploading"}
+                  className="px-8 py-2.5 text-sm font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Submit
+                </button>
+                {uploadPoseVectors.length > 0 &&
+                  uploadHandsVectors.length > 0 &&
+                  file &&
+                  uploadDataReady && (
+                    <button
+                      onClick={() => handleResultsDownload("upload")}
+                      className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                    >
+                      Download Landmark Data JSON File
+                    </button>
+                  )}
+              </div>
+              {uploadStatus && (
+                <div className="text-center mt-2 text-sm text-gray-500 font-medium">
+                  {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
@@ -1154,24 +889,30 @@ function FileUploader() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen py-10 bg-gray-50">
-      <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
-        Home
-      </h1>
-      <div className="text-center max-w-2xl mx-auto mt-6 mb-10 px-4 text-gray-600">
+    <main className="min-h-screen bg-gray-50">
+      <div className="justify-center mt-6">
+        <div className="flex justify-center">
+          <img
+            src="ASLWELCOMEIMAGE.PNG"
+            alt="Header visual"
+            className="rounded-lg"
+          />
+        </div>
+        <h1 className="text-center font-head text-gray-900 text-[50px] leading-tight mt-2">
+          To ASL Live Dictionary!
+        </h1>
+      </div>
+      <div className="w-23/24 h-1 mt-4 border-b border-gray-500 mx-auto"></div>
+      <div className="text-center max-w-2xl mx-auto mt-6 mb-10 text-gray-600">
         <p className="text-base sm:text-lg leading-relaxed">
           <strong>
-            Record{" "}
-            <span className="underline decoration-brand-darker decoration-2">
-              or
-            </span>{" "}
-            upload a video here.
+            Record <span className="text-black font-bold">or</span> upload a
+            video below.
           </strong>{" "}
           Your video will be stored temporarily, and you will be redirected to
           the results page once the upload is processed.
         </p>
       </div>
-
       <FileUploader />
     </main>
   );
