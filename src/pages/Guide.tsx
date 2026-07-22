@@ -58,6 +58,12 @@ export default function Guide() {
         "A: You need to allow camera access in order to record a video. Please try reloading the page and allowing camera access when you try recording again. " +
         "As a reminder your image is not being used just the vector points of your sign. \n\n",
     },
+    {
+      id: "acknowledgements",
+      label: "Acknowledgements",
+      content:
+        "We would like to acknowledge the following for their contributions to the development of this tool: ",
+    },
   ];
 
   /* slideshow functionality */
