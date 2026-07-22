@@ -2,18 +2,11 @@ import { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
 import { useLocation, useParams } from "react-router-dom";
+import { createRoot } from "react-dom/client";
 
-interface MatchVideo {
-  id: number;
-  src: string;
-  thumbnail: string;
-  label: string;
-  features: {
-    handshape: string;
-    movement: string;
-    location: string;
-    palm: string;
-  };
+interface MatchItem {
+  word: string;
+  confidence: number;
 }
 
 interface FeedbackItem {
@@ -26,8 +19,10 @@ interface FeedbackItem {
 }
 
 interface JobResult {
-  matched_word: string;
-  match_confidence: number;
+  matched_word?: string;
+  match_confidence?: number;
+  top_k?: [string, number][];
+  matches?: MatchItem[];
   feedback: FeedbackItem[];
 }
 
@@ -61,21 +56,58 @@ export default function Results() {
     if (!job_id) return;
     const interval = setInterval(async () => {
       try {
+        console.log("Fetching job status for ID:", job_id);
         const res = await fetch(`${apiBaseUrl}/api/jobs/${job_id}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        //DELETE THIS NEXT LINE
-        console.log(data);
+        console.log("Received Job Data from Backend:", data);
         setJobData(data);
         if (data.status === "completed" || data.status === "failed") {
           clearInterval(interval);
         }
       } catch (err) {
-        console.log("Error fetching job data:", err);
+        console.error("Error fetching job data:", err);
       }
     }, 1500);
     return () => clearInterval(interval);
   }, [job_id, apiBaseUrl]);
+
+  // Normalize top_k / matches into array
+  const rawMatches: MatchItem[] = (() => {
+    if (jobData?.result?.matches && jobData.result.matches.length > 0) {
+      return jobData.result.matches;
+    }
+    if (jobData?.result?.top_k && jobData.result.top_k.length > 0) {
+      return jobData.result.top_k.map(([word, confidence]) => ({
+        word,
+        confidence,
+      }));
+    }
+    if (jobData?.result?.matched_word) {
+      return [
+        {
+          word: jobData.result.matched_word,
+          confidence: jobData.result.match_confidence ?? 0,
+        },
+      ];
+    }
+    return [];
+  })();
+
+  // Top 3 for Slideshow (Indices 0, 1, 2)
+  const slideshowMatches = rawMatches.slice(0, 3);
+
+  // Bottom Cards (Indices 3, 4, 5) -> 4th, 5th, and 6th matches
+  const bottomMatches = [0, 1, 2].map((i) => {
+    //delete line below
+    console.log(rawMatches);
+    const match = rawMatches[i + 3];
+    return {
+      word: match?.word ?? `Match ${i + 4}`,
+      confidence: match?.confidence ?? 0,
+      slotKey: match?.word ? match.word : `slot_${i + 4}`,
+    };
+  });
 
   const featuresList = jobData?.result?.feedback ?? [];
 
@@ -94,44 +126,7 @@ export default function Results() {
   }, [jobData]);
 
   const [activeIdx, setActiveIdx] = useState<number>(0);
-  const topMatches: MatchVideo[] = [
-    {
-      id: 1,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 1 (Confidence: 95%)",
-      features: {
-        handshape: "95%",
-        movement: "92%",
-        location: "98%",
-        palm: "90%",
-      },
-    },
-    {
-      id: 2,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 2 (Confidence: 85%)",
-      features: {
-        handshape: "85%",
-        movement: "80%",
-        location: "87%",
-        palm: "82%",
-      },
-    },
-    {
-      id: 3,
-      src: "test.mp4",
-      thumbnail: "test-ss.png",
-      label: "Match 3 (Confidence: 75%)",
-      features: {
-        handshape: "75%",
-        movement: "72%",
-        location: "70%",
-        palm: "78%",
-      },
-    },
-  ];
+  const currentMatch = slideshowMatches[activeIdx] || slideshowMatches[0];
 
   const handleDownload = () => {
     if (videoURL) {
@@ -140,31 +135,24 @@ export default function Results() {
   };
 
   const nextSlide = (): void => {
-    setActiveIdx((prev) => (prev + 1) % topMatches.length);
+    if (slideshowMatches.length === 0) return;
+    setActiveIdx((prev) => (prev + 1) % slideshowMatches.length);
   };
 
   const prevSlide = (): void => {
-    setActiveIdx((prev) => (prev - 1 + topMatches.length) % topMatches.length);
+    if (slideshowMatches.length === 0) return;
+    setActiveIdx(
+      (prev) => (prev - 1 + slideshowMatches.length) % slideshowMatches.length,
+    );
   };
 
-  const currentMatch = topMatches[activeIdx];
-
-  const [isVisible, setIsVisible] = useState<{ [key: number]: boolean }>({
-    1: false,
-    2: false,
-    3: false,
-  });
-
-  const parsePercent = (valString: string): number => {
-    return parseInt(valString, 10) || 0;
-  };
+  const [isVisible, setIsVisible] = useState<{ [key: string]: boolean }>({});
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToggleFeature = (name: string) => {
     const isCurrentlyEnabled = enabledFeatures[name];
     const totalEnabled = Object.values(enabledFeatures).filter(Boolean).length;
-    // prevent disabling the last enabled feature
     if (isCurrentlyEnabled && totalEnabled <= 1) {
       setErrorMessage("At least one feature must be enabled.");
       setTimeout(() => setErrorMessage(null), 3000);
@@ -183,11 +171,9 @@ export default function Results() {
     setIsSignModalOpen(true);
   };
 
-  // handle confirming match result
   const handleConfirmSign = async () => {
     setHasSubmittedFeedback(true);
     setIsSignModalOpen(false);
-    // send feedback to backend
     try {
       await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
         method: "POST",
@@ -205,11 +191,9 @@ export default function Results() {
     alert(`Thank you! Feedback recorded for ${selectedMatchLabel}.`);
   };
 
-  // handle missing sign form submission
   const handleConfirmMissingSign = async () => {
     setHasSubmittedFeedback(true);
     setIsMissingModalOpen(false);
-    // send feedback to backend
     try {
       await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
         method: "POST",
@@ -217,7 +201,7 @@ export default function Results() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          matchedCorrectly: false,
+          matchedCorrectly: true,
           intendedWord: intendedWord,
           allowVideoUse: true,
         }),
@@ -231,7 +215,10 @@ export default function Results() {
     setIntendedWord("");
   };
 
-  // loading screen
+  //checkboxes for video consent
+  const [inputs, setInputs] = useState({});
+
+  // Loading screen
   if (!jobData || jobData.status === "queued" || jobData.status === "running") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -246,6 +233,7 @@ export default function Results() {
     );
   }
 
+  // Failed screen
   if (jobData.status === "failed") {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -256,16 +244,15 @@ export default function Results() {
     );
   }
 
-  const results = jobData.result; // jobData.status === "completed"
-
   return (
     <main>
       <h1 className="text-4xl font-extrabold text-neutral-darkest text-center mt-5 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
         Results
       </h1>
-      {/* side-by-side layout */}
+
+      {/* Side-by-side layout */}
       <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch w-full mb-12">
-        {/* user video */}
+        {/* User uploaded video */}
         <div className="flex flex-col items-center justify-between w-full lg:w-1/2 p-6 border-2 border-neutral-border rounded-xl bg-brand-light shadow-custom">
           <div className="w-full text-center flex flex-col items-center">
             <h2 className="text-2xl font-bold text-neutral-darkest mb-4">
@@ -288,7 +275,8 @@ export default function Results() {
               </button>
             </div>
           </div>
-          {/* user features */}
+
+          {/* User features */}
           <div className="w-full mt-8 pt-6 border-t border-neutral-border text-left">
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
@@ -365,17 +353,18 @@ export default function Results() {
           </div>
         </div>
 
-        {/* top 3 matches */}
+        {/* Top 3 Matches Slideshow */}
         <div className="flex flex-col items-center justify-between w-full lg:w-1/2 p-6 border-2 border-neutral-border rounded-xl bg-brand-light shadow-custom">
           <div className="w-full text-center">
             <h2 className="text-2xl font-bold text-neutral-darkest mb-4">
               Top Three Matches
             </h2>
-            {/* slideshow */}
+
+            {/* Slideshow */}
             <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border group mb-4">
               <video
-                key={currentMatch.id}
-                src={currentMatch.src}
+                key={currentMatch?.word ?? activeIdx}
+                src={`/${currentMatch?.word}_Cut.mp4`}
                 className="w-full h-full object-cover"
                 controls
               />
@@ -393,34 +382,36 @@ export default function Results() {
               </button>
               <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
                 <p className="text-white text-sm font-medium">
-                  {` ${results?.matched_word} (Confidence: ${Math.round((results?.match_confidence ?? 0) * 100)}%)`}
+                  {currentMatch
+                    ? `${currentMatch.word} (Confidence: ${Math.round(currentMatch.confidence * 100)}%)`
+                    : "No match"}
                 </p>
               </div>
             </div>
-            {/* caption */}
+
+            {/* Thumbnails */}
             <div className="flex flex-row gap-3 justify-center max-w-xs mx-auto">
-              {topMatches.map((match, idx) => (
+              {slideshowMatches.map((match, idx) => (
                 <button
-                  key={match.id}
+                  key={match.word}
                   onClick={() => setActiveIdx(idx)}
-                  className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all ${
+                  className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all cursor-pointer ${
                     idx === activeIdx
                       ? "border-brand scale-105 opacity-100 ring-2 ring-brand-hover-bg"
                       : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img
-                    src={match.thumbnail}
-                    className="w-full h-full object-cover"
-                    alt={results?.matched_word}
-                  />
+                  <div className="w-full h-full bg-neutral-dark text-white flex items-center justify-center text-xs font-bold uppercase">
+                    {match.word}
+                  </div>
                 </button>
               ))}
             </div>
-            {/* "this is my sign" for current top match */}
+
+            {/* "This is my sign" for current top match */}
             <button
               onClick={() =>
-                openSignModal(results?.matched_word || `Match ${activeIdx + 1}`)
+                openSignModal(currentMatch?.word || `Match ${activeIdx + 1}`)
               }
               disabled={hasSubmittedFeedback}
               className={`font-semibold py-2 px-6 rounded-lg transition-colors shadow ${
@@ -429,13 +420,11 @@ export default function Results() {
                   : "mt-4 bg-green-600 hover:bg-green-700 text-white"
               }`}
             >
-              {hasSubmittedFeedback
-                ? "Feedback Submitted"
-                : "This is my sign"}{" "}
+              {hasSubmittedFeedback ? "Feedback Submitted" : "This is my sign"}
             </button>
           </div>
 
-          {/* match details */}
+          {/* Match details / Features */}
           <div className="w-full mt-6 pt-6 border-t border-neutral-border text-left">
             <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
               Features
@@ -483,7 +472,8 @@ export default function Results() {
           </div>
         </div>
       </div>
-      {/* other matches */}
+
+      {/* Other Potential Matches Grid (4th, 5th, 6th signs) */}
       <div className="w-full border-t border-neutral-border pt-8 mt-4">
         <h2 className="text-3xl font-bold text-neutral-darkest text-center mb-4">
           Other Potential Matches
@@ -495,25 +485,30 @@ export default function Results() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((item) => (
+          {bottomMatches.map((match) => (
             <div
-              key={item}
+              key={match.slotKey}
               className="flex flex-col items-center p-5 bg-neutral-panel rounded-xl border border-neutral-border shadow-sm"
             >
               <div className="w-full flex flex-col items-center">
-                {!isVisible[item] && (
+                {!isVisible[match.slotKey] && (
                   <button
                     className="font-button w-full max-w-70 aspect-video bg-brand text-white text-lg font-semibold rounded-lg shadow hover:bg-brand-hover active:scale-95 transition-all uppercase tracking-wider cursor-pointer"
-                    onClick={() => setIsVisible({ ...isVisible, [item]: true })}
+                    onClick={() =>
+                      setIsVisible((prev) => ({
+                        ...prev,
+                        [match.slotKey]: true,
+                      }))
+                    }
                   >
-                    View Match {item}
+                    View {match.word}
                   </button>
                 )}
-                {isVisible[item] && (
+                {isVisible[match.slotKey] && (
                   <div className="w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border">
                     <video
-                      key={currentMatch.id}
-                      src={currentMatch.src}
+                      key={match.word}
+                      src={`/${match.word}_Cut.mp4`}
                       className="w-full h-full object-cover"
                       controls
                     />
@@ -521,22 +516,17 @@ export default function Results() {
                 )}
                 <div className="w-full mt-4 p-4 bg-white rounded-lg border border-neutral-border text-xs sm:text-sm text-neutral-dark space-y-1">
                   <p>
-                    Handshape (Confidence: {currentMatch.features.handshape}):
+                    Predicted Sign: <strong>{match.word}</strong>
                   </p>
                   <p>
-                    Movement (Confidence: {currentMatch.features.movement}):
-                  </p>
-                  <p>
-                    Location (Confidence: {currentMatch.features.location}):
-                  </p>
-                  <p>
-                    Palm Orientation (Confidence: {currentMatch.features.palm}):
+                    Confidence:{" "}
+                    <strong>{Math.round(match.confidence * 100)}%</strong>
                   </p>
                 </div>
               </div>
-              {/* "this is my sign" for potential matches */}
+              {/* "This is my sign" for potential matches */}
               <button
-                onClick={() => openSignModal(`Match ${item}`)}
+                onClick={() => openSignModal(match.word)}
                 disabled={hasSubmittedFeedback}
                 className={`mt-4 text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow ${
                   hasSubmittedFeedback
@@ -546,13 +536,14 @@ export default function Results() {
               >
                 {hasSubmittedFeedback
                   ? "Feedback Submitted"
-                  : "This is my sign"}{" "}
+                  : "This is my sign"}
               </button>
             </div>
           ))}
         </div>
       </div>
-      {/* sign not found */}
+
+      {/* Sign not found */}
       <div className="mt-2 bottom-0 left-0 right-0 py-4 px-6 flex justify-center">
         <button
           onClick={() => setIsMissingModalOpen(true)}
@@ -567,7 +558,7 @@ export default function Results() {
         </button>
       </div>
 
-      {/* modal: "this is my sign" */}
+      {/* Modal: "This is my sign" */}
       {isSignModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in relative">
@@ -595,13 +586,15 @@ export default function Results() {
               >
                 Feedback Survey
               </a>
+              <br />
               <a
                 href="https://forms.gle/ZiiSs1Cs2C2mbfnA7"
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline font-medium inline-block"
               >
-                List of Signs for Testing (only fill out once)
+                List of Signs for Testing (only fill out once AFTER you've
+                tested all of them)
               </a>
             </div>
             <div className="flex gap-4 justify-end">
@@ -622,7 +615,7 @@ export default function Results() {
         </div>
       )}
 
-      {/* modal: "my sign is not here" */}
+      {/* Modal: "My sign is not here" */}
       {isMissingModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in relative">
@@ -631,7 +624,7 @@ export default function Results() {
             </h3>
             <p className="text-gray-600 mb-6">
               Can we use your uploaded video to debug what happened? We will
-              completely delete the video after resolving the bug.{" "}
+              completely delete the video after resolving the bug.
             </p>
             <div className="mb-4">
               <label
@@ -654,9 +647,6 @@ export default function Results() {
                 📝 Feedback Survey
               </p>
               <p className="text-gray-600 mb-2">
-                What word were you trying to sign?
-              </p>
-              <p className="text-gray-600 mb-2">
                 Help us improve the recognition accuracy by answering a few
                 short questions.
               </p>
@@ -668,13 +658,15 @@ export default function Results() {
               >
                 Feedback Survey
               </a>
+              <br />
               <a
                 href="https://forms.gle/ZiiSs1Cs2C2mbfnA7"
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline font-medium inline-block"
               >
-                List of Signs for Testing (only fill out once)
+                List of Signs for Testing (only fill out once AFTER you've
+                tested all of them)
               </a>
             </div>
             <div className="flex gap-4 justify-end">
@@ -693,7 +685,7 @@ export default function Results() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Allow and Submit
+                Submit
               </button>
             </div>
           </div>
