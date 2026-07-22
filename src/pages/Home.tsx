@@ -591,7 +591,25 @@ function FileUploader() {
     saveAs(jsonBlob, `landmark_data_${source}_${Date().toString()}.json`);
   };
 
+  // UI state for tab switching
   const [activeTab, setActiveTab] = useState<"record" | "upload">("record");
+  const [tabError, setTabError] = useState<string | null>(null);
+
+  const handleTabSwitch = (targetTab: "record" | "upload") => {
+    const isRecordingOrCounting =
+      recordingStatus === "recording" || recordingStatus === "counting";
+    const hasActiveContent = !!file || !!rawRecordedBlob || !!recordedVideo;
+
+    if (isRecordingOrCounting || hasActiveContent) {
+      setTabError(
+        "Please reset or remove your current video before switching options.",
+      );
+      return;
+    }
+
+    setTabError(null);
+    setActiveTab(targetTab);
+  };
 
   return (
     <main className="w-full flex flex-col items-center justify-center px-4 mb-16">
@@ -604,7 +622,7 @@ function FileUploader() {
         />
         <button
           type="button"
-          onClick={() => setActiveTab("record")}
+          onClick={() => handleTabSwitch("record")}
           className={`relative z-10 flex-1 py-2.5 text-center text-lg font-bold tracking-wide transition-colors duration-200 ${
             activeTab === "record"
               ? "text-white"
@@ -615,7 +633,7 @@ function FileUploader() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("upload")}
+          onClick={() => handleTabSwitch("upload")}
           className={`relative z-10 flex-1 py-2.5 text-center text-lg font-bold tracking-wide transition-colors duration-200 ${
             activeTab === "upload"
               ? "text-white"
@@ -625,6 +643,23 @@ function FileUploader() {
           UPLOAD
         </button>
       </div>
+
+      {/* error message */}
+      {tabError && (
+        <div className="w-full max-w-2xl mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">{tabError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTabError(null)}
+            className="text-red-600 hover:text-red-800 font-bold text-sm px-2 py-1 rounded-md hover:bg-red-200/60 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* tab content container */}
       <div className="w-full max-w-2xl bg-[#EAEAEA] rounded-2xl p-8 border border-gray-300/60 shadow-lg transition-all duration-300">
         {/* record content */}
@@ -779,6 +814,7 @@ function FileUploader() {
             </div>
           </div>
         )}
+
         {/* upload content */}
         {activeTab === "upload" && (
           <div className="flex flex-col items-center">
@@ -842,8 +878,8 @@ function FileUploader() {
                 className="hidden"
               />
             </div>
-            <div className="w-full mt-4">
-              <div className="flex flex-wrap items-center justify-center gap-4 mt-8 w-full">
+            <div className="w-full mt-8">
+              <div className="flex flex-wrap items-center justify-center gap-4 w-full">
                 <button
                   type="button"
                   onClick={() => {
@@ -864,7 +900,11 @@ function FileUploader() {
                 <button
                   type="button"
                   onClick={handleRedirect}
-                  disabled={!file || uploadStatus === "uploading"}
+                  disabled={
+                    (!file && !rawRecordedBlob) ||
+                    uploadStatus === "uploading" ||
+                    uploadDataReady === false
+                  }
                   className="px-8 py-2.5 font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Submit
@@ -881,6 +921,13 @@ function FileUploader() {
                     </button>
                   )}
               </div>
+              {file && !uploadDataReady && uploadStatus !== "uploading" && (
+                <div className="flex items-center gap-2 text-sm text-gray-600 font-medium animate-pulse mt-5">
+                  <span>
+                    Processing video landmarks with MediaPipe... Please wait.
+                  </span>
+                </div>
+              )}
               {uploadStatus && (
                 <div className="text-center mt-2 text-sm text-gray-500 font-medium">
                   {uploadStatus} {uploadProgress > 0 && `${uploadProgress}%`}

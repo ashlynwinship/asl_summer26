@@ -42,10 +42,10 @@ function Navigation() {
   return (
     <nav
       className={`sticky left-0 right-0 bg-gray-300 transition-[top] duration-300 z-1000 ${
-        visible ? "top-0" : "-top-12.5"
+        visible ? "top-0" : "-top-14"
       }`}
     >
-      <div className="list-none py-3.25 flex justify-between items-center font-head">
+      <div className="list-none py-3 flex justify-between items-center font-head">
         <Link to="/" className="text-brand-alt no-underline px-3 text-2xl">
           ASL Live Dictionary
         </Link>
