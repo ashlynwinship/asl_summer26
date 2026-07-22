@@ -605,7 +605,7 @@ function FileUploader() {
         <button
           type="button"
           onClick={() => setActiveTab("record")}
-          className={`relative z-10 flex-1 py-2.5 text-center text-sm font-bold tracking-wide transition-colors duration-200 ${
+          className={`relative z-10 flex-1 py-2.5 text-center text-lg font-bold tracking-wide transition-colors duration-200 ${
             activeTab === "record"
               ? "text-white"
               : "text-gray-700 hover:text-gray-900"
@@ -616,7 +616,7 @@ function FileUploader() {
         <button
           type="button"
           onClick={() => setActiveTab("upload")}
-          className={`relative z-10 flex-1 py-2.5 text-center text-sm font-bold tracking-wide transition-colors duration-200 ${
+          className={`relative z-10 flex-1 py-2.5 text-center text-lg font-bold tracking-wide transition-colors duration-200 ${
             activeTab === "upload"
               ? "text-white"
               : "text-gray-700 hover:text-gray-900"
@@ -633,7 +633,7 @@ function FileUploader() {
             <h2 className="text-2xl font-bold text-gray-800 mb-2 tracking-tight">
               Record your video
             </h2>
-            <p className="text-xs sm:text-sm text-gray-600 max-w-md mb-6 leading-relaxed">
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
               Your video will start recording after a 3-second countdown. A
               playback of your recording will be displayed below once the stop
               button is clicked.
@@ -680,7 +680,7 @@ function FileUploader() {
                   recordingStatus === "counting" ||
                   !!recordedVideo
                 }
-                className="py-3 px-4 text-sm font-bold text-white bg-[#34A853] hover:bg-[#2E9647] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="py-3 px-4 font-bold text-white bg-[#34A853] hover:bg-[#2E9647] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {recordingStatus === "counting"
                   ? "Preparing..."
@@ -695,7 +695,7 @@ function FileUploader() {
                   setPermission(false);
                 }}
                 disabled={recordingStatus !== "recording"}
-                className="py-3 px-4 text-sm font-bold text-white bg-[#EA4335] hover:bg-[#D93025] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="py-3 px-4 font-bold text-white bg-[#EA4335] hover:bg-[#D93025] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Stop Recording
               </button>
@@ -708,7 +708,7 @@ function FileUploader() {
                 onClick={() =>
                   recordedVideo && saveAs(recordedVideo, "recorded_video.webm")
                 }
-                className="px-5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Download Video
               </button>
@@ -725,7 +725,7 @@ function FileUploader() {
                   stopMediaTracks(streamRef.current);
                   setPermission(false);
                 }}
-                className="px-5 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Retake
               </button>
@@ -762,7 +762,7 @@ function FileUploader() {
                     console.error("Error submitting job:", error);
                   }
                 }}
-                className="px-8 py-2 text-xs font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-8 py-2 font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Submit
               </button>
@@ -771,7 +771,7 @@ function FileUploader() {
                 recordingStatus === "stopped" && (
                   <button
                     onClick={() => handleResultsDownload("recording")}
-                    className="font-button py-2 px-5 text-sm text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
+                    className="font-button py-2 px-5 text-white bg-brand-dark rounded-md transition-colors hover:bg-brand font-medium"
                   >
                     Download Live Landmark Results JSON File
                   </button>
@@ -785,7 +785,14 @@ function FileUploader() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6 tracking-tight">
               Upload your video
             </h2>
-            <div className="w-full aspect-video bg-gray-300/80 rounded-xl border-2 border-dashed border-gray-400 flex flex-col items-center justify-center text-center p-6 relative overflow-hidden group hover:border-[#9E2A2B] hover:bg-gray-300/50 transition-all duration-200">
+            <div
+              className={`w-full aspect-video rounded-xl transition-all duration-200 overflow-hidden relative flex flex-col items-center justify-center text-center ${
+                file
+                  ? "bg-black border-none"
+                  : "bg-gray-300/80 border-2 border-dashed border-gray-400 group hover:border-[#9E2A2B] hover:bg-gray-300/50" // Dashed dropzone when empty
+              }`}
+            >
+              {" "}
               {!file && (
                 <label
                   htmlFor="upload-input"
@@ -805,7 +812,7 @@ function FileUploader() {
                     Browse <span className="font-bold text-gray-900">or</span>{" "}
                     drag & drop file here.
                   </p>
-                  <p className="text-xs text-gray-500 mt-1.5">
+                  <p className="text-sm text-gray-500 mt-1.5">
                     Accepted formats: .mov, .mp4, .webm
                   </p>
                 </label>
@@ -815,7 +822,7 @@ function FileUploader() {
                   <video
                     ref={videoRef}
                     src={videoURL}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     controls
                     autoPlay
                     playsInline
@@ -850,7 +857,7 @@ function FileUploader() {
                     stopMediaTracks(streamRef.current);
                   }}
                   disabled={!file}
-                  className="px-8 py-2.5 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-8 py-2.5 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Reset
                 </button>
@@ -858,7 +865,7 @@ function FileUploader() {
                   type="button"
                   onClick={handleRedirect}
                   disabled={!file || uploadStatus === "uploading"}
-                  className="px-8 py-2.5 text-sm font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-8 py-2.5 font-semibold text-white bg-[#4385F5] hover:bg-[#3367D6] rounded-full transition-colors duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Submit
                 </button>
@@ -903,7 +910,7 @@ export default function Home() {
         </h1>
       </div>
       <div className="w-23/24 h-1 mt-4 border-b border-gray-500 mx-auto"></div>
-      <div className="text-center max-w-2xl mx-auto mt-6 mb-10 text-gray-600">
+      <div className="text-center mt-6 mb-10 text-gray-600">
         <p className="text-base sm:text-lg leading-relaxed">
           <strong>
             Record <span className="text-black font-bold">or</span> upload a
