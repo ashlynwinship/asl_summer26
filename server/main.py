@@ -8,7 +8,15 @@ from typing import Optional, List
 #from server.slgcn import load_ensemble, run_inference
 #delete when deploy
 
-USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
+Path("/var/www/asldictionary/asl_summer26/logs").mkdir(parents=True, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    filename="/home/claude/asl_summer26/logs/inference.log",
+)
+
+#USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
 
 if USE_MOCK_INFERENCE:
     def load_ensemble(checkpoints_dir=None):
@@ -206,7 +214,7 @@ async def dummy_process(job_id: str):
         jobs[job_id].stage = JobStage.CLS1_FEEDBACK
         # CLS1 receives keyframe_pose and keyframe_hands
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(10)
         jobs[job_id].status = JobStatus.COMPLETED
         jobs[job_id].result = JobResult(
             matches=top_matches,
