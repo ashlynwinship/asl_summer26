@@ -268,7 +268,7 @@ export default function Results() {
             <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
               <button
                 disabled={!videoURL}
-                className="font-button py-2 px-5 text-base text-white bg-brand rounded-md transition-colors hover:bg-brand-hover disabled:bg-neutral-border disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="font-body py-2 px-5 text-base text-black  bg-gray-300 rounded-2xl transition-colors hover:bg-gray-400 disabled:bg-neutral-border disabled:text-gray-400 disabled:cursor-not-allowed"
                 onClick={handleDownload}
               >
                 Download Video
@@ -278,7 +278,7 @@ export default function Results() {
 
           {/* User features */}
           <div className="w-full mt-8 pt-6 border-t border-neutral-border text-left">
-            <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
+            <p className="text-xl font-bold text-neutral-darkest mb-3 text-center">
               Features
             </p>
             <div className="flex flex-col gap-3 w-full">
@@ -347,9 +347,11 @@ export default function Results() {
                 );
               })}
             </div>
-            <button className="bg-brand hover:bg-brand-hover text-white font-semibold py-2 px-4 mt-5 rounded-lg transition-colors duration-300">
-              Recalculate
-            </button>
+            <div className="flex justify-center mt-5">
+              <button className="bg-brand hover:bg-brand-hover text-white font-semibold py-2 px-4 mt-5 rounded-2xl transition-colors duration-300">
+                Recalculate Features
+              </button>
+            </div>
           </div>
         </div>
 
@@ -380,13 +382,6 @@ export default function Results() {
               >
                 &#10095;
               </button>
-              <div className="absolute bottom-0 inset-x-0 bg-black/60 py-2 text-center">
-                <p className="text-white text-sm font-medium">
-                  {currentMatch
-                    ? `${currentMatch.word} (Confidence: ${Math.round(currentMatch.confidence * 100)}%)`
-                    : "No match"}
-                </p>
-              </div>
             </div>
 
             {/* Thumbnails */}
@@ -395,7 +390,7 @@ export default function Results() {
                 <button
                   key={match.word}
                   onClick={() => setActiveIdx(idx)}
-                  className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all cursor-pointer ${
+                  className={`flex-1 aspect-video rounded overflow-hidden border-2 transition-all cursor-pointer capitalize${
                     idx === activeIdx
                       ? "border-brand scale-105 opacity-100 ring-2 ring-brand-hover-bg"
                       : "border-transparent opacity-60 hover:opacity-100"
@@ -407,26 +402,41 @@ export default function Results() {
                 </button>
               ))}
             </div>
+          </div>
+          <br></br>
 
-            {/* "This is my sign" for current top match */}
+          <div className="flex items-center justify-between gap-4 bg-gray-200 rounded-full px-6 py-2 shadow-sm w-full max-w-md">
+            {/* Left: label and confidence */}
+            <div className="flex items-baseline gap-2 pl-2 overflow-hidden">
+              <span className="font-extrabold text-black text-lg tracking-wide uppercase truncate">
+                {currentMatch ? currentMatch.word : "SIGN LABEL"}
+              </span>
+              {currentMatch?.confidence !== undefined && (
+                <span className="text-s font-semibold text-gray-600 whitespace-nowrap">
+                  ({Math.round(currentMatch.confidence * 100)}% Confidence)
+                </span>
+              )}
+            </div>
+
+            {/* Right: this is my sign */}
             <button
               onClick={() =>
                 openSignModal(currentMatch?.word || `Match ${activeIdx + 1}`)
               }
               disabled={hasSubmittedFeedback}
-              className={`font-semibold py-2 px-6 rounded-lg transition-colors shadow ${
+              className={`font-semibold py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap ${
                 hasSubmittedFeedback
-                  ? "mt-4 bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
-                  : "mt-4 bg-green-600 hover:bg-green-700 text-white"
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700 text-white"
               }`}
             >
-              {hasSubmittedFeedback ? "Feedback Submitted" : "This is my sign"}
+              {hasSubmittedFeedback ? "Feedback Submitted" : "This is my sign!"}
             </button>
           </div>
 
           {/* Match details / Features */}
           <div className="w-full mt-6 pt-6 border-t border-neutral-border text-left">
-            <p className="text-xl font-bold text-neutral-darkest mb-3 relative pb-1 inline-block after:content-[''] after:absolute after:w-1/2 after:h-0.5 after:bg-brand-darker after:bottom-0 after:left-0">
+            <p className="text-xl font-bold text-neutral-darkest mb-3 text-center">
               Features
             </p>
             <div className="flex flex-col gap-3 w-full">
@@ -514,30 +524,43 @@ export default function Results() {
                     />
                   </div>
                 )}
-                <div className="w-full mt-4 p-4 bg-white rounded-lg border border-neutral-border text-xs sm:text-sm text-neutral-dark space-y-1">
-                  <p>
-                    Predicted Sign: <strong>{match.word}</strong>
-                  </p>
-                  <p>
-                    Confidence:{" "}
-                    <strong>{Math.round(match.confidence * 100)}%</strong>
-                  </p>
-                </div>
               </div>
+              <br></br>
               {/* "This is my sign" for potential matches */}
-              <button
-                onClick={() => openSignModal(match.word)}
-                disabled={hasSubmittedFeedback}
-                className={`mt-4 text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow ${
-                  hasSubmittedFeedback
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
-              >
-                {hasSubmittedFeedback
-                  ? "Feedback Submitted"
-                  : "This is my sign"}
-              </button>
+              {isVisible[match.slotKey] && (
+                <div className="flex items-center justify-between gap-4 bg-gray-200 rounded-full px-6 py-2 shadow-sm w-full max-w-md">
+                  {/* Left: label and confidence */}
+
+                  <div className="flex items-baseline gap-2 pl-2 overflow-hidden">
+                    <span className="font-extrabold text-black text-medium tracking-wide uppercase truncate">
+                      {match.word}
+                    </span>
+
+                    <span className="text-s font-semibold text-gray-600 whitespace-nowrap">
+                      ({Math.round(match.confidence * 100)}% Confidence)
+                    </span>
+                  </div>
+
+                  {/* Right: this is my sign */}
+                  <button
+                    onClick={() =>
+                      openSignModal(
+                        currentMatch?.word || `Match ${activeIdx + 1}`,
+                      )
+                    }
+                    disabled={hasSubmittedFeedback}
+                    className={`font-semibold text-sm py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap ${
+                      hasSubmittedFeedback
+                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                    }`}
+                  >
+                    {hasSubmittedFeedback
+                      ? "Feedback Submitted"
+                      : "This is my sign!"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
