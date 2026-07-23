@@ -4,19 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 from contextlib import asynccontextmanager
 from typing import Optional, List
+from db import create_db_pool
 #uncomment when deploy
 #from server.slgcn import load_ensemble, run_inference
 #delete when deploy
 
-Path("/var/www/asldictionary/asl_summer26/logs").mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    filename="/home/claude/asl_summer26/logs/inference.log",
-)
-
-#USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
+USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
 
 if USE_MOCK_INFERENCE:
     def load_ensemble(checkpoints_dir=None):
@@ -207,14 +200,14 @@ async def dummy_process(job_id: str):
         print(f"[{job_id}] run_inference returned: {inference['top_k']}", flush=True)
         top_matches = [
             Match(word=gloss, confidence=score)
-            for gloss, score in inference["top_k"][:5]
+            for gloss, score in inference["top_k"][:6]
         ]
 
         await asyncio.sleep(3)
         jobs[job_id].stage = JobStage.CLS1_FEEDBACK
         # CLS1 receives keyframe_pose and keyframe_hands
 
-        await asyncio.sleep(10)
+        await asyncio.sleep(3)
         jobs[job_id].status = JobStatus.COMPLETED
         jobs[job_id].result = JobResult(
             matches=top_matches,
@@ -268,41 +261,50 @@ async def get_job(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
-# @app.post("/api/jobs/{job_id}/feedback", status_code=status.HTTP_201_CREATED)
-# async def save_user_feedback(job_id: str, feedback: UserFeedback):
-#     # if job_id not in jobs:
-#     #     raise HTTPException(status_code=404, detail="Job not found")
-#     # feedback_store[job_id] = feedback
-
-#     # log feedback for now
-#     print(f"\n[FEEDBACK REECEIVED] Job ID: {job_id}")
-#     print(f"Matched Correctly: {feedback.is_correct_match_listed}")
-#     if feedback.is_correct_match_listed:
-#         print(f"User Confirmed Match: {feedback.chosen_label}")
-#     else: 
-#         print(f"User Intended Word: {feedback.open_response_text}")
-#         print(f"User Allowed Video Debugging: {feedback.allow_video_debugging}")
-#     print("-" * 40)
-    
-#     return {"message": "Feedback submitted successfully."}
 class UserFeedbackPayload(BaseModel):
+    matchRank: Optional[int] = None
     matchedCorrectly: bool
     chosenLabel: Optional[str] = None
     intendedWord: Optional[str] = None
     allowVideoUse: Optional[bool] = False
 
-# --- Add this route handler to main.py ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.ensemble = load_ensemble(checkpoints_dir=WEIGHTS_DIR)
+    app.state.db_pool = await create_db_pool()
+    yield
+    await app.state.db_pool.close() 
 
 @app.post("/api/jobs/{job_id}/feedback")
 async def submit_feedback(job_id: str, payload: UserFeedbackPayload):
-    # Verify the job exists
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
-    
-    # Store or log the feedback (e.g., save to a database, file, or log)
-    print(f"Received feedback for job {job_id}: {payload.model_dump_json()}")
+    try:
+        async with app.state.db_pool.acquire() as conn:
+            async with conn.transaction():
+                # Table h: matchedCorrectly, chosenLabel
+                await conn.execute(
+                    """
+                    INSERT INTO h (job_id, matched_correctly, chosen_label)
+                    VALUES ($1, $2, $3)
+                    """,
+                    job_id,
+                    payload.matchedCorrectly,
+                    payload.chosenLabel,
+                )
 
-    # Optional: Update the stored job object
-    # jobs[job_id].user_feedback = payload.dict()
+                # Table k: intendedWord, allowVideoUse
+                await conn.execute(
+                    """
+                    INSERT INTO k (job_id, intended_word, allow_video_use)
+                    VALUES ($1, $2, $3)
+                    """,
+                    job_id,
+                    payload.intendedWord,
+                    payload.allowVideoUse,
+                )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}") 
+    print(f"Received feedback for job {job_id}: {payload.model_dump_json()}")
 
     return {"status": "success", "message": "Feedback recorded"}

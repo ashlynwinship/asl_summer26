@@ -31,3 +31,4 @@ venv/
 .env
 .env
 .env
+server/__pycache__/keyframe_fps.cpython-310.pyc
