@@ -899,7 +899,34 @@ function FileUploader() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleRedirect}
+                  onClick={async () => {
+                    stopMediaTracks(streamRef.current);
+                    setPermission(false);
+                    const activeVideoUrl = recordedVideo ?? videoURL ?? null;
+                    const poses = file ? uploadPoseVectors : poseVectors;
+                    const hands = file ? uploadHandsVectors : handsVectors;
+                    try {
+                      const res = await fetch(`${apiBaseUrl}/api/jobs`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          frame_count: poses.length,
+                          landmarks_per_frame: 33,
+                          extracted_at: new Date().toISOString(),
+                          pose: poses,
+                          hands: hands,
+                        }),
+                      });
+                      const data = await res.json();
+                      navigate(`/results/${data.job_id}`, {
+                        state: { videoURL: activeVideoUrl },
+                      });
+                    } catch (error) {
+                      console.error("Error submitting job:", error);
+                    }
+                  }}
                   disabled={
                     (!file && !rawRecordedBlob) ||
                     uploadStatus === "uploading" ||
