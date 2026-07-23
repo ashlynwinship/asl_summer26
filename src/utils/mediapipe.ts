@@ -56,13 +56,18 @@ export const extractLandmarkVectors = ({
   }
 
   const frameHands: DetectedHand[] = [];
-  if (handResult?.worldLandmarks?.length) {
-    handResult.worldLandmarks.forEach((handLandmarks: any[], index: number) => {
+  if (handResult?.landmarks?.length) {
+    handResult.landmarks.forEach((handLandmarks: any[], index: number) => {
       const handednessInfo = handResult.handedness?.[index]?.[0];
       if (!handednessInfo) return;
 
+      // mirror correction since the front-facing camera feed isn't flipped
+      // before MediaPipe sees it, but handedness assumes a selfie-view image
+      const correctedLabel =
+        handednessInfo.categoryName === "Left" ? "Right" : "Left";
+
       frameHands.push({
-        label: handednessInfo.categoryName,
+        label: correctedLabel,
         score: handednessInfo.score,
         landmarks: handLandmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]),
       });

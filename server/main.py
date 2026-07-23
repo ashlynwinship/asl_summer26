@@ -1,35 +1,14 @@
 import os
+import logging
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 from contextlib import asynccontextmanager
 from typing import Optional, List
-from db import create_db_pool
-#uncomment when deploy
-#from server.slgcn import load_ensemble, run_inference
-#delete when deploy
+from server.slgcn import load_ensemble, run_inference
 
-USE_MOCK_INFERENCE = os.getenv("USE_MOCK_INFERENCE", "false").lower() == "true"
 
-if USE_MOCK_INFERENCE:
-    def load_ensemble(checkpoints_dir=None):
-        print("[MOCK] Skipping real model load, using fake ensemble")
-        return None
-
-    def run_inference(classifier_input, ensemble):
-        print("[MOCK] Returning fake inference results")
-        return {
-            "top_k": [
-                ("HELLO", 0.95),
-                ("THANKS", 0.87),
-                ("PLEASE", 0.72),
-                ("SORRY", 0.65),
-                ("YES", 0.51),
-                ("NO", 0.45)
-            ]
-        }
-else:
-    from server.slgcn import load_ensemble, run_inference
 from enum import Enum
 import uuid
 import asyncio
@@ -178,7 +157,7 @@ async def dummy_process(job_id: str):
         signing_start, signing_end = find_signing_region(velocities)
         keyframe_indices = select_keyframes(payload.pose, payload.hands)
         classifier_input = build_classifier_input(
-            payload.pose, payload.hands, keyframe_indices
+            payload.pose, payload.hands, list(range(len(payload.pose)))
         )
 
         jobs[job_id].debug = {
