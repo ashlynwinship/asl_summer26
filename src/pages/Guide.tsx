@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Guide() {
   const [activeTab, setActiveTab] = useState("what");
@@ -79,9 +80,32 @@ export default function Guide() {
 
   return (
     <main className="p-4">
-      <h1 className="text-4xl font-extrabold text-gray-900 text-center mt-3 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
-        User Guide
-      </h1>
+      <div className="relative w-full flex items-center justify-center mb-10 px-4">
+        <div className="absolute left-0">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 rounded-full transition-all duration-200 shadow-sm hover:shadow active:scale-95 no-underline"
+          >
+            <svg
+              className="w-4 h-4 text-gray-600 transition-transform duration-200 group-hover:-translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            <span>Return Home</span>
+          </Link>
+        </div>
+        <h1 className="text-4xl font-extrabold text-gray-900 text-center relative inline-block after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
+          User Guide
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
         <div className="bg-white p-5 rounded-xl border border-neutral-border shadow-sm">
