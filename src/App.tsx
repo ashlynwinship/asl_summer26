@@ -68,8 +68,8 @@ function Navigation() {
             className={({ isActive }) =>
               `py-3.5 px-4 no-underline text-xl transition-colors ${
                 isActive
-                  ? "bg-brand-alt text-white" // Active styles
-                  : "text-black hover:bg-brand-alt hover:text-white" // Inactive styles
+                  ? "bg-brand-alt text-white"
+                  : "text-black hover:bg-brand-alt hover:text-white"
               }`
             }
           >
