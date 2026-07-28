@@ -3,6 +3,7 @@ import { saveAs } from "file-saver";
 import { SyncLoader } from "react-spinners";
 import { useLocation, useParams } from "react-router-dom";
 import { createRoot } from "react-dom/client";
+import { Link } from "react-router-dom";
 
 interface MatchItem {
   word: string;
@@ -245,11 +246,33 @@ export default function Results() {
   }
 
   return (
-    <main>
-      <h1 className="text-4xl font-extrabold text-neutral-darkest text-center mt-5 mb-10 relative inline-block left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
-        Results
-      </h1>
-
+    <main className="p-4">
+      <div className="relative w-full flex items-center justify-center mb-10 px-4">
+        <div className="absolute left-0">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 rounded-full transition-all duration-200 shadow-sm hover:shadow active:scale-95 no-underline"
+          >
+            <svg
+              className="w-4 h-4 text-gray-600 transition-transform duration-200 group-hover:-translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            <span>Return Home</span>
+          </Link>
+        </div>
+        <h1 className="text-4xl font-extrabold text-gray-900 text-center relative inline-block after:content-[''] after:absolute after:w-full after:h-1 after:bg-brand-darker after:-bottom-2 after:left-0">
+          Results
+        </h1>
+      </div>
       {/* Side-by-side layout */}
       <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch w-full mb-12">
         {/* User uploaded video */}
@@ -405,26 +428,26 @@ export default function Results() {
           </div>
           <br></br>
 
-          <div className="flex items-center justify-between gap-4 bg-gray-200 rounded-full px-6 py-2 shadow-sm w-full max-w-md">
-            {/* Left: label and confidence */}
-            <div className="flex items-baseline gap-2 pl-2 overflow-hidden">
-              <span className="font-extrabold text-black text-lg tracking-wide uppercase truncate">
-                {currentMatch ? currentMatch.word : "SIGN LABEL"}
-              </span>
-              {currentMatch?.confidence !== undefined && (
-                <span className="text-s font-semibold text-gray-600 whitespace-nowrap">
-                  ({Math.round(currentMatch.confidence * 100)}% Confidence)
-                </span>
-              )}
-            </div>
+          <div className="flex flex-col items-center justify-center gap-3 bg-gray-200 rounded-2xl px-6 py-4 shadow-sm w-full max-w-md text-center">
+            {/* Line 1: Word */}
+            <span className="font-extrabold text-black text-xl tracking-wide uppercase truncate w-full">
+              {currentMatch ? currentMatch.word : "SIGN LABEL"}
+            </span>
 
-            {/* Right: this is my sign */}
+            {/* Line 2: Confidence */}
+            {currentMatch?.confidence !== undefined && (
+              <span className="text-sm font-semibold text-gray-600">
+                ({Math.round(currentMatch.confidence * 100)}% Confidence)
+              </span>
+            )}
+
+            {/* Line 3: Button */}
             <button
               onClick={() =>
                 openSignModal(currentMatch?.word || `Match ${activeIdx + 1}`)
               }
               disabled={hasSubmittedFeedback}
-              className={`font-semibold py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap ${
+              className={`font-semibold py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap w-full mt-1 ${
                 hasSubmittedFeedback
                   ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700 text-white"
@@ -482,7 +505,6 @@ export default function Results() {
           </div>
         </div>
       </div>
-
       {/* Other Potential Matches Grid (4th, 5th, 6th signs) */}
       <div className="w-full border-t border-neutral-border pt-8 mt-4">
         <h2 className="text-3xl font-bold text-neutral-darkest text-center mb-4">
@@ -528,28 +550,26 @@ export default function Results() {
               <br></br>
               {/* "This is my sign" for potential matches */}
               {isVisible[match.slotKey] && (
-                <div className="flex items-center justify-between gap-4 bg-gray-200 rounded-full px-6 py-2 shadow-sm w-full max-w-md">
-                  {/* Left: label and confidence */}
+                <div className="flex flex-col items-center justify-center gap-3 bg-gray-200 rounded-2xl px-6 py-4 shadow-sm w-full max-w-md text-center">
+                  {/* Line 1: Word */}
+                  <span className="font-extrabold text-black text-xl tracking-wide uppercase truncate w-full">
+                    {match ? match.word : "SIGN LABEL"}
+                  </span>
 
-                  <div className="flex items-baseline gap-2 pl-2 overflow-hidden">
-                    <span className="font-extrabold text-black text-medium tracking-wide uppercase truncate">
-                      {match.word}
-                    </span>
-
-                    <span className="text-s font-semibold text-gray-600 whitespace-nowrap">
+                  {/* Line 2: Confidence */}
+                  {match?.confidence !== undefined && (
+                    <span className="text-sm font-semibold text-gray-600">
                       ({Math.round(match.confidence * 100)}% Confidence)
                     </span>
-                  </div>
+                  )}
 
-                  {/* Right: this is my sign */}
+                  {/* Line 3: Button */}
                   <button
                     onClick={() =>
-                      openSignModal(
-                        currentMatch?.word || `Match ${activeIdx + 1}`,
-                      )
+                      openSignModal(match?.word || `Match ${activeIdx + 1}`)
                     }
                     disabled={hasSubmittedFeedback}
-                    className={`font-semibold text-sm py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap ${
+                    className={`font-semibold py-2 px-6 rounded-full transition-colors shadow-sm whitespace-nowrap w-full mt-1 ${
                       hasSubmittedFeedback
                         ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                         : "bg-green-600 hover:bg-green-700 text-white"
@@ -565,7 +585,6 @@ export default function Results() {
           ))}
         </div>
       </div>
-
       {/* Sign not found */}
       <div className="mt-2 bottom-0 left-0 right-0 py-4 px-6 flex justify-center">
         <button
@@ -580,7 +599,6 @@ export default function Results() {
           {hasSubmittedFeedback ? "Feedback Completed" : "My sign is not here"}
         </button>
       </div>
-
       {/* Modal: "This is my sign" */}
       {isSignModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -637,7 +655,6 @@ export default function Results() {
           </div>
         </div>
       )}
-
       {/* Modal: "My sign is not here" */}
       {isMissingModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

@@ -68,6 +68,12 @@ function FileUploader() {
   //   });
 
   // Video recorder
+
+  // semantic states
+  const [hasWord, setHasWord] = useState(false);
+  const [wordCategory, setWordCategory] = useState("");
+  const [confirmCategory, setConfirmCategory] = useState(false);
+
   const [permission, setPermission] = useState<boolean>(false);
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>(null);
   const [countdown, setCountdown] = useState(3);
@@ -737,6 +743,48 @@ function FileUploader() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-300/70 w-full">
+              {hasWord == false && confirmCategory == false && (
+                <button
+                  type="button"
+                  className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setHasWord(true)}
+                  disabled={!recordedVideo}
+                >
+                  Word Category
+                </button>
+              )}
+              {hasWord == true && confirmCategory == false && (
+                <div>
+                  <input
+                    type="text"
+                    id="wordCategoryInput"
+                    value={wordCategory}
+                    onChange={(e) => setWordCategory(e.target.value)}
+                    placeholder="Enter word"
+                    className="w-full px-3 py-2 text-neutral-600 border border-neutral-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <br></br>
+                  <br></br>
+                  <button
+                    type="button"
+                    className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      setHasWord(true);
+                      setConfirmCategory(true);
+                    }}
+                  >
+                    Confirm Category
+                  </button>
+                </div>
+              )}
+              {hasWord == true && confirmCategory == true && (
+                <div className="text-black">
+                  <p>Word Category:</p> {wordCategory}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-300/70 w-full">
               <button
                 type="button"
                 disabled={!recordedVideo}
@@ -759,6 +807,9 @@ function FileUploader() {
                   setCountdown(3);
                   stopMediaTracks(streamRef.current);
                   setPermission(false);
+                  setConfirmCategory(false);
+                  setHasWord(false);
+                  setWordCategory("");
                 }}
                 className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -801,7 +852,7 @@ function FileUploader() {
               >
                 Submit
               </button>
-              {poseVectors.length > 0 &&
+              {/* {poseVectors.length > 0 &&
                 handsVectors.length > 0 &&
                 recordingStatus === "stopped" && (
                   <button
@@ -810,7 +861,7 @@ function FileUploader() {
                   >
                     Download Live Landmark Results JSON File
                   </button>
-                )}
+                )} */}
             </div>
           </div>
         )}
@@ -878,6 +929,47 @@ function FileUploader() {
                 className="hidden"
               />
             </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-300/70 w-full">
+              {hasWord == false && confirmCategory == false && (
+                <button
+                  type="button"
+                  className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setHasWord(true)}
+                  disabled={!file}
+                >
+                  Word Category
+                </button>
+              )}
+              {hasWord == true && confirmCategory == false && (
+                <div>
+                  <input
+                    type="text"
+                    id="wordCategoryInput"
+                    value={wordCategory}
+                    onChange={(e) => setWordCategory(e.target.value)}
+                    placeholder="Enter word"
+                    className="w-full px-3 py-2 text-neutral-600 border border-neutral-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <br></br>
+                  <br></br>
+                  <button
+                    type="button"
+                    className="px-5 py-2 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      setHasWord(true);
+                      setConfirmCategory(true);
+                    }}
+                  >
+                    Confirm Category
+                  </button>
+                </div>
+              )}
+              {hasWord == true && confirmCategory == true && (
+                <div className="text-black" text-center>
+                  <p>Word Category:</p> {wordCategory}
+                </div>
+              )}
+            </div>
             <div className="w-full mt-8">
               <div className="flex flex-wrap items-center justify-center gap-4 w-full">
                 <button
@@ -891,6 +983,9 @@ function FileUploader() {
                     setCountdownVisible(false);
                     setCountdown(3);
                     stopMediaTracks(streamRef.current);
+                    setWordCategory("");
+                    setHasWord(false);
+                    setConfirmCategory(false);
                   }}
                   disabled={!file}
                   className="px-8 py-2.5 font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-full border border-gray-300 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -936,7 +1031,7 @@ function FileUploader() {
                 >
                   Submit
                 </button>
-                {uploadPoseVectors.length > 0 &&
+                {/* {uploadPoseVectors.length > 0 &&
                   uploadHandsVectors.length > 0 &&
                   file &&
                   uploadDataReady && (
@@ -946,7 +1041,7 @@ function FileUploader() {
                     >
                       Download Landmark Data JSON File
                     </button>
-                  )}
+                  )} */}
               </div>
               {file && !uploadDataReady && uploadStatus !== "uploading" && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 font-medium animate-pulse mt-5">
