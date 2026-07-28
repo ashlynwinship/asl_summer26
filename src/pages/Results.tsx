@@ -110,6 +110,26 @@ export default function Results() {
     };
   });
 
+  // Map of gloss word -> video filename, loaded from gloss_to_video.json
+  const [glossToVideo, setGlossToVideo] = useState<Record<string, string>>(
+    {},
+  );
+
+  useEffect(() => {
+    fetch("/gloss_to_video.json")
+      .then((res) => res.json())
+      .then((data) => setGlossToVideo(data))
+      .catch((err) =>
+        console.error("Error loading gloss_to_video.json:", err),
+      );
+  }, []);
+
+  const getVideoSrc = (word?: string): string | undefined => {
+    if (!word) return undefined;
+    const filename = glossToVideo[word.toLowerCase()];
+    return filename ? `/Videos_gloss/${filename}` : undefined;
+  };
+
   const featuresList = jobData?.result?.feedback ?? [];
 
   const [enabledFeatures, setEnabledFeatures] = useState<
@@ -387,12 +407,18 @@ export default function Results() {
 
             {/* Slideshow */}
             <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border group mb-4">
-              <video
-                key={currentMatch?.word ?? activeIdx}
-                src={`/${currentMatch?.word}_Cut.mp4`}
-                className="w-full h-full object-cover"
-                controls
-              />
+              {getVideoSrc(currentMatch?.word) ? (
+                <video
+                  key={currentMatch?.word ?? activeIdx}
+                  src={getVideoSrc(currentMatch?.word)}
+                  className="w-full h-full object-cover"
+                  controls
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-sm">
+                  Video not available
+                </div>
+              )}
               <button
                 onClick={prevSlide}
                 className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/70 w-9 h-9 flex items-center justify-center rounded-full text-xl font-bold transition-all cursor-pointer select-none"
@@ -538,12 +564,18 @@ export default function Results() {
                 )}
                 {isVisible[match.slotKey] && (
                   <div className="w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden border border-neutral-border">
-                    <video
-                      key={match.word}
-                      src={`/${match.word}_Cut.mp4`}
-                      className="w-full h-full object-cover"
-                      controls
-                    />
+                    {getVideoSrc(match.word) ? (
+                      <video
+                        key={match.word}
+                        src={getVideoSrc(match.word)}
+                        className="w-full h-full object-cover"
+                        controls
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white text-sm">
+                        Video not available
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
