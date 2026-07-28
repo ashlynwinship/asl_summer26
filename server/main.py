@@ -177,8 +177,10 @@ async def dummy_process(job_id: str):
             run_inference, classifier_input, app.state.ensemble
         )
         print(f"[{job_id}] run_inference returned: {inference['top_k']}", flush=True)
+
+        sum_score = inference["sum_score"]
         top_matches = [
-            Match(word=gloss, confidence=score)
+            Match(word=gloss, confidence=score/sum_score)
             for gloss, score in inference["top_k"][:6]
         ]
 
