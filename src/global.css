@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css?family=Google+Sans|Lato|DM+Sans|Merriweather|Playfair+Display&display=swap");
+@import "tailwindcss";
+@plugin "flyonui";
+
+@theme {
+  --color-brand-light: #f9fbfd;
+  --color-brand: #4a90e2;
+  --color-brand-hover: #78afef;
+  --color-brand-dark: #2b72c4;
+  --color-brand-darker: #2e5c8a;
+  --color-brand-hover-bg: #f0f7ff;
+  --color-brand-alt-bg: #e8f0f7;
+  --color-brand-alt: #a01d1d;
+
+  --color-neutral-dark: #333333;
+  --color-neutral-darkest: #111111;
+  --color-neutral-bg: #f0f2f5;
+  --color-neutral-panel: #f1f1f1df;
+  --color-neutral-border: #d7d7d7;
+
+  --font-head: "Playfair Display", serif;
+  --font-body: "Playfair Display", serif;
+  --font-button: "Google Sans", sans-serif;
+
+  --shadow-custom:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+}
+
+@layer base {
+  :root {
+    letter-spacing: 0.18px;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-body m-0 flex flex-col min-h-screen bg-neutral-bg pb-2.5 w-full;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-heading-style {
+    @apply font-head;
+  }
+}
