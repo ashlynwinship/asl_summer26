@@ -111,17 +111,13 @@ export default function Results() {
   });
 
   // Map of gloss word -> video filename, loaded from gloss_to_video.json
-  const [glossToVideo, setGlossToVideo] = useState<Record<string, string>>(
-    {},
-  );
+  const [glossToVideo, setGlossToVideo] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/gloss_to_video.json")
       .then((res) => res.json())
       .then((data) => setGlossToVideo(data))
-      .catch((err) =>
-        console.error("Error loading gloss_to_video.json:", err),
-      );
+      .catch((err) => console.error("Error loading gloss_to_video.json:", err));
   }, []);
 
   const getVideoSrc = (word?: string): string | undefined => {
