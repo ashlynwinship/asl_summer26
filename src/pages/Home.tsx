@@ -454,8 +454,10 @@ function FileUploader() {
           } = extractLandmarkVectors({ poseResult, handResult });
           if (currentPoseVectors.length > 0) {
             uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
+            uploadAccumulatedHandsRef.current.push(
+              currentHandsVectors[0] ?? [],
+            );
           }
-          uploadAccumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
         }
 
         uploadTrackingFrameRef.current =
@@ -566,10 +568,11 @@ function FileUploader() {
         } = extractLandmarkVectors({ poseResult, handResult });
         if (currentPoseVectors.length > 0) {
           accumulatedDataRef.current.push(currentPoseVectors[0]);
+          accumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
+
           setPoseVectors([...accumulatedDataRef.current]);
+          setHandsVectors([...accumulatedHandsRef.current]);
         }
-        accumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
-        setHandsVectors([...accumulatedHandsRef.current]);
       }
       requestAnimationFrame(processFrame);
     };
