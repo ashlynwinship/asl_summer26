@@ -62,6 +62,8 @@ class FramesPayload(BaseModel):
     def check_counts(self):
         if len(self.pose) != self.frame_count:
             raise ValueError("frame_count does not match length of pose data")
+        if self.hands is not None and len(self.hands) != self.frame_count:
+            raise ValueError("frame_count does not match length of hands data")
         return self
 
     class Config:
@@ -157,7 +159,7 @@ async def dummy_process(job_id: str):
         signing_start, signing_end = find_signing_region(velocities)
         keyframe_indices = select_keyframes(payload.pose, payload.hands)
         classifier_input = build_classifier_input(
-            payload.pose, payload.hands, list(range(len(payload.pose)))
+            payload.pose, payload.hands, keyframe_indices
         )
 
         jobs[job_id].debug = {
