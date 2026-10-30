@@ -4,6 +4,8 @@ import {
   HandLandmarker,
 } from "@mediapipe/tasks-vision";
 
+const NUM_POSE_LANDMARKS = 33;
+
 export interface DetectedHand {
   label: string;
   score: number;
@@ -49,10 +51,16 @@ export const extractLandmarkVectors = ({
   const poseVectors: number[][] = [];
   const handsVectors: DetectedHand[][] = [];
 
-  if (poseResult?.worldLandmarks?.length) {
+  // Must match the training pipeline (keyframe_selection/landmarks.py):
+  // normalized image-space pose landmarks (same [0,1] frame as the hands),
+  // not worldLandmarks (meters, hip-centred). Frames with no pose are
+  // zero-filled rather than dropped, as in training.
+  if (poseResult?.landmarks?.length) {
     poseVectors.push(
-      poseResult.worldLandmarks[0].flatMap((lm: any) => [lm.x, lm.y, lm.z]),
+      poseResult.landmarks[0].flatMap((lm: any) => [lm.x, lm.y, lm.z]),
     );
+  } else {
+    poseVectors.push(new Array(NUM_POSE_LANDMARKS * 3).fill(0));
   }
 
   const frameHands: DetectedHand[] = [];
@@ -61,13 +69,11 @@ export const extractLandmarkVectors = ({
       const handednessInfo = handResult.handedness?.[index]?.[0];
       if (!handednessInfo) return;
 
-      // mirror correction since the front-facing camera feed isn't flipped
-      // before MediaPipe sees it, but handedness assumes a selfie-view image
-      const correctedLabel =
-        handednessInfo.categoryName === "Left" ? "Right" : "Left";
-
+      // MediaPipe's handedness label is passed through unchanged: the model
+      // was trained on raw labels from unflipped video. If the input is ever
+      // mirrored, flip the image before MediaPipe instead of the label.
       frameHands.push({
-        label: correctedLabel,
+        label: handednessInfo.categoryName,
         score: handednessInfo.score,
         landmarks: handLandmarks.flatMap((lm: any) => [lm.x, lm.y, lm.z]),
       });

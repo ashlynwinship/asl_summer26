@@ -24,6 +24,23 @@ import {
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
 
+// Schedules `callback` for the next new video frame, so landmarks are
+// extracted once per frame at the video's own frame rate (matching the
+// training pipeline, which used every frame). Falls back to
+// requestAnimationFrame where requestVideoFrameCallback is unavailable.
+// Returns a function that cancels the pending callback.
+const onNextVideoFrame = (
+  video: HTMLVideoElement,
+  callback: () => void,
+): (() => void) => {
+  if (typeof video.requestVideoFrameCallback === "function") {
+    const id = video.requestVideoFrameCallback(() => callback());
+    return () => video.cancelVideoFrameCallback(id);
+  }
+  const id = window.requestAnimationFrame(callback);
+  return () => window.cancelAnimationFrame(id);
+};
+
 function FileUploader() {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -90,11 +107,9 @@ function FileUploader() {
   const countdownTimerRef = useRef<number | null>(null);
   const countdownActiveRef = useRef(false);
   const countdownRunIdRef = useRef(0);
-  const lastFrameProcessedAtRef = useRef(0);
-  const uploadTrackingFrameRef = useRef<number | null>(null);
+  const uploadTrackingFrameRef = useRef<(() => void) | null>(null); // cancels the pending frame callback
   const uploadTrackingActiveRef = useRef(false);
-  const uploadLastProcessedTimeRef = useRef(0);
-  const frameStepMs = 100;
+  const uploadLastProcessedTimeRef = useRef(-1);
 
   const clearCountdownTimer = () => {
     if (countdownTimerRef.current !== null) {
@@ -193,7 +208,7 @@ function FileUploader() {
   const stopUploadTrackingLoop = () => {
     uploadTrackingActiveRef.current = false;
     if (uploadTrackingFrameRef.current !== null) {
-      window.cancelAnimationFrame(uploadTrackingFrameRef.current);
+      uploadTrackingFrameRef.current();
       uploadTrackingFrameRef.current = null;
     }
     clearUploadOverlay();
@@ -385,7 +400,7 @@ function FileUploader() {
     const startUploadTracking = () => {
       stopUploadTrackingLoop();
       uploadTrackingActiveRef.current = true;
-      uploadLastProcessedTimeRef.current = 0;
+      uploadLastProcessedTimeRef.current = -1;
       uploadAccumulatedDataRef.current = [];
       uploadAccumulatedHandsRef.current = [];
       setUploadPoseVectors([]);
@@ -414,10 +429,12 @@ function FileUploader() {
           return;
         }
 
+        // Every video frame is processed (no throttling): the keyframe
+        // velocity thresholds were tuned on full-frame-rate landmarks.
+        // Skip only if this exact frame was already processed.
         const playbackTimeMs = video.currentTime * 1000;
-        if (playbackTimeMs - uploadLastProcessedTimeRef.current < frameStepMs) {
-          uploadTrackingFrameRef.current =
-            window.requestAnimationFrame(processFrame);
+        if (playbackTimeMs === uploadLastProcessedTimeRef.current) {
+          uploadTrackingFrameRef.current = onNextVideoFrame(video, processFrame);
           return;
         }
         uploadLastProcessedTimeRef.current = playbackTimeMs;
@@ -452,16 +469,13 @@ function FileUploader() {
             poseVectors: currentPoseVectors,
             handsVectors: currentHandsVectors,
           } = extractLandmarkVectors({ poseResult, handResult });
-          if (currentPoseVectors.length > 0) {
-            uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
-            uploadAccumulatedHandsRef.current.push(
-              currentHandsVectors[0] ?? [],
-            );
-          }
+          // extractLandmarkVectors zero-fills frames with no pose, so every
+          // frame is kept (as in training).
+          uploadAccumulatedDataRef.current.push(currentPoseVectors[0]);
+          uploadAccumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
         }
 
-        uploadTrackingFrameRef.current =
-          window.requestAnimationFrame(processFrame);
+        uploadTrackingFrameRef.current = onNextVideoFrame(video, processFrame);
       };
 
       video.src = videoURL;
@@ -475,8 +489,7 @@ function FileUploader() {
       });
 
       const handleLoadedData = () => {
-        uploadTrackingFrameRef.current =
-          window.requestAnimationFrame(processFrame);
+        uploadTrackingFrameRef.current = onNextVideoFrame(video, processFrame);
       };
 
       const handleVideoEnded = () => {
@@ -515,7 +528,6 @@ function FileUploader() {
     isStreamingRef.current = true;
     accumulatedDataRef.current = [];
     accumulatedHandsRef.current = [];
-    lastFrameProcessedAtRef.current = 0;
     setPoseVectors([]);
     setHandsVectors([]);
 
@@ -523,15 +535,12 @@ function FileUploader() {
     // canvas landmark drawing
     const canvas = overlayCanvasRef.current;
 
+    // Runs once per new camera frame (no throttling): the keyframe velocity
+    // thresholds were tuned on full-frame-rate landmarks.
     const processFrame = () => {
       if (!isStreamingRef.current) return;
 
       const now = performance.now();
-      if (now - lastFrameProcessedAtRef.current < frameStepMs) {
-        requestAnimationFrame(processFrame);
-        return;
-      }
-      lastFrameProcessedAtRef.current = now;
 
       if (video.readyState >= 2) {
         const timestamp = now;
@@ -566,17 +575,17 @@ function FileUploader() {
           poseVectors: currentPoseVectors,
           handsVectors: currentHandsVectors,
         } = extractLandmarkVectors({ poseResult, handResult });
-        if (currentPoseVectors.length > 0) {
-          accumulatedDataRef.current.push(currentPoseVectors[0]);
-          accumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
+        // extractLandmarkVectors zero-fills frames with no pose, so every
+        // frame is kept (as in training).
+        accumulatedDataRef.current.push(currentPoseVectors[0]);
+        accumulatedHandsRef.current.push(currentHandsVectors[0] ?? []);
 
-          setPoseVectors([...accumulatedDataRef.current]);
-          setHandsVectors([...accumulatedHandsRef.current]);
-        }
+        setPoseVectors([...accumulatedDataRef.current]);
+        setHandsVectors([...accumulatedHandsRef.current]);
       }
-      requestAnimationFrame(processFrame);
+      onNextVideoFrame(video, processFrame);
     };
-    requestAnimationFrame(processFrame);
+    onNextVideoFrame(video, processFrame);
   };
 
   const handleResultsDownload = (source: "upload" | "recording") => {
