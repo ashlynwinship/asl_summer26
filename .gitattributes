@@ -1,0 +1,2 @@
+server/semanticfilter/bert_representations.txt filter=lfs diff=lfs merge=lfs -text
+server/semanticfilter/segmented_bert_representations.txt filter=lfs diff=lfs merge=lfs -text

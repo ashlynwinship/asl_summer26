@@ -35,45 +35,90 @@ interface JobResponse {
   result?: JobResult;
 }
 
+// new content start
+interface SemanticMatch {
+  word: string;
+  similarity: number;
+}
+
+type SemanticStatus = "idle" | "loading" | "ready" | "error";
+// new content end
+
+// new content start
+const DEMO_JOB_DATA: JobResponse = {
+  job_id: "demo",
+  status: "completed",
+  stage: null,
+  result: {
+    matches: [
+      { word: "hello", confidence: 0.82 },
+      { word: "thank you", confidence: 0.71 },
+      { word: "please", confidence: 0.63 },
+      { word: "good", confidence: 0.54 },
+      { word: "name", confidence: 0.46 },
+      { word: "help", confidence: 0.38 },
+    ],
+    feedback: [
+      {
+        feature: "Handshape",
+        user_value: "Open hand",
+        user_confidence: 0.86,
+        reference_value: "Open hand",
+        similarity_score: 0.91,
+        accurate: true,
+      },
+      {
+        feature: "Movement",
+        user_value: "Outward motion",
+        user_confidence: 0.74,
+        reference_value: "Outward motion",
+        similarity_score: 0.78,
+        accurate: true,
+      },
+      {
+        feature: "Location",
+        user_value: "Near face",
+        user_confidence: 0.69,
+        reference_value: "Near face",
+        similarity_score: 0.72,
+        accurate: true,
+      },
+      {
+        feature: "Palm Orientation",
+        user_value: "Facing outward",
+        user_confidence: 0.62,
+        reference_value: "Facing outward",
+        similarity_score: 0.65,
+        accurate: true,
+      },
+    ],
+  },
+};
+// new content end
+
 export default function Results() {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  // new content start
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+  // new content end
+  // const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
-  const { videoURL } = (location.state as { videoURL?: string }) || {};
+  // new content start
+  const { videoURL: uploadedVideoURL, wordCategory: submittedWordCategory } =
+    (location.state as { videoURL?: string; wordCategory?: string }) || {};
+  // new content end
+  // const { videoURL: uploadedVideoURL } =
+  //   (location.state as { videoURL?: string }) || {};
 
   // API call to fetch results
   const { job_id } = useParams<{ job_id: string }>();
+  // new content start
+  const isDemoMode = new URLSearchParams(location.search).get("demo") === "1";
+  const videoURL = isDemoMode ? "/test.mp4" : uploadedVideoURL;
+  const wordCategory = submittedWordCategory?.trim() ?? "";
+  // new content end
   const [jobData, setJobData] = useState<JobResponse | null>(null);
 
-  // modal states
-  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [isMissingModalOpen, setIsMissingModalOpen] = useState(false);
-  const [selectedMatchLabel, setSelectedMatchLabel] = useState("");
-
-  // user testing data
-  const [intendedWord, setIntendedWord] = useState("");
-  const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState(false);
-
-  useEffect(() => {
-    if (!job_id) return;
-    const interval = setInterval(async () => {
-      try {
-        console.log("Fetching job status for ID:", job_id);
-        const res = await fetch(`${apiBaseUrl}/api/jobs/${job_id}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        console.log("Received Job Data from Backend:", data);
-        setJobData(data);
-        if (data.status === "completed" || data.status === "failed") {
-          clearInterval(interval);
-        }
-      } catch (err) {
-        console.error("Error fetching job data:", err);
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [job_id, apiBaseUrl]);
-
-  // Normalize top_k / matches into array
   const rawMatches: MatchItem[] = (() => {
     if (jobData?.result?.matches && jobData.result.matches.length > 0) {
       return jobData.result.matches;
@@ -94,15 +139,130 @@ export default function Results() {
     }
     return [];
   })();
+  const classifierWordsKey = JSON.stringify(
+    rawMatches.map((match) => match.word),
+  );
+
+  // new content start
+  useEffect(() => {
+    if (isDemoMode) setJobData(DEMO_JOB_DATA);
+  }, [isDemoMode]);
+  // new content end
+
+  // new content start
+  const [semanticMatches, setSemanticMatches] = useState<SemanticMatch[]>([]);
+  const [semanticStatus, setSemanticStatus] = useState<SemanticStatus>(
+    wordCategory ? "loading" : "idle",
+  );
+
+  useEffect(() => {
+    if (!wordCategory) {
+      setSemanticMatches([]);
+      setSemanticStatus("idle");
+      return;
+    }
+
+    if (jobData?.status !== "completed") return;
+
+    const classifierWords = JSON.parse(classifierWordsKey) as string[];
+    if (classifierWords.length === 0) {
+      setSemanticMatches([]);
+      setSemanticStatus("ready");
+      return;
+    }
+
+    const controller = new AbortController();
+    setSemanticStatus("loading");
+
+    const params = new URLSearchParams({ word: wordCategory });
+    classifierWords.forEach((word) => params.append("candidate_words", word));
+
+    fetch(`${apiBaseUrl}/api/semantic-filter?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((data: { matches: SemanticMatch[] }) => {
+        setSemanticMatches(data.matches);
+        setSemanticStatus("ready");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSemanticStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [apiBaseUrl, wordCategory, jobData?.status, classifierWordsKey]);
+  // new content end
+
+  const filteredMatches = wordCategory
+    ? semanticStatus === "ready"
+      ? semanticMatches.flatMap((semanticMatch) => {
+          const classifierMatch = rawMatches.find(
+            (match) =>
+              match.word.toLocaleLowerCase() ===
+              semanticMatch.word.toLocaleLowerCase(),
+          );
+          return classifierMatch ? [classifierMatch] : [];
+        })
+      : []
+    : rawMatches;
+
+  // modal states
+  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isMissingModalOpen, setIsMissingModalOpen] = useState(false);
+  const [selectedMatchLabel, setSelectedMatchLabel] = useState("");
+
+  // user testing data
+  const [intendedWord, setIntendedWord] = useState("");
+  const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState(false);
+
+  useEffect(() => {
+    // new content start
+    if (isDemoMode) return;
+    // new content end
+    if (!job_id) return;
+    const interval = setInterval(async () => {
+      try {
+        console.log("Fetching job status for ID:", job_id);
+        const res = await fetch(`${apiBaseUrl}/api/jobs/${job_id}`);
+        // new content start
+        if (res.status === 404) {
+          setJobData({
+            job_id,
+            status: "failed",
+            stage: null,
+            error: "Job not found. Submit a video from the home page first.",
+          });
+          clearInterval(interval);
+          return;
+        }
+        // new content end
+        // if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        console.log("Received Job Data from Backend:", data);
+        setJobData(data);
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Error fetching job data:", err);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+    // new content start
+  }, [job_id, apiBaseUrl, isDemoMode]);
+  // new content end
+  // }, [job_id, apiBaseUrl]);
 
   // Top 3 for Slideshow (Indices 0, 1, 2)
-  const slideshowMatches = rawMatches.slice(0, 3);
+  const slideshowMatches = filteredMatches.slice(0, 3);
 
   // Bottom Cards (Indices 3, 4, 5) -> 4th, 5th, and 6th matches
   const bottomMatches = [0, 1, 2].map((i) => {
-    //delete line below
-    console.log(rawMatches);
-    const match = rawMatches[i + 3];
+    const match = filteredMatches[i + 3];
     return {
       word: match?.word ?? `Match ${i + 4}`,
       confidence: match?.confidence ?? 0,
@@ -114,11 +274,17 @@ export default function Results() {
   const [glossToVideo, setGlossToVideo] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    // new content start
+    if (isDemoMode) return;
+    // new content end
     fetch("/gloss_to_video.json")
       .then((res) => res.json())
       .then((data) => setGlossToVideo(data))
       .catch((err) => console.error("Error loading gloss_to_video.json:", err));
-  }, []);
+    // new content start
+  }, [isDemoMode]);
+  // new content end
+  // }, []);
 
   const getVideoSrc = (word?: string): string | undefined => {
     if (!word) return undefined;
@@ -191,6 +357,12 @@ export default function Results() {
   const handleConfirmSign = async () => {
     setHasSubmittedFeedback(true);
     setIsSignModalOpen(false);
+    // new content start
+    if (isDemoMode) {
+      alert("Demo mode: feedback was not sent.");
+      return;
+    }
+    // new content end
     try {
       await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
         method: "POST",
@@ -211,6 +383,13 @@ export default function Results() {
   const handleConfirmMissingSign = async () => {
     setHasSubmittedFeedback(true);
     setIsMissingModalOpen(false);
+    // new content start
+    if (isDemoMode) {
+      alert("Demo mode: feedback was not sent.");
+      setIntendedWord("");
+      return;
+    }
+    // new content end
     try {
       await fetch(`${apiBaseUrl}/api/jobs/${job_id}/feedback`, {
         method: "POST",
@@ -235,6 +414,49 @@ export default function Results() {
   //checkboxes for video consent
   const [inputs, setInputs] = useState({});
 
+  // new content start
+  const semanticSection = wordCategory ? (
+    <section className="w-full max-w-3xl mx-auto my-6 p-5 border border-neutral-border rounded-lg bg-white">
+      <h2 className="text-xl font-bold text-neutral-darkest">
+        Semantic filter results
+      </h2>
+      <p className="mt-2 text-neutral-dark">
+        Your word: <strong>{wordCategory}</strong>
+      </p>
+      {semanticStatus === "loading" && (
+        <p className="mt-3 text-sm text-gray-600">Finding similar words...</p>
+      )}
+      {semanticStatus === "error" && (
+        <p className="mt-3 text-sm text-red-600">
+          Could not load similar words from the local semantic filter.
+        </p>
+      )}
+      {semanticStatus === "ready" && semanticMatches.length === 0 && (
+        <p className="mt-3 text-sm text-gray-600">
+          No matching word was found in the local vocabulary.
+        </p>
+      )}
+      {semanticMatches.length > 0 && (
+        <ol className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-gray-600">
+          {semanticMatches.map((match, index) => (
+            <li
+              key={match.word}
+              className="flex items-center justify-between gap-4 px-3 py-2 bg-neutral-panel rounded-md"
+            >
+              <span>
+                {index + 1}. {match.word}
+              </span>
+              <span className="text-sm text-gray-600">
+                Similarity {match.similarity.toFixed(3)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  ) : null;
+  // new content end
+
   // Loading screen
   if (!jobData || jobData.status === "queued" || jobData.status === "running") {
     return (
@@ -245,6 +467,9 @@ export default function Results() {
           {jobData?.stage === "cls1_feedback" && "Analyzing features..."}
           {!jobData?.stage && "Processing..."}
         </p>
+        {/* new content start */}
+        {semanticSection}
+        {/* new content end */}
         <SyncLoader color="#4a90e2" size={10} />
       </main>
     );
@@ -253,10 +478,16 @@ export default function Results() {
   // Failed screen
   if (jobData.status === "failed") {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
+        {/* new content start */}
+        {/* Previous className: "min-h-screen flex items-center justify-center" */}
+        {/* new content end */}
         <p className="text-red-500 font-medium">
           Something went wrong: {jobData.error ?? "unknown error"}
         </p>
+        {/* new content start */}
+        {semanticSection}
+        {/* new content end */}
       </main>
     );
   }
@@ -289,6 +520,19 @@ export default function Results() {
           Results
         </h1>
       </div>
+      {/* new content start */}
+      {isDemoMode && (
+        <p
+          className="mb-6 text-center text-sm font-medium text-gray-600"
+          role="status"
+        >
+          Demo preview: sample results testing locally.
+        </p>
+      )}
+      {/* new content end */}
+      {/* new content start */}
+      {semanticSection}
+      {/* new content end */}
       {/* Side-by-side layout */}
       <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch w-full mb-12">
         {/* User uploaded video */}

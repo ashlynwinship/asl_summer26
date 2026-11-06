@@ -25,7 +25,11 @@ type UploadStatus = "idle" | "uploading" | "success" | "error";
 type RecordingStatus = null | "recording" | "stopped" | "counting";
 
 function FileUploader() {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  // new content start
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+  // new content end
+  // const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   //file uploading
   const [file, setFile] = useState<File | null>(null);
@@ -845,8 +849,14 @@ function FileUploader() {
                     });
                     const data = await res.json();
                     navigate(`/results/${data.job_id}`, {
-                      state: { videoURL: activeVideoUrl },
+                      // new content start
+                      state: {
+                        videoURL: activeVideoUrl,
+                        wordCategory: wordCategory.trim(),
+                      },
+                      // new content end
                     });
+                    // state: { videoURL: activeVideoUrl },
                   } catch (error) {
                     console.error("Error submitting job:", error);
                   }
@@ -1019,8 +1029,14 @@ function FileUploader() {
                       });
                       const data = await res.json();
                       navigate(`/results/${data.job_id}`, {
-                        state: { videoURL: activeVideoUrl },
+                        // new content start
+                        state: {
+                          videoURL: activeVideoUrl,
+                          wordCategory: wordCategory.trim(),
+                        },
+                        // new content end
                       });
+                      // state: { videoURL: activeVideoUrl },
                     } catch (error) {
                       console.error("Error submitting job:", error);
                     }

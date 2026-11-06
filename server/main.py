@@ -1,12 +1,24 @@
 import os
 import logging
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 from contextlib import asynccontextmanager
 from typing import Optional, List
-from server.slgcn import load_ensemble, run_inference
+from server.semanticfilter.semanticfilter import get_similar_words
+
+# new content start
+try:
+    from server.slgcn import load_ensemble, run_inference
+except ModuleNotFoundError as error:
+    if error.name != "predict":
+        raise
+    load_ensemble = None
+    run_inference = None
+    logging.warning("SL-GCN pipeline is unavailable; sign inference is disabled")
+# new content end
+# from server.slgcn import load_ensemble, run_inference
 
 
 from enum import Enum
@@ -19,21 +31,53 @@ WEIGHTS_DIR = "/var/www/asldictionary/asl_summer26/server/sl-gcn-deploy/weights"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.ensemble = load_ensemble(checkpoints_dir=WEIGHTS_DIR)
+    # new content start
+    if load_ensemble is None:
+        app.state.ensemble = None
+    else:
+        try:
+            app.state.ensemble = load_ensemble(checkpoints_dir=WEIGHTS_DIR)
+        except FileNotFoundError:
+            app.state.ensemble = None
+            logging.warning("SL-GCN weights are unavailable; sign inference is disabled")
+    # new content end
+    # app.state.ensemble = load_ensemble(checkpoints_dir=WEIGHTS_DIR)
     yield
 
 
 app = FastAPI(lifespan=lifespan)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+# new content start
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
+# new content end
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    # new content start
+    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    # new content end
+    # allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# new content start
+@app.get("/api/semantic-filter")
+async def semantic_filter(
+    word: str, candidate_words: List[str] | None = Query(default=None)
+):
+    matches = await asyncio.to_thread(get_similar_words, word, 6, candidate_words)
+    return {
+        "query": word,
+        "matches": [
+            {"word": match, "similarity": similarity}
+            for match, similarity in matches
+        ],
+    }
+# new content end
 
 
 # request/response models
